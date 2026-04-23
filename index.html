@@ -1301,28 +1301,6 @@ tick();
         mx.fillStyle = bg;
         mx.fillRect(0, 0, W, H);
 
-        // 大見出し（左）
-        const headSize = Math.max(28, W * 0.045);
-        mx.font = `900 ${headSize}px Poppins, sans-serif`;
-        mx.fillStyle = '#ffffff';
-        mx.shadowBlur = 0;
-        const headX = W * 0.04;
-        const headLines = ['SPACE', 'DESIGNER', '× AI'];
-        headLines.forEach((l, i) => {
-            mx.fillText(l, headX, H * 0.18 + i * headSize * 1.15);
-        });
-        // 細いルール線
-        mx.strokeStyle = 'rgba(244,114,182,0.5)';
-        mx.lineWidth = 1;
-        mx.beginPath();
-        mx.moveTo(headX, H*0.18 + headLines.length * headSize * 1.15 + 10);
-        mx.lineTo(headX + W*0.22, H*0.18 + headLines.length * headSize * 1.15 + 10);
-        mx.stroke();
-        // サブ
-        const subSize = Math.max(8, W * 0.011);
-        mx.font = `300 ${subSize}px Poppins, sans-serif`;
-        mx.fillStyle = 'rgba(184,168,208,0.7)';
-        mx.fillText('FLOTAN  2025', headX, H*0.18 + headLines.length * headSize * 1.15 + 26);
 
         // ── テキストフロー ──
         const fontSize  = Math.max(9, W * 0.013);
