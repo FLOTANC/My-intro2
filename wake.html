@@ -7,7 +7,7 @@
     <meta name="description" content="子どもアート教室 rowke の AI 講師「Wake先生」。OSS の Claude エージェントハーネス nanoclaw を使い、Discord 上で動く AI Bot を Mac に構築した記録。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700;800;900&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;700;800;900&family=Inter:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -62,10 +62,15 @@
         }
         @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
         .hero h1 {
-            font-weight: 900; font-size: clamp(2.4rem, 7vw, 4rem);
+            font-weight: 800; font-size: clamp(2.6rem, 7vw, 4.2rem);
             letter-spacing: .02em; margin: 26px 0 6px;
             background: linear-gradient(120deg, var(--foam), var(--aqua) 55%, var(--sun));
             -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero h1 .en {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600; font-style: italic;
+            font-size: 1.32em; letter-spacing: .01em; margin-right: .04em;
         }
         .hero .tag { color: var(--muted); font-size: 1.05rem; letter-spacing: .04em; }
         .hero .verse {
@@ -166,7 +171,7 @@
     <!-- ════════ HERO ════════ -->
     <header class="hero">
         <img class="avatar" src="wake-avatar.png" alt="Wake先生">
-        <h1>Wake先生</h1>
+        <h1><span class="en">Wake</span>先生</h1>
         <p class="tag">子どもアート教室 <strong>rowke</strong> の AI 講師</p>
         <p class="verse">
             「僕の前に道はない、僕の後ろに道はできる」<br>
