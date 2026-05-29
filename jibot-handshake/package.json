@@ -1,0 +1,15 @@
+{
+  "name": "jibot-handshake",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node handshake.mjs",
+    "status": "node status.mjs"
+  },
+  "dependencies": {
+    "@x402/axios": "latest",
+    "@x402/evm": "latest",
+    "axios": "latest",
+    "viem": "latest"
+  }
+}

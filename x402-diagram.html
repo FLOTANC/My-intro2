@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>x402 の思想</title>
+<style>
+  :root {
+    --purple: #9333ea;
+    --pink: #f472b6;
+    --mint: #34d399;
+    --bg: #0d0820;
+    --card: #1a1035;
+    --border: #2d1f5e;
+    --text: #e2d9f3;
+    --muted: #7c6fa0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Hiragino Sans', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 48px;
+  }
+
+  .section {
+    max-width: 860px;
+    margin: 0 auto 48px;
+  }
+
+  .section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 3px solid var(--purple);
+  }
+
+  /* ── 1. 哲学対比 ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .compare-col {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .compare-col.old { border-color: #3a2a2a; }
+  .compare-col.new { border-color: #1f3a2a; }
+
+  .compare-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare-label.old { color: #f87171; }
+  .compare-label.new { color: var(--mint); }
+
+  .compare-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-old { background: #f87171; }
+  .dot-new { background: var(--mint); }
+
+  .compare-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+  }
+
+  .flow-row:last-child { margin-bottom: 0; }
+
+  .node {
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .node.highlight {
+    background: linear-gradient(135deg, rgba(147,51,234,0.3), rgba(244,114,182,0.3));
+    border: 1px solid rgba(147,51,234,0.4);
+  }
+
+  .arrow {
+    color: var(--muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .broker {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .broker-item {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .broker-item::before {
+    content: '×';
+    color: #f87171;
+    font-weight: 700;
+  }
+
+  .advantage {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .advantage-item {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .advantage-item::before {
+    content: '✓';
+    color: var(--mint);
+    font-weight: 700;
+  }
+
+  /* ── 2. フロー図 ── */
+  .flow-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .step-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .step-icon.s1 { background: linear-gradient(135deg, #1e3a5f, #2d5a8e); }
+  .step-icon.s2 { background: linear-gradient(135deg, #3a1f5f, #6b35a8); }
+  .step-icon.s3 { background: linear-gradient(135deg, #1f3a2a, #2d6b4a); }
+  .step-icon.s4 { background: linear-gradient(135deg, #3a2a1f, #8e6b35); }
+
+  .step-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .step-sub {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .step-arrow {
+    font-size: 1.2rem;
+    color: var(--purple);
+    flex-shrink: 0;
+  }
+
+  .flow-note {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* ── 3. マイクロペイメント ── */
+  .micro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .micro-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .micro-card:hover { border-color: var(--purple); }
+
+  .micro-before {
+    font-size: 0.7rem;
+    color: #f87171;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .micro-before::before { content: '今'; font-weight: 700; }
+
+  .micro-after {
+    font-size: 0.7rem;
+    color: var(--mint);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .micro-after::before { content: 'x402後'; font-weight: 700; }
+
+  .micro-icon { font-size: 1.4rem; margin-bottom: 10px; }
+
+  .micro-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .divider-arrow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 0.65rem;
+    margin: 4px 0;
+  }
+
+  /* ── 4. ビジネスモデル ── */
+  .biz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .biz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .biz-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .biz-card.c1::before { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+  .biz-card.c2::before { background: linear-gradient(90deg, var(--mint), #60a5fa); }
+  .biz-card.c3::before { background: linear-gradient(90deg, #f59e0b, #f472b6); }
+
+  .biz-icon { font-size: 1.6rem; margin-bottom: 12px; }
+  .biz-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
+  .biz-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── footer ── */
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.72rem;
+    max-width: 860px;
+    margin: 0 auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<h1>x402 の思想</h1>
+<p class="subtitle">HTTP 402 Payment Required — お金をインターネットのプリミティブに</p>
+
+<!-- 1. 哲学的な意味 -->
+<div class="section">
+  <div class="section-title">哲学的な意味</div>
+  <div class="compare">
+    <div class="compare-col old">
+      <div class="compare-label old"><span class="compare-dot dot-old"></span>従来のウェブ</div>
+      <div class="flow-row">
+        <div class="node">人間</div>
+        <div class="arrow">→</div>
+        <div class="node">クレカ入力</div>
+        <div class="arrow">→</div>
+        <div class="node">Stripe</div>
+      </div>
+      <div class="flow-row" style="padding-left:32px">
+        <div class="arrow">→</div>
+        <div class="node">銀行</div>
+        <div class="arrow">→</div>
+        <div class="node">サービス</div>
+      </div>
+      <div class="broker">
+        <div class="broker-item">仲介業者が複数必要</div>
+        <div class="broker-item">人間の操作が必要</div>
+        <div class="broker-item">マイクロペイメント不可</div>
+        <div class="broker-item">国・銀行に依存</div>
+      </div>
+    </div>
+
+    <div class="compare-vs">VS</div>
+
+    <div class="compare-col new">
+      <div class="compare-label new"><span class="compare-dot dot-new"></span>x402 のウェブ</div>
+      <div class="flow-row">
+        <div class="node highlight">AIエージェント</div>
+        <div class="arrow">→</div>
+        <div class="node highlight">自動支払い</div>
+        <div class="arrow">→</div>
+        <div class="node highlight">サービス</div>
+      </div>
+      <div class="advantage">
+        <div class="advantage-item">P2P で完結・仲介不要</div>
+        <div class="advantage-item">人間の操作ゼロ</div>
+        <div class="advantage-item">$0.001 単位の決済</div>
+        <div class="advantage-item">ブロックチェーン上で自律</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. x402 の動作フロー -->
+<div class="section">
+  <div class="section-title">x402 が普及するとどうなるか — 動作フロー</div>
+  <div class="flow-diagram">
+    <div class="flow-steps">
+      <div class="step">
+        <div class="step-icon s1">🤖</div>
+        <div class="step-label">AIエージェント</div>
+        <div class="step-sub">リクエスト送信</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-icon s2">⚡</div>
+        <div class="step-label">HTTP 402</div>
+        <div class="step-sub">Payment Required<br>が返ってくる</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-icon s3">✍️</div>
+        <div class="step-label">自動署名・送金</div>
+        <div class="step-sub">USDC $0.01<br>を自動支払い</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-icon s4">🔓</div>
+        <div class="step-label">アクセス取得</div>
+        <div class="step-sub">サービスが<br>許可を返す</div>
+      </div>
+    </div>
+    <div class="flow-note">
+      <span class="badge">今日やったこと</span>
+      Jibot に x402 でハンドシェイク → $0.01 USDC 自動支払い → NFT ミント完了
+    </div>
+  </div>
+</div>
+
+<!-- 3. マイクロペイメント -->
+<div class="section">
+  <div class="section-title">マイクロペイメントの復活</div>
+  <div class="micro-grid">
+    <div class="micro-card">
+      <div class="micro-icon">📰</div>
+      <div class="micro-title">コンテンツ</div>
+      <div class="micro-before">月額サブスクが必要</div>
+      <div class="divider-arrow">↓</div>
+      <div class="micro-after">1記事 $0.001 で読む</div>
+    </div>
+    <div class="micro-card">
+      <div class="micro-icon">⚙️</div>
+      <div class="micro-title">API</div>
+      <div class="micro-before">月額プランに縛られる</div>
+      <div class="divider-arrow">↓</div>
+      <div class="micro-after">1リクエストごとに支払う</div>
+    </div>
+    <div class="micro-card">
+      <div class="micro-icon">💰</div>
+      <div class="micro-title">収益化</div>
+      <div class="micro-before">広告モデルに依存</div>
+      <div class="divider-arrow">↓</div>
+      <div class="micro-after">読まれるたびに直接収益</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 新しいビジネスモデル -->
+<div class="section">
+  <div class="section-title">新しいビジネスモデル</div>
+  <div class="biz-grid">
+    <div class="biz-card c1">
+      <div class="biz-icon">🤖</div>
+      <div class="biz-title">AIが自分で稼ぐ</div>
+      <div class="biz-desc">サービスを提供して USDC を受け取るエージェント。人間のように口座を持ち、自律的に収益を得る。</div>
+    </div>
+    <div class="biz-card c2">
+      <div class="biz-icon">🔄</div>
+      <div class="biz-title">エージェント間取引</div>
+      <div class="biz-desc">人間を介さない B2B 取引。AIエージェント同士が自動で契約・決済・協調する経済圏。</div>
+    </div>
+    <div class="biz-card c3">
+      <div class="biz-icon">⚡</div>
+      <div class="biz-title">スポット利用経済</div>
+      <div class="biz-desc">月額不要、使った分だけ払う。サブスク疲れのない、摩擦ゼロの新しい消費スタイル。</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  x402 protocol · Optimism · USDC · 2026
+</div>
+
+</body>
+</html>
