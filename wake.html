@@ -42,12 +42,11 @@
             background:
                 radial-gradient(120% 80% at 50% -10%, var(--sea) 0%, var(--navy) 45%, var(--deep) 100%);
         }
-        .bg-wake {
-            position: fixed; inset: 0; z-index: -2; opacity: 0.5;
-            background-image:
-                repeating-linear-gradient(115deg, transparent 0 38px, rgba(159,231,224,0.05) 38px 39px),
-                repeating-linear-gradient(65deg, transparent 0 46px, rgba(52,200,214,0.04) 46px 47px);
-            mask-image: radial-gradient(80% 60% at 50% 30%, #000 0%, transparent 75%);
+        #wave {
+            position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%;
+            display: block; pointer-events: none;
+            mask-image: radial-gradient(120% 90% at 50% 20%, #000 0%, #000 55%, transparent 95%);
+            -webkit-mask-image: radial-gradient(120% 90% at 50% 20%, #000 0%, #000 55%, transparent 95%);
         }
 
         .wrap { max-width: 920px; margin: 0 auto; padding: 0 22px; }
@@ -167,7 +166,7 @@
 </head>
 <body>
     <div class="bg-sea"></div>
-    <div class="bg-wake"></div>
+    <canvas id="wave"></canvas>
 
     <!-- ════════ HERO ════════ -->
     <header class="hero">
@@ -298,5 +297,68 @@
             改変・制作：FLOTAN ／ 原教材クレジット：web3AI概論
         </p>
     </footer>
+
+    <!-- ── particle wave field (vanilla JS, no library) ── -->
+    <script>
+    (function () {
+        var canvas = document.getElementById('wave');
+        var ctx = canvas.getContext('2d');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var W = 0, H = 0, cols = 0, rows = 0, gap = 0;
+        var t = 0;
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function resize() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+            canvas.style.width = W + 'px';
+            canvas.style.height = H + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            // particle density scales with screen size, capped for perf
+            gap = W < 600 ? 26 : 20;
+            cols = Math.ceil(W / gap) + 2;
+            rows = Math.ceil(H / gap) + 2;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            for (var i = 0; i < cols; i++) {
+                for (var j = 0; j < rows; j++) {
+                    var bx = i * gap;
+                    var by = j * gap;
+                    // layered sine waves -> rolling ocean surface
+                    var wave =
+                        Math.sin(bx * 0.012 + t) * 14 +
+                        Math.sin(bx * 0.022 - t * 1.3 + by * 0.01) * 10 +
+                        Math.sin((bx + by) * 0.015 + t * 0.6) * 8;
+                    var y = by + wave;
+                    // depth: lower on screen = denser & brighter (sea foam toward bottom)
+                    var depth = j / rows;
+                    var crest = (wave + 32) / 64; // 0..1 wave height
+                    var alpha = (0.10 + depth * 0.45) * (0.45 + crest * 0.55);
+                    if (alpha <= 0.02) continue;
+                    var r = 0.6 + depth * 0.9 + crest * 0.5;
+                    // color shift: foam-white crests over aqua body
+                    var g = Math.floor(200 + crest * 40);
+                    var b = Math.floor(214 + crest * 30);
+                    ctx.fillStyle = 'rgba(' + Math.floor(120 + crest * 110) + ',' + g + ',' + b + ',' + alpha.toFixed(3) + ')';
+                    ctx.fillRect(bx, y, r, r);
+                }
+            }
+        }
+
+        function loop() {
+            t += 0.01;
+            draw();
+            if (!reduce) requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        if (reduce) { t = 1.2; draw(); } else { loop(); }
+    })();
+    </script>
 </body>
 </html>
