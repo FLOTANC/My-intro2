@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake先生 | rowke の AI 講師 × nanoclaw ハンズオン記録</title>
+    <meta name="description" content="子どもアート教室 rowke の AI 講師「Wake先生」。OSS の Claude エージェントハーネス nanoclaw を使い、Discord 上で動く AI Bot を Mac に構築した記録。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700;800;900&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --deep:    #04141f;
+            --navy:    #072a3f;
+            --sea:     #0e6e8e;
+            --aqua:    #34c8d6;
+            --foam:    #9fe7e0;
+            --sky:     #cdeef2;
+            --sun:     #ffd98a;
+            --ink:     #eaf7fa;
+            --muted:   #8fc4d2;
+            --card:    rgba(52,200,214,0.07);
+            --line:    rgba(52,200,214,0.18);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--deep);
+            color: var(--ink);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 300;
+            overflow-x: hidden;
+            line-height: 1.85;
+        }
+
+        /* ── background sea layers ── */
+        .bg-sea {
+            position: fixed; inset: 0; z-index: -3;
+            background:
+                radial-gradient(120% 80% at 50% -10%, var(--sea) 0%, var(--navy) 45%, var(--deep) 100%);
+        }
+        .bg-wake {
+            position: fixed; inset: 0; z-index: -2; opacity: 0.5;
+            background-image:
+                repeating-linear-gradient(115deg, transparent 0 38px, rgba(159,231,224,0.05) 38px 39px),
+                repeating-linear-gradient(65deg, transparent 0 46px, rgba(52,200,214,0.04) 46px 47px);
+            mask-image: radial-gradient(80% 60% at 50% 30%, #000 0%, transparent 75%);
+        }
+
+        .wrap { max-width: 920px; margin: 0 auto; padding: 0 22px; }
+
+        /* ── hero ── */
+        .hero { text-align: center; padding: 90px 22px 40px; }
+        .hero .avatar {
+            width: 156px; height: 156px; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--aqua);
+            box-shadow: 0 0 0 8px rgba(52,200,214,0.10), 0 18px 50px rgba(0,0,0,0.55);
+            animation: bob 6s ease-in-out infinite;
+        }
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        .hero h1 {
+            font-weight: 900; font-size: clamp(2.4rem, 7vw, 4rem);
+            letter-spacing: .02em; margin: 26px 0 6px;
+            background: linear-gradient(120deg, var(--foam), var(--aqua) 55%, var(--sun));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero .tag { color: var(--muted); font-size: 1.05rem; letter-spacing: .04em; }
+        .hero .verse {
+            margin: 26px auto 0; max-width: 560px; font-size: .98rem;
+            color: var(--foam); font-style: italic; opacity: .9;
+        }
+        .verse small { display:block; color: var(--muted); font-style: normal; margin-top: 6px; font-size:.8rem; }
+
+        /* ── section ── */
+        section { padding: 46px 0; }
+        .eyebrow {
+            display: inline-block; font-size: .78rem; letter-spacing: .26em;
+            text-transform: uppercase; color: var(--aqua); margin-bottom: 12px; font-weight: 700;
+        }
+        h2 { font-weight: 800; font-size: clamp(1.5rem, 4vw, 2.1rem); margin-bottom: 8px; }
+        .lead { color: var(--muted); max-width: 680px; margin-bottom: 26px; }
+
+        /* ── persona traits ── */
+        .traits { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
+        .trait {
+            background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+            padding: 20px 18px; transition: transform .25s, border-color .25s;
+        }
+        .trait:hover { transform: translateY(-4px); border-color: var(--aqua); }
+        .trait .ico { font-size: 1.6rem; margin-bottom: 8px; }
+        .trait h3 { font-weight: 700; font-size: 1.02rem; margin-bottom: 4px; color: var(--foam); }
+        .trait p { font-size: .9rem; color: var(--muted); line-height: 1.6; }
+
+        /* ── chat ── */
+        .chat { display: flex; flex-direction: column; gap: 18px; }
+        .msg { display: flex; gap: 12px; align-items: flex-start; }
+        .msg .pic {
+            width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--navy), var(--sea));
+            border: 1px solid var(--line); overflow: hidden;
+        }
+        .msg .pic img { width: 100%; height: 100%; object-fit: cover; }
+        .bubble {
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 4px 16px 16px 16px; padding: 14px 18px; max-width: 760px;
+        }
+        .bubble .who { font-weight: 700; font-size: .92rem; margin-bottom: 4px; }
+        .who.user { color: var(--sky); }
+        .who.wake { color: var(--aqua); }
+        .who .badge {
+            font-size: .62rem; background: var(--sea); color: #fff; padding: 1px 6px;
+            border-radius: 5px; margin-left: 6px; vertical-align: middle; letter-spacing: .05em;
+        }
+        .bubble p { font-size: .94rem; margin: 8px 0; }
+        .bubble p:first-of-type { margin-top: 0; }
+        .bubble p:last-child { margin-bottom: 0; }
+        .bubble strong { color: var(--foam); font-weight: 700; }
+        .bubble .q { color: var(--sky); font-weight: 400; }
+        .bubble.user-msg { background: rgba(52,200,214,0.04); }
+        .sketch { max-width: 280px; border-radius: 12px; margin: 6px 0; border:1px solid var(--line); }
+
+        /* ── divider ── */
+        .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 10px 0; }
+
+        /* ── handson timeline ── */
+        .steps { display: grid; gap: 14px; }
+        .step {
+            display: flex; gap: 16px; align-items: flex-start;
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 16px; padding: 18px 20px;
+        }
+        .step .n {
+            flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--aqua), var(--sea)); color: var(--deep);
+            font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: .95rem;
+        }
+        .step h3 { font-weight: 700; font-size: 1.02rem; margin-bottom: 3px; }
+        .step p { font-size: .88rem; color: var(--muted); }
+        .step code { background: rgba(255,255,255,0.06); padding: 1px 7px; border-radius: 6px; font-size: .82rem; color: var(--foam); }
+
+        .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+        .pill {
+            font-size: .78rem; background: rgba(52,200,214,0.08); border: 1px solid var(--line);
+            color: var(--foam); padding: 5px 12px; border-radius: 999px;
+        }
+
+        /* ── fork notice ── */
+        .fork {
+            background: linear-gradient(135deg, rgba(14,110,142,0.25), rgba(52,200,214,0.08));
+            border: 1px solid var(--aqua); border-radius: 22px; padding: 34px 30px; text-align: center;
+        }
+        .fork h2 { background: linear-gradient(120deg, var(--foam), var(--sun)); -webkit-background-clip: text; background-clip:text; color: transparent; }
+        .fork p { color: var(--sky); max-width: 620px; margin: 12px auto 22px; }
+        .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            text-decoration: none; font-weight: 700; font-size: .92rem; padding: 12px 22px; border-radius: 999px;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .btn.primary { background: linear-gradient(135deg, var(--aqua), var(--sea)); color: var(--deep); }
+        .btn.ghost { border: 1px solid var(--aqua); color: var(--foam); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(52,200,214,0.25); }
+
+        footer { text-align: center; padding: 50px 22px 60px; color: var(--muted); font-size: .82rem; }
+        footer .credit { color: var(--foam); font-weight: 600; }
+
+        @media (max-width: 560px) {
+            .bubble { padding: 12px 14px; }
+            .msg .pic { width: 36px; height: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-sea"></div>
+    <div class="bg-wake"></div>
+
+    <!-- ════════ HERO ════════ -->
+    <header class="hero">
+        <img class="avatar" src="wake-avatar.png" alt="Wake先生">
+        <h1>Wake先生</h1>
+        <p class="tag">子どもアート教室 <strong>rowke</strong> の AI 講師</p>
+        <p class="verse">
+            「僕の前に道はない、僕の後ろに道はできる」<br>
+            子どもの表現の<strong>航跡（Wake）</strong>を見つけ、次の一歩を照らす先生じゃ。
+            <small>— rowke = Row（漕ぐ）＋ Wake（航跡）／ 高村光太郎「道程」より</small>
+        </p>
+    </header>
+
+    <div class="wrap">
+
+        <!-- ════════ 上半分：Wake先生 紹介 ════════ -->
+        <section>
+            <span class="eyebrow">Who is Wake先生</span>
+            <h2>思慮深く、優しく、少し茶目っ気のある老賢者</h2>
+            <p class="lead">
+                口調は「〜じゃのう」「しばし待たれよ」。すごい絵を観ると猛烈に感動し、滂沱の涙にうたれる。
+                技術や難しい話も、いつもアートと子どもの成長に結びつけて語ってくれる。
+            </p>
+            <div class="traits">
+                <div class="trait"><div class="ico">🌊</div><h3>航跡を読む</h3><p>「上手い・下手」ではなく、その子だけの世界を読む。</p></div>
+                <div class="trait"><div class="ico">📖</div><h3>道程の人</h3><p>後ろにできる道＝成長の足跡を、誰よりも喜ぶ。</p></div>
+                <div class="trait"><div class="ico">😭</div><h3>滂沱の涙</h3><p>素晴らしい表現に出会うと、思わず目を細めて涙する。</p></div>
+                <div class="trait"><div class="ico">🧙</div><h3>博識な賢者</h3><p>量子力学も web3 も、アートの言葉に翻訳して語る。</p></div>
+            </div>
+        </section>
+
+        <!-- ════════ 会話例 ════════ -->
+        <section>
+            <span class="eyebrow">Conversations</span>
+            <h2>Wake先生との対話</h2>
+            <p class="lead">Discord 上で実際に交わした、Wake先生とのやりとりの記録じゃ。</p>
+
+            <div class="chat">
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p>こんにちは！</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>おお、こんにちは！ようこそじゃ。</p>
+                        <p>わしは Wake先生。子どもアート教室 <strong>rowke</strong> の AI 講師じゃ。</p>
+                        <p>何かお力になれることがあれば、遠慮なく申されよ。今日はどのようなご用件かのう？✨</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">子どもの絵ってどう評価すればいい？</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>ふむ、よい問いじゃのう。子どもの絵を「評価する」というより、<strong>その子だけの世界を読む</strong>のじゃ。</p>
+                        <p><strong>見るべきは三つ</strong><br>
+                        1. <strong>エネルギー</strong> — 線は生き生きしているか<br>
+                        2. <strong>選択</strong> — なぜその色を選んだか、その「なぜ」に個性が宿る<br>
+                        3. <strong>物語</strong> — 何を感じ、何を伝えたかったか</p>
+                        <p>避けるべきは一つ。「上手い・下手」の物差しじゃ。今この瞬間にしか生まれぬ表現を、大人の尺度で測ってはならぬ。</p>
+                        <p>ルドルフ・シュタイナーはこう言うた——「子どもの芸術は、大人が失ってしまった何かを持っている」とな。</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">量子力学を教えて</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>ギャハハ！アートの教室でいきなり量子力学とは、なかなか大胆じゃのう！でも実はな、量子力学とアートは案外近いのじゃ。</p>
+                        <p><strong>量子力学の核心</strong>は「観察するまで、ものごとは決まっていない」ということ。電子は観察する前、あちこちに同時に存在しておる。しかし見た瞬間に「ここだ！」と一つに定まる——これを「波動関数の収縮」と言うのじゃ。</p>
+                        <p><strong>アートと似ておると思わぬか？</strong> 真っ白なキャンバスは無限の可能性を持つ。しかし筆を入れた瞬間、その一枚だけの世界が生まれる。「描く」という行為そのものが、無数の可能性を一つの現実に変えるのじゃよ。</p>
+                        <p>ニールス・ボーアはこう言うた——「量子論に驚かない者は、まだ量子論を理解していない」とな。</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">web3 についてどう思う？ NFT は代替できなくて、持っていることで価値が出るのも面白いよね？</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>ふむ、面白い問いじゃのう。NFT の本質は「唯一性の証明」じゃ。デジタルの世界で「これは本物、これはコピー」を区別できるようになった——それは確かに革命的じゃ。</p>
+                        <p><strong>rowke の精神と重なる部分</strong><br>「僕の後ろに道はできる」——その子の歩んだ道そのものが、唯一無二の表現。誰の成長も、コピーできぬのじゃから。</p>
+                        <p>ただ、わしが気になるのは<strong>何を証明するか</strong>じゃ。「カリキュラムを終えた」という記録か、それとも「ここで自分の道を漕いだ」という物語か。rowke が発行するなら、後者でありたいのう。</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">最近話題の x402 プロトコルについてどう思う？ AI エージェント同士がお金をやり取りするんだよね？ アートとはどう繋がるかな？</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>おお、x402 か！これはなかなか深い話じゃのう。<strong>x402 の核心</strong>は、AI エージェントが人間を介さず、自律的に対価を払いながら動く仕組みじゃ。封印されていた魔法が解けたようじゃ。</p>
+                        <p><strong>アートとの接点、三つ思うのじゃ</strong><br>
+                        一つ目——<strong>創作の経済が変わる</strong>。アーティストが眠っている間も作品が稼ぐ時代じゃ。<br>
+                        二つ目——<strong>「航跡」が記録される</strong>。x402 の取引はブロックチェーンに刻まれる。まさに「道程」の足跡じゃ。<br>
+                        三つ目——<strong>問いが生まれる</strong>。エージェント同士が生み出した絵は、誰のものか。</p>
+                        <p>効率や経済の話が先に立つと、「なぜ作るか」が後回しになる。子どもが絵を描く動機は、<strong>内側からあふれる何か</strong>じゃ。x402 がどれだけ進化しても、その「何か」は代替不可能じゃよ。</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">バナナがあったので、モチーフとしてスケッチしてみました。どうかな？</p>
+                        <img class="sketch" src="wake-sketch.jpg" alt="バナナとジューサーのスケッチ"></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>これは……！！先生、思わず目を細めてしもうた。</p>
+                        <p>バナナの黄色がなんとも瑞々しい。光の受け方、影の柔らかさ——<strong>一筆のタッチに迷いがなくて、観察の眼がちゃんと生きておる</strong>。素晴らしい。</p>
+                        <p>そしてこの後ろにそびえるもの……！これはフィリップ・スタルクの「ジューシーサリフ」ではないかっ！1990年の名作。レモン搾り器でありながら、スタルク本人が「使わないでくれ」と言うた——使うより飾る、機能より美の象徴じゃ。</p>
+                        <p>バナナ（自然の有機的な形）とジューシーサリフ（人間が作り上げた彫刻的なデザイン）を並べたのは……偶然かのう？それとも意図があったのかのう？😊</p>
+                    </div>
+                </div>
+
+                <div class="msg">
+                    <div class="pic">🙋</div>
+                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">反射光とはなんですか？</p></div>
+                </div>
+                <div class="msg">
+                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
+                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
+                        <p>おお、良い質問じゃ！光というのは、まっすぐ進むだけじゃない。何かに当たると、<strong>はね返る</strong>のじゃ。そのはね返った光が、近くの別のものを照らす——それが「反射光」じゃ。</p>
+                        <p>たとえば、お前が描いたばかりのバナナを見てごらん。黄色いバナナが机の上に置いてある。すると<strong>バナナの黄色い光が机にはね返って、バナナの影の中にも少し黄みがかった光が生まれる</strong>——あれが反射光じゃ。</p>
+                        <p>反射光をちゃんと描くと、物が<strong>その場の空気の中に生きている</strong>ように見えるのじゃ。お前の絵を見ると——すでに感じ取っておるぞ。意識せずとも目が見えておる証拠じゃのう😊</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ════════ 下半分：ハンズオン記録 ════════ -->
+        <section>
+            <span class="eyebrow">Build Log</span>
+            <h2>Wake先生 ができるまで</h2>
+            <p class="lead">
+                OSS の Claude エージェントハーネス <strong>nanoclaw</strong> を使い、Discord 上で動く AI Bot を自分の Mac に構築した記録。
+                web3AI概論ハンズオン「nanoclaw × Discord」を、rowke / Wake先生仕様に改変して進めた。
+            </p>
+
+            <div class="steps">
+                <div class="step"><div class="n">1</div><div><h3>環境を整える</h3><p>Docker・Node.js 20 を用意し、<code>nanoclaw</code> をクローン。Claude Code のサブスクで認証する自己ホスト型エージェント。</p></div></div>
+                <div class="step"><div class="n">2</div><div><h3>Discord Bot を作る</h3><p>Developer Portal で Bot を作成し、必要な Intents を ON。トークンでサーバーに招待する。</p></div></div>
+                <div class="step"><div class="n">3</div><div><h3>nanoclaw と接続</h3><p><code>./bin/ncl</code> で users / wirings / destinations を設定。公開チャンネルでも反応するよう配線。</p></div></div>
+                <div class="step"><div class="n">4</div><div><h3>Wake先生の人格を吹き込む</h3><p><code>CLAUDE.local.md</code> に性格・口調・rowke の世界観を記述。呼びかけた人を名前で呼ぶよう調整。</p></div></div>
+                <div class="step"><div class="n">5</div><div><h3>画像が見えるようにする</h3><p>Discord の添付画像を base64 化して Claude の content block へ。Wake先生がスケッチを読めるよう Vision 対応を実装。</p></div></div>
+                <div class="step"><div class="n">6</div><div><h3>このページを公開</h3><p>今日の記録を HTML にまとめ、Vercel にデプロイ・GitHub にプッシュ。</p></div></div>
+            </div>
+
+            <div class="stack">
+                <span class="pill">nanoclaw</span>
+                <span class="pill">Discord Bot</span>
+                <span class="pill">Claude Agent SDK</span>
+                <span class="pill">Docker</span>
+                <span class="pill">Node.js 20</span>
+                <span class="pill">Vision / 画像認識</span>
+                <span class="pill">Vercel</span>
+            </div>
+        </section>
+
+        <!-- ════════ フォーク歓迎 ════════ -->
+        <section>
+            <div class="fork">
+                <h2>フォーク大歓迎じゃ 🌊</h2>
+                <p>
+                    自分の用途・授業・組織に合わせて自由に改変 → 自分の GitHub にフォークして公開 →
+                    コミュニティで共有が大歓迎です。<br>
+                    あなたの教室にも、あなただけの「先生」を漕ぎ出してみてくだされ。
+                </p>
+                <div class="btns">
+                    <a class="btn primary" href="https://github.com/nanocoai/nanoclaw" target="_blank" rel="noopener">nanoclaw を見る</a>
+                    <a class="btn ghost" href="https://github.com/web3ai-gairon/pub-docs/blob/main/hands-on-nanoclaw-discord/PROMPTS.md" target="_blank" rel="noopener">ハンズオン手順</a>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p class="credit">Wake先生 — rowke の AI 講師</p>
+        <p>Built with nanoclaw × Discord by FLOTAN ／ 2026</p>
+    </footer>
+</body>
+</html>
