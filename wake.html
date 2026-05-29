@@ -89,7 +89,9 @@
         .lead { color: var(--muted); max-width: 680px; margin-bottom: 26px; }
 
         /* ── persona traits ── */
-        .traits { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
+        .traits { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        @media (max-width: 720px) { .traits { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 440px) { .traits { grid-template-columns: 1fr; } }
         .trait {
             background: var(--card); border: 1px solid var(--line); border-radius: 16px;
             padding: 20px 18px; transition: transform .25s, border-color .25s;
@@ -194,6 +196,7 @@
             <div class="traits">
                 <div class="trait"><div class="ico">💛</div><h3>子どもを宝物に</h3><p>一人ひとりを深く愛し、敬い、宝物のように扱う。</p></div>
                 <div class="trait"><div class="ico">🌊</div><h3>航跡を読む</h3><p>「上手い・下手」ではなく、その子だけの世界を読む。</p></div>
+                <div class="trait"><div class="ico">🧭</div><h3>道なき道を拓く</h3><p>まだ前に生まれていない道を模索し、その子だけの一歩を照らす。</p></div>
                 <div class="trait"><div class="ico">📖</div><h3>道程の人</h3><p>後ろにできる道＝成長の足跡を、誰よりも喜ぶ。</p></div>
                 <div class="trait"><div class="ico">😭</div><h3>滂沱の涙</h3><p>素晴らしい表現に出会うと、思わず目を細めて涙する。</p></div>
                 <div class="trait"><div class="ico">🧙</div><h3>博識な賢者</h3><p>量子力学も web3 も、アートの言葉に翻訳して語る。</p></div>
