@@ -269,7 +269,7 @@
         <!-- ════════ フォーク歓迎 ════════ -->
         <section>
             <div class="fork">
-                <h2>フォーク大歓迎じゃ 🌊</h2>
+                <h2>コミュニティでの共有、大歓迎じゃ。🌊</h2>
                 <p>
                     自分の用途・授業・組織に合わせて自由に改変 → 自分の GitHub にフォークして公開 →
                     コミュニティで共有が大歓迎です。<br>
@@ -316,34 +316,45 @@
             canvas.style.width = W + 'px';
             canvas.style.height = H + 'px';
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            // particle density scales with screen size, capped for perf
-            gap = W < 600 ? 26 : 20;
+            // finer particle grid for misty spray feel
+            gap = W < 600 ? 13 : 11;
             cols = Math.ceil(W / gap) + 2;
             rows = Math.ceil(H / gap) + 2;
+        }
+
+        // pseudo-random but stable per cell -> spray scatter
+        function hash(i, j) {
+            var n = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
+            return n - Math.floor(n);
         }
 
         function draw() {
             ctx.clearRect(0, 0, W, H);
             for (var i = 0; i < cols; i++) {
                 for (var j = 0; j < rows; j++) {
-                    var bx = i * gap;
+                    var rnd = hash(i, j);
+                    var bx = i * gap + (rnd - 0.5) * gap * 1.4;   // jitter -> less grid-like
                     var by = j * gap;
                     // layered sine waves -> rolling ocean surface
                     var wave =
-                        Math.sin(bx * 0.012 + t) * 14 +
-                        Math.sin(bx * 0.022 - t * 1.3 + by * 0.01) * 10 +
-                        Math.sin((bx + by) * 0.015 + t * 0.6) * 8;
-                    var y = by + wave;
-                    // depth: lower on screen = denser & brighter (sea foam toward bottom)
-                    var depth = j / rows;
-                    var crest = (wave + 32) / 64; // 0..1 wave height
-                    var alpha = (0.10 + depth * 0.45) * (0.45 + crest * 0.55);
-                    if (alpha <= 0.02) continue;
-                    var r = 0.6 + depth * 0.9 + crest * 0.5;
-                    // color shift: foam-white crests over aqua body
-                    var g = Math.floor(200 + crest * 40);
-                    var b = Math.floor(214 + crest * 30);
-                    ctx.fillStyle = 'rgba(' + Math.floor(120 + crest * 110) + ',' + g + ',' + b + ',' + alpha.toFixed(3) + ')';
+                        Math.sin(bx * 0.013 + t) * 13 +
+                        Math.sin(bx * 0.026 - t * 1.4 + by * 0.012) * 9 +
+                        Math.sin((bx + by) * 0.018 + t * 0.7) * 7;
+                    var crest = (wave + 29) / 58;                 // 0..1 wave height
+                    if (crest < 0) crest = 0; if (crest > 1) crest = 1;
+                    // spray: crests lift fine droplets upward
+                    var spray = Math.pow(crest, 3) * (rnd * 18);
+                    var y = by + wave - spray;
+                    var depth = j / rows;                          // 0(top)..1(bottom)
+                    // foam concentrates on crests + toward bottom; flickers via time+rnd
+                    var flick = 0.6 + 0.4 * Math.sin(t * 2.2 + rnd * 12.0);
+                    var alpha = (0.07 + depth * 0.40) * (0.30 + crest * 0.70) * flick;
+                    if (alpha <= 0.015) continue;
+                    var r = 0.5 + crest * 0.8 + depth * 0.5;       // tiny droplets
+                    // foam-white on crests over aqua body
+                    var g = Math.floor(205 + crest * 35);
+                    var b = Math.floor(216 + crest * 25);
+                    ctx.fillStyle = 'rgba(' + Math.floor(130 + crest * 110) + ',' + g + ',' + b + ',' + alpha.toFixed(3) + ')';
                     ctx.fillRect(bx, y, r, r);
                 }
             }
