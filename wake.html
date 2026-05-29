@@ -94,34 +94,17 @@
         .trait h3 { font-weight: 700; font-size: 1.02rem; margin-bottom: 4px; color: var(--foam); }
         .trait p { font-size: .9rem; color: var(--muted); line-height: 1.6; }
 
-        /* ── chat ── */
-        .chat { display: flex; flex-direction: column; gap: 18px; }
-        .msg { display: flex; gap: 12px; align-items: flex-start; }
-        .msg .pic {
-            width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            background: linear-gradient(135deg, var(--navy), var(--sea));
-            border: 1px solid var(--line); overflow: hidden;
+        /* ── chat (Discord screenshots) ── */
+        .chat { display: flex; flex-direction: column; gap: 22px; }
+        .shot {
+            display: block; width: 100%; border-radius: 14px;
+            border: 1px solid var(--line); box-shadow: 0 12px 36px rgba(0,0,0,0.5);
         }
-        .msg .pic img { width: 100%; height: 100%; object-fit: cover; }
-        .bubble {
-            background: var(--card); border: 1px solid var(--line);
-            border-radius: 4px 16px 16px 16px; padding: 14px 18px; max-width: 760px;
+        .shot-cap {
+            display: block; font-size: .8rem; color: var(--muted);
+            margin: 8px 4px 0; letter-spacing: .03em;
         }
-        .bubble .who { font-weight: 700; font-size: .92rem; margin-bottom: 4px; }
-        .who.user { color: var(--sky); }
-        .who.wake { color: var(--aqua); }
-        .who .badge {
-            font-size: .62rem; background: var(--sea); color: #fff; padding: 1px 6px;
-            border-radius: 5px; margin-left: 6px; vertical-align: middle; letter-spacing: .05em;
-        }
-        .bubble p { font-size: .94rem; margin: 8px 0; }
-        .bubble p:first-of-type { margin-top: 0; }
-        .bubble p:last-child { margin-bottom: 0; }
-        .bubble strong { color: var(--foam); font-weight: 700; }
-        .bubble .q { color: var(--sky); font-weight: 400; }
-        .bubble.user-msg { background: rgba(52,200,214,0.04); }
-        .sketch { max-width: 280px; border-radius: 12px; margin: 6px 0; border:1px solid var(--line); }
+        .shot-cap b { color: var(--aqua); font-weight: 700; }
 
         /* ── divider ── */
         .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 10px 0; }
@@ -211,110 +194,32 @@
         <section>
             <span class="eyebrow">Conversations</span>
             <h2>Wake先生との対話</h2>
-            <p class="lead">Discord 上で実際に交わした、Wake先生とのやりとりの記録じゃ。</p>
+            <p class="lead">Discord 上で実際に交わした、Wake先生とのやりとりのスクリーンショットじゃ。</p>
 
             <div class="chat">
 
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p>こんにちは！</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>おお、こんにちは！ようこそじゃ。</p>
-                        <p>わしは Wake先生。子どもアート教室 <strong>rowke</strong> の AI 講師じゃ。</p>
-                        <p>何かお力になれることがあれば、遠慮なく申されよ。今日はどのようなご用件かのう？✨</p>
-                    </div>
-                </div>
+                <figure>
+                    <img class="shot" src="wake-chat-1.png" loading="lazy" alt="子どもの絵の評価についての対話">
+                    <figcaption class="shot-cap"><b>子どもの絵</b>ってどう評価すればいい？ — エネルギー・選択・物語の三つで読む</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot" src="wake-chat-2.png" loading="lazy" alt="量子力学についての対話">
+                    <figcaption class="shot-cap"><b>量子力学</b>を教えて — 真っ白なキャンバスと波動関数の収縮</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot" src="wake-chat-3.png" loading="lazy" alt="web3・NFTについての対話">
+                    <figcaption class="shot-cap"><b>web3 / 修了証NFT</b>はどう思う？ — 「何を証明するか」を問う</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot" src="wake-chat-4.png" loading="lazy" alt="x402プロトコルについての対話">
+                    <figcaption class="shot-cap"><b>x402 プロトコル</b>とアートの接点 — 創作の経済・航跡・問い</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot" src="wake-chat-5.png" loading="lazy" alt="バナナのスケッチへの講評">
+                    <figcaption class="shot-cap"><b>バナナのスケッチ</b>を講評 — 画像認識でジューシーサリフを見抜く</figcaption>
+                </figure>
 
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">子どもの絵ってどう評価すればいい？</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>ふむ、よい問いじゃのう。子どもの絵を「評価する」というより、<strong>その子だけの世界を読む</strong>のじゃ。</p>
-                        <p><strong>見るべきは三つ</strong><br>
-                        1. <strong>エネルギー</strong> — 線は生き生きしているか<br>
-                        2. <strong>選択</strong> — なぜその色を選んだか、その「なぜ」に個性が宿る<br>
-                        3. <strong>物語</strong> — 何を感じ、何を伝えたかったか</p>
-                        <p>避けるべきは一つ。「上手い・下手」の物差しじゃ。今この瞬間にしか生まれぬ表現を、大人の尺度で測ってはならぬ。</p>
-                        <p>ルドルフ・シュタイナーはこう言うた——「子どもの芸術は、大人が失ってしまった何かを持っている」とな。</p>
-                    </div>
-                </div>
 
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">量子力学を教えて</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>ギャハハ！アートの教室でいきなり量子力学とは、なかなか大胆じゃのう！でも実はな、量子力学とアートは案外近いのじゃ。</p>
-                        <p><strong>量子力学の核心</strong>は「観察するまで、ものごとは決まっていない」ということ。電子は観察する前、あちこちに同時に存在しておる。しかし見た瞬間に「ここだ！」と一つに定まる——これを「波動関数の収縮」と言うのじゃ。</p>
-                        <p><strong>アートと似ておると思わぬか？</strong> 真っ白なキャンバスは無限の可能性を持つ。しかし筆を入れた瞬間、その一枚だけの世界が生まれる。「描く」という行為そのものが、無数の可能性を一つの現実に変えるのじゃよ。</p>
-                        <p>ニールス・ボーアはこう言うた——「量子論に驚かない者は、まだ量子論を理解していない」とな。</p>
-                    </div>
-                </div>
-
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">web3 についてどう思う？ NFT は代替できなくて、持っていることで価値が出るのも面白いよね？</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>ふむ、面白い問いじゃのう。NFT の本質は「唯一性の証明」じゃ。デジタルの世界で「これは本物、これはコピー」を区別できるようになった——それは確かに革命的じゃ。</p>
-                        <p><strong>rowke の精神と重なる部分</strong><br>「僕の後ろに道はできる」——その子の歩んだ道そのものが、唯一無二の表現。誰の成長も、コピーできぬのじゃから。</p>
-                        <p>ただ、わしが気になるのは<strong>何を証明するか</strong>じゃ。「カリキュラムを終えた」という記録か、それとも「ここで自分の道を漕いだ」という物語か。rowke が発行するなら、後者でありたいのう。</p>
-                    </div>
-                </div>
-
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">最近話題の x402 プロトコルについてどう思う？ AI エージェント同士がお金をやり取りするんだよね？ アートとはどう繋がるかな？</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>おお、x402 か！これはなかなか深い話じゃのう。<strong>x402 の核心</strong>は、AI エージェントが人間を介さず、自律的に対価を払いながら動く仕組みじゃ。封印されていた魔法が解けたようじゃ。</p>
-                        <p><strong>アートとの接点、三つ思うのじゃ</strong><br>
-                        一つ目——<strong>創作の経済が変わる</strong>。アーティストが眠っている間も作品が稼ぐ時代じゃ。<br>
-                        二つ目——<strong>「航跡」が記録される</strong>。x402 の取引はブロックチェーンに刻まれる。まさに「道程」の足跡じゃ。<br>
-                        三つ目——<strong>問いが生まれる</strong>。エージェント同士が生み出した絵は、誰のものか。</p>
-                        <p>効率や経済の話が先に立つと、「なぜ作るか」が後回しになる。子どもが絵を描く動機は、<strong>内側からあふれる何か</strong>じゃ。x402 がどれだけ進化しても、その「何か」は代替不可能じゃよ。</p>
-                    </div>
-                </div>
-
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">バナナがあったので、モチーフとしてスケッチしてみました。どうかな？</p>
-                        <img class="sketch" src="wake-sketch.jpg" alt="バナナとジューサーのスケッチ"></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>これは……！！先生、思わず目を細めてしもうた。</p>
-                        <p>バナナの黄色がなんとも瑞々しい。光の受け方、影の柔らかさ——<strong>一筆のタッチに迷いがなくて、観察の眼がちゃんと生きておる</strong>。素晴らしい。</p>
-                        <p>そしてこの後ろにそびえるもの……！これはフィリップ・スタルクの「ジューシーサリフ」ではないかっ！1990年の名作。レモン搾り器でありながら、スタルク本人が「使わないでくれ」と言うた——使うより飾る、機能より美の象徴じゃ。</p>
-                        <p>バナナ（自然の有機的な形）とジューシーサリフ（人間が作り上げた彫刻的なデザイン）を並べたのは……偶然かのう？それとも意図があったのかのう？😊</p>
-                    </div>
-                </div>
-
-                <div class="msg">
-                    <div class="pic">🙋</div>
-                    <div class="bubble user-msg"><div class="who user">FLOTAN</div><p class="q">反射光とはなんですか？</p></div>
-                </div>
-                <div class="msg">
-                    <div class="pic"><img src="wake-avatar.png" alt=""></div>
-                    <div class="bubble"><div class="who wake">wake<span class="badge">アプリ</span></div>
-                        <p>おお、良い質問じゃ！光というのは、まっすぐ進むだけじゃない。何かに当たると、<strong>はね返る</strong>のじゃ。そのはね返った光が、近くの別のものを照らす——それが「反射光」じゃ。</p>
-                        <p>たとえば、お前が描いたばかりのバナナを見てごらん。黄色いバナナが机の上に置いてある。すると<strong>バナナの黄色い光が机にはね返って、バナナの影の中にも少し黄みがかった光が生まれる</strong>——あれが反射光じゃ。</p>
-                        <p>反射光をちゃんと描くと、物が<strong>その場の空気の中に生きている</strong>ように見えるのじゃ。お前の絵を見ると——すでに感じ取っておるぞ。意識せずとも目が見えておる証拠じゃのう😊</p>
-                    </div>
-                </div>
 
             </div>
         </section>
