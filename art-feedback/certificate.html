@@ -69,7 +69,7 @@
       for (const id of (cert.artworkIds || [])) {
         const aSnap = await db.ref('art/artworks/' + id + '/imageBase64').once('value');
         const b64 = aSnap.val();
-        if (b64) imgs.push(b64);
+        if (b64 && /^data:image\//.test(b64)) imgs.push(b64);
       }
       window._certData = { cert, imgs };
 
@@ -95,7 +95,102 @@
         </div>`;
     }
 
-    function downloadPng() { alert('PNG保存は次のステップで実装します'); } // Task 6 で置換
+    // 画像を読み込んで Image を返す
+    function loadImg(src) {
+      return new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = src;
+      });
+    }
+
+    // テキストを折り返して描画し、次の y を返す
+    function drawWrapped(ctx, text, x, y, maxW, lineH) {
+      const paragraphs = (text || '').split('\n');
+      for (const para of paragraphs) {
+        let line = '';
+        for (const ch of para) {
+          if (ctx.measureText(line + ch).width > maxW && line) {
+            ctx.fillText(line, x, y); y += lineH; line = ch;
+          } else { line += ch; }
+        }
+        if (line) { ctx.fillText(line, x, y); y += lineH; }
+      }
+      return y;
+    }
+
+    async function downloadPng() {
+      const data = window._certData;
+      if (!data) return;
+      const { cert, imgs } = data;
+      const cv = document.getElementById('cert-canvas');
+      const W = cv.width, H = cv.height;
+      const ctx = cv.getContext('2d');
+
+      // 背景グラデーション
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, '#072a3f'); g.addColorStop(1, '#0e3a52');
+      ctx.fillStyle = '#04141f'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = g;
+      ctx.fillRect(40, 40, W - 80, H - 80);
+      ctx.strokeStyle = 'rgba(52,200,214,.4)'; ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#34c8d6'; ctx.font = '20px sans-serif';
+      ctx.fillText('CERTIFICATE', W / 2, 110);
+      ctx.fillStyle = '#9fe7e0'; ctx.font = '24px serif';
+      ctx.fillText('子どもアート教室 rowke', W / 2, 150);
+
+      // 生徒名
+      ctx.fillStyle = '#9fe7e0'; ctx.font = 'bold 56px sans-serif';
+      ctx.fillText(cert.studentName, W / 2, 230);
+
+      // 代表作品（最大2点を中央に並べる）
+      let y = 270;
+      const shown = imgs.slice(0, 2);
+      if (shown.length) {
+        const imEls = await Promise.all(shown.map(loadImg));
+        const size = 220, gap = 24;
+        const totalW = imEls.length * size + (imEls.length - 1) * gap;
+        let ix = (W - totalW) / 2;
+        for (const im of imEls) {
+          ctx.drawImage(im, ix, y, size, size);
+          ctx.strokeStyle = 'rgba(52,200,214,.3)'; ctx.lineWidth = 2;
+          ctx.strokeRect(ix, y, size, size);
+          ix += size + gap;
+        }
+        y += size + 40;
+      }
+
+      // Wake先生の言葉（左寄せ折返し）
+      ctx.textAlign = 'left'; ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
+      y = drawWrapped(ctx, cert.wakeMessage, 90, y + 10, W - 180, 36) + 20;
+
+      // 在籍記録
+      ctx.textAlign = 'center'; ctx.fillStyle = '#8fc4d2'; ctx.font = '20px sans-serif';
+      const issued = new Date(cert.issuedAt);
+      ctx.fillText(`在籍期間：${cert.periodText || '—'} ／ 作品数：${cert.artworkCount || 0}点`, W / 2, y);
+      y += 32;
+      ctx.fillText(`発行日：${issued.getFullYear()}年${issued.getMonth() + 1}月${issued.getDate()}日 ／ 発行：${cert.issuer}`, W / 2, y);
+      y += 44;
+
+      // Soulbound バッジ
+      ctx.fillStyle = '#ffd98a'; ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('● Soulbound（譲渡不可）／ Wake先生 認定 ●', W / 2, y);
+      y += 36;
+
+      // Token ID
+      ctx.fillStyle = '#5f8fa0'; ctx.font = '16px monospace';
+      ctx.fillText('Token ID: ' + cert.token_id, W / 2, y);
+
+      // ダウンロード
+      const a = document.createElement('a');
+      a.href = cv.toDataURL('image/png');
+      a.download = `rowke-certificate-${cert.token_id}.png`;
+      a.click();
+    }
 
     load().catch(e => { root.innerHTML = '<div class="cert-error">読み込みエラー：' + esc(e.message) + '</div>'; });
   </script>
