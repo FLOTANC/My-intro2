@@ -55,6 +55,25 @@
     /* ── Wake先生 ── */
     /* 「Wake」の英字はトップページ（wake.html）と同じ Times New Roman に合わせる */
     .wake-en { font-family:'Times New Roman', Times, serif; font-weight:700; font-style:normal; letter-spacing:0; }
+    /* ── 修了証 発行画面 ── */
+    .cert-issue-wrap { padding:20px; display:flex; flex-direction:column; gap:18px; }
+    .cert-issue-wrap h2 { font-size:18px; font-weight:700; }
+    .cert-field-label { font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+    .cert-student-select, .cert-period-input, .cert-msg-area {
+      width:100%; padding:12px 14px; border:1px solid var(--rule); border-radius:12px;
+      font-size:14px; font-family:inherit; background:var(--card); color:var(--text);
+    }
+    .cert-msg-area { min-height:120px; line-height:1.6; resize:vertical; }
+    .cert-artwork-pick { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .cert-artwork-cell { border:2px solid var(--rule); border-radius:12px; overflow:hidden; cursor:pointer; position:relative; }
+    .cert-artwork-cell.selected { border-color:var(--navy); }
+    .cert-artwork-cell img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+    .cert-artwork-cell .cert-check { position:absolute; top:6px; right:6px; width:22px; height:22px;
+      border-radius:50%; background:var(--navy); color:#fff; display:none; align-items:center; justify-content:center; font-size:13px; }
+    .cert-artwork-cell.selected .cert-check { display:flex; }
+    .cert-issue-actions { display:flex; gap:10px; }
+    .cert-issue-result { padding:14px; border:1px solid var(--rule); border-radius:12px; background:var(--card); font-size:13px; word-break:break-all; }
+    .cert-issue-result a { color:var(--navy); font-weight:600; }
     .wake-screen { display:flex; flex-direction:column; height:calc(100vh - 120px); }
     .wake-header { padding:20px 20px 12px; border-bottom:1px solid var(--rule); flex-shrink:0; }
     .wake-chat { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
@@ -1359,6 +1378,10 @@
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">生徒ごとの会話履歴</div>
       </div>
     </div>
+      <div style="padding:0 20px 12px;">
+        <button class="btn-primary" style="width:100%;padding:12px;font-size:14px;"
+          onclick="openCertIssue()">🏅 修了証を発行する</button>
+      </div>
     <div id="wake-teacher-list" class="wake-teacher-list"></div>
     <!-- 個別会話ビュー -->
     <div id="wake-convo-view" style="display:none;">
@@ -1368,6 +1391,42 @@
       </div>
       <div class="wake-chat" id="wake-convo-messages" style="height:calc(100vh - 180px);overflow-y:auto;"></div>
     </div>
+  </div>
+</div>
+
+<!-- ===== 修了証 発行 ===== -->
+<div id="screen-cert-issue" class="screen">
+  <div class="topbar">
+    <div class="topbar-back" onclick="switchTab('wake')">‹</div>
+    <div class="topbar-title">修了証を発行</div>
+  </div>
+  <div class="cert-issue-wrap">
+    <div>
+      <div class="cert-field-label">生徒を選ぶ</div>
+      <select id="cert-student" class="cert-student-select" onchange="onCertStudentChange()">
+        <option value="">— 生徒を選択 —</option>
+      </select>
+    </div>
+    <div id="cert-artwork-section" style="display:none;">
+      <div class="cert-field-label">代表作品を選ぶ（タップで選択／複数可）</div>
+      <div id="cert-artwork-pick" class="cert-artwork-pick"></div>
+    </div>
+    <div id="cert-detail-section" style="display:none;">
+      <div>
+        <div class="cert-field-label">在籍期間</div>
+        <input id="cert-period" class="cert-period-input" type="text" placeholder="例：2025.4〜2026.3">
+      </div>
+      <div style="margin-top:14px;">
+        <div class="cert-field-label">Wake先生の言葉</div>
+        <textarea id="cert-message" class="cert-msg-area" placeholder="「Wake先生の言葉を生成」を押すか、直接入力してください"></textarea>
+        <button class="btn-secondary" style="margin-top:8px;padding:10px 14px;font-size:13px;"
+          onclick="generateWakeMessage()">✨ Wake先生の言葉を生成</button>
+      </div>
+      <div class="cert-issue-actions" style="margin-top:18px;">
+        <button class="btn-primary" style="flex:1;padding:14px;font-size:15px;" onclick="submitCertificate()">発行する</button>
+      </div>
+    </div>
+    <div id="cert-issue-result" class="cert-issue-result" style="display:none;"></div>
   </div>
 </div>
 
