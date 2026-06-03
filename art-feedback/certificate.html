@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rowke 修了証</title>
+  <meta property="og:title" content="rowke 修了証">
+  <meta property="og:description" content="子どもの航跡の証 — Wake先生より">
+  <meta property="og:type" content="website">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Hiragino Sans','Yu Gothic',sans-serif; background:#04141f; color:#eaf7fa;
+      min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px; }
+    .cert-card { width:100%; max-width:420px; background:linear-gradient(160deg,#072a3f,#0e3a52);
+      border:1px solid rgba(52,200,214,.3); border-radius:20px; padding:30px 24px; text-align:center;
+      box-shadow:0 18px 50px rgba(0,0,0,.5); }
+    .cert-kicker { font-size:12px; letter-spacing:.25em; color:#34c8d6; text-transform:uppercase; }
+    .cert-school { font-size:14px; color:#9fe7e0; margin-top:4px; }
+    .cert-name { font-size:30px; font-weight:800; margin:18px 0 4px;
+      background:linear-gradient(120deg,#9fe7e0,#34c8d6,#ffd98a); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .cert-name .en { font-family:'Times New Roman',Times,serif; }
+    .cert-artworks { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:18px 0; }
+    .cert-artworks img { width:120px; height:120px; object-fit:cover; border-radius:12px; border:1px solid rgba(52,200,214,.3); }
+    .cert-message { font-size:14px; line-height:1.9; color:#eaf7fa; text-align:left;
+      background:rgba(52,200,214,.06); border:1px solid rgba(52,200,214,.18); border-radius:14px; padding:16px; margin:16px 0; white-space:pre-wrap; }
+    .cert-record { font-size:13px; color:#8fc4d2; line-height:1.8; }
+    .cert-badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+    .cert-badge { font-size:11px; padding:5px 10px; border-radius:999px; border:1px solid rgba(52,200,214,.35); color:#9fe7e0; }
+    .cert-badge.soul { background:rgba(255,217,138,.12); border-color:#ffd98a; color:#ffd98a; }
+    .cert-token { font-size:11px; color:#5f8fa0; margin-top:12px; word-break:break-all; }
+    .cert-actions { margin-top:22px; }
+    .cert-dl { font-size:14px; font-weight:700; padding:12px 22px; border-radius:999px; border:none; cursor:pointer;
+      background:linear-gradient(135deg,#34c8d6,#0e6e8e); color:#04141f; }
+    .cert-loading, .cert-error { margin-top:40px; color:#8fc4d2; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div id="cert-root"><div class="cert-loading">証明書を読み込み中…</div></div>
+  <canvas id="cert-canvas" width="840" height="1188" style="display:none;"></canvas>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCio3NPmFHG9HEuNkCS4QnSNGlbeM_ZLCs",
+      authDomain: "family-compass-37891.firebaseapp.com",
+      projectId: "family-compass-37891",
+      storageBucket: "family-compass-37891.firebasestorage.app",
+      messagingSenderId: "832790097576",
+      appId: "1:832790097576:web:7451a91920051c1c769c9d",
+      databaseURL: "https://family-compass-37891-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const tokenId = new URLSearchParams(location.search).get('id');
+    const root = document.getElementById('cert-root');
+
+    function esc(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    async function load() {
+      if (!tokenId) { root.innerHTML = '<div class="cert-error">証明書IDが指定されていません。</div>'; return; }
+      const snap = await db.ref('art/certificates/' + tokenId).once('value');
+      const cert = snap.val();
+      if (!cert) { root.innerHTML = '<div class="cert-error">証明書が見つかりませんでした。</div>'; return; }
+
+      // 作品画像を取得（base64）
+      const imgs = [];
+      for (const id of (cert.artworkIds || [])) {
+        const aSnap = await db.ref('art/artworks/' + id + '/imageBase64').once('value');
+        const b64 = aSnap.val();
+        if (b64) imgs.push(b64);
+      }
+      window._certData = { cert, imgs };
+
+      const issued = new Date(cert.issuedAt);
+      const issuedText = `${issued.getFullYear()}年${issued.getMonth() + 1}月${issued.getDate()}日`;
+      root.innerHTML = `
+        <div class="cert-card">
+          <div class="cert-kicker">Certificate</div>
+          <div class="cert-school">子どもアート教室 <span style="font-family:'Times New Roman',serif">rowke</span></div>
+          <div class="cert-name">${esc(cert.studentName)}</div>
+          <div class="cert-artworks">${imgs.map(b => `<img src="${b}" alt="">`).join('')}</div>
+          <div class="cert-message">${esc(cert.wakeMessage)}</div>
+          <div class="cert-record">
+            在籍期間：${esc(cert.periodText) || '—'}　／　作品数：${cert.artworkCount || 0}点<br>
+            発行日：${issuedText}　／　発行：${esc(cert.issuer)}
+          </div>
+          <div class="cert-badges">
+            <span class="cert-badge soul">Soulbound（譲渡不可）</span>
+            <span class="cert-badge"><span style="font-family:'Times New Roman',serif">Wake</span>先生 認定</span>
+          </div>
+          <div class="cert-token">Token ID: ${esc(cert.token_id)}</div>
+          <div class="cert-actions"><button class="cert-dl" onclick="downloadPng()">画像で保存（PNG）</button></div>
+        </div>`;
+    }
+
+    function downloadPng() { alert('PNG保存は次のステップで実装します'); } // Task 6 で置換
+
+    load().catch(e => { root.innerHTML = '<div class="cert-error">読み込みエラー：' + esc(e.message) + '</div>'; });
+  </script>
+</body>
+</html>
