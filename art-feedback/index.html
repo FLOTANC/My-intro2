@@ -1764,6 +1764,70 @@
   }
   function goBack() { switchTab('artworks'); }
 
+  // ===== 修了証（SBT 体験デモ） =====
+  // その生徒の作品キー一覧（新しい順）
+  function studentArtworkEntries(studentName) {
+    return Object.entries(artworks)
+      .filter(([, a]) => (a.studentName || '') === studentName)
+      .sort((x, y) => (y[1].ts || 0) - (x[1].ts || 0));
+  }
+
+  // 在籍期間テキストを作品の最古〜最新 ts から作る（例 "2025.4〜2026.3"）
+  function defaultPeriodText(studentName) {
+    const entries = studentArtworkEntries(studentName);
+    if (!entries.length) return '';
+    const tss = entries.map(([, a]) => a.ts || 0).filter(Boolean);
+    if (!tss.length) return '';
+    const fmt = ms => { const d = new Date(ms); return `${d.getFullYear()}.${d.getMonth() + 1}`; };
+    const min = fmt(Math.min(...tss)), max = fmt(Math.max(...tss));
+    return min === max ? min : `${min}〜${max}`;
+  }
+
+  // 一意 token_id を生成: ROWKE-{年}-{4桁連番}-{4桁hash}
+  async function generateTokenId() {
+    const year = new Date().getFullYear();
+    const snap = await db.ref('art/certificates').once('value');
+    const all = snap.val() || {};
+    const seq = Object.keys(all).filter(k => k.startsWith(`ROWKE-${year}-`)).length + 1;
+    const hash = Math.random().toString(36).slice(2, 6);
+    return `ROWKE-${year}-${String(seq).padStart(4, '0')}-${hash}`;
+  }
+
+  // 証明書を発行して Firebase に保存。保存した token_id を返す。
+  // ※将来の本物 SBT 化は、この関数内に mint 処理を足すだけで済むよう集約している。
+  async function issueCertificate({ studentName, artworkIds, wakeMessage, periodText, artworkCount }) {
+    const tokenId = await generateTokenId();
+    const viewer = getViewer();
+    const record = {
+      token_id: tokenId,
+      studentName,
+      artworkIds,
+      wakeMessage,
+      periodText,
+      artworkCount,
+      issuedAt: Date.now(),
+      issuer: (viewer && viewer.role === 'teacher') ? '先生' : (viewer?.name || 'unknown'),
+      soulbound: true,
+      metadata: {
+        name: `rowke 修了証 — ${studentName}`,
+        description: `${studentName}の航跡の証。Wake先生より。`,
+        image: '',
+        attributes: [
+          { trait_type: 'period',       value: periodText || '' },
+          { trait_type: 'artworkCount', value: artworkCount },
+          { trait_type: 'soulbound',    value: 'true' }
+        ]
+      }
+    };
+    await db.ref('art/certificates/' + tokenId).set(record);
+    return tokenId;
+  }
+
+  // 証明書ページの URL を組み立てる
+  function certificateUrl(tokenId) {
+    return location.origin + '/certificate.html?id=' + encodeURIComponent(tokenId);
+  }
+
   // ===== ARTWORKS (Firebase) =====
   db.ref('art/next_class').on('value', snap => {
     renderHomeNotices(snap.val());
