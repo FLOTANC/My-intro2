@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 600 }
+          generationConfig: { temperature: 0.9, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } }
         })
       }
     );
