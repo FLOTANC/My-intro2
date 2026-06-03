@@ -1792,6 +1792,7 @@
     if (name === 'contact') initContact();
     if (name === 'critique') initCritique();
     if (name === 'wake')    initWake();
+    if (name === 'cert-issue') { /* openCertIssue() で初期化済み */ }
     // Stop 3D render when leaving critique tab
     if (name !== 'critique' && _glAnimId) {
       cancelAnimationFrame(_glAnimId); _glAnimId = null;
@@ -1885,6 +1886,113 @@
   // 証明書ページの URL を組み立てる
   function certificateUrl(tokenId) {
     return location.origin + '/certificate.html?id=' + encodeURIComponent(tokenId);
+  }
+
+  let _certSelectedArtworkIds = [];
+
+  function openCertIssue() {
+    _certSelectedArtworkIds = [];
+    // 生徒名一覧（作品から重複なく）
+    const names = [...new Set(Object.values(artworks).map(a => a.studentName).filter(Boolean))].sort();
+    const sel = document.getElementById('cert-student');
+    sel.innerHTML = '<option value="">— 生徒を選択 —</option>' +
+      names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+    document.getElementById('cert-artwork-section').style.display = 'none';
+    document.getElementById('cert-detail-section').style.display = 'none';
+    document.getElementById('cert-issue-result').style.display = 'none';
+    document.getElementById('cert-message').value = '';
+    document.getElementById('cert-period').value = '';
+    switchTab('cert-issue');
+  }
+
+  function onCertStudentChange() {
+    const name = document.getElementById('cert-student').value;
+    _certSelectedArtworkIds = [];
+    const artSec = document.getElementById('cert-artwork-section');
+    const detSec = document.getElementById('cert-detail-section');
+    if (!name) { artSec.style.display = 'none'; detSec.style.display = 'none'; return; }
+
+    const entries = studentArtworkEntries(name);
+    if (!entries.length) {
+      alert('この生徒の作品がまだありません。作品が1点以上ないと発行できません。');
+      artSec.style.display = 'none'; detSec.style.display = 'none';
+      return;
+    }
+    // 作品サムネイル（画像があるものだけ）を描画
+    const pick = document.getElementById('cert-artwork-pick');
+    pick.innerHTML = entries.map(([id, a]) => {
+      const img = a.imageBase64 ? `<img src="${a.imageBase64}" alt="">`
+                                : `<div style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:28px;">🎨</div>`;
+      return `<div class="cert-artwork-cell" data-id="${id}" onclick="toggleCertArtwork('${id}')">${img}<div class="cert-check">✓</div></div>`;
+    }).join('');
+    artSec.style.display = 'block';
+    detSec.style.display = 'block';
+    // 在籍期間の初期値を自動補完
+    document.getElementById('cert-period').value = defaultPeriodText(name);
+  }
+
+  function toggleCertArtwork(id) {
+    const cell = document.querySelector(`.cert-artwork-cell[data-id="${id}"]`);
+    const i = _certSelectedArtworkIds.indexOf(id);
+    if (i >= 0) { _certSelectedArtworkIds.splice(i, 1); cell.classList.remove('selected'); }
+    else { _certSelectedArtworkIds.push(id); cell.classList.add('selected'); }
+  }
+
+  async function generateWakeMessage() {
+    const name = document.getElementById('cert-student').value;
+    if (!name) { alert('先に生徒を選んでください'); return; }
+    const entries = studentArtworkEntries(name);
+    const titles = _certSelectedArtworkIds.length
+      ? _certSelectedArtworkIds.map(id => artworks[id]?.title).filter(Boolean)
+      : entries.slice(0, 3).map(([, a]) => a.title).filter(Boolean);
+    const area = document.getElementById('cert-message');
+    area.value = '生成中…';
+    try {
+      const res = await fetch('/api/certificate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: name,
+          titles,
+          artworkCount: entries.length,
+          periodText: document.getElementById('cert-period').value
+        })
+      });
+      const { message, error } = await res.json();
+      if (error) throw new Error(error);
+      area.value = message;
+    } catch (e) {
+      area.value = '';
+      alert('メッセージ生成に失敗しました。直接入力してください。\n' + e.message);
+    }
+  }
+
+  async function submitCertificate() {
+    const name = document.getElementById('cert-student').value;
+    const wakeMessage = document.getElementById('cert-message').value.trim();
+    const periodText = document.getElementById('cert-period').value.trim();
+    if (!name) { alert('生徒を選んでください'); return; }
+    if (!_certSelectedArtworkIds.length) { alert('代表作品を1点以上選んでください'); return; }
+    if (!wakeMessage) { alert('Wake先生の言葉を入力または生成してください'); return; }
+    try {
+      const tokenId = await issueCertificate({
+        studentName: name,
+        artworkIds: _certSelectedArtworkIds.slice(),
+        wakeMessage,
+        periodText,
+        artworkCount: studentArtworkEntries(name).length
+      });
+      const url = certificateUrl(tokenId);
+      const result = document.getElementById('cert-issue-result');
+      result.style.display = 'block';
+      result.innerHTML =
+        `🏅 発行しました！<br>Token ID: <b>${tokenId}</b><br>` +
+        `証明書ページ: <a href="${url}" target="_blank" rel="noopener">${url}</a><br>` +
+        `<button class="btn-secondary" style="margin-top:8px;padding:8px 12px;font-size:13px;" ` +
+        `onclick="navigator.clipboard.writeText('${url}').then(()=>alert('URLをコピーしました'))">URLをコピー</button>`;
+    } catch (e) {
+      alert('発行に失敗しました：' + e.message);
+    }
   }
 
   // ===== ARTWORKS (Firebase) =====
