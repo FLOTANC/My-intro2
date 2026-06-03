@@ -1357,6 +1357,7 @@
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">美術やアートのことを何でも聞いてね</div>
       </div>
     </div>
+    <div id="my-certificates" style="padding:0 20px 8px; display:none;"></div>
     <div class="wake-chat" id="wake-chat-messages"></div>
     <div class="wake-input-bar">
       <textarea id="wake-input" placeholder="質問を入力…" rows="1"
@@ -1993,6 +1994,24 @@
     } catch (e) {
       alert('発行に失敗しました：' + e.message);
     }
+  }
+
+  async function loadMyCertificates() {
+    const viewer = getViewer();
+    const box = document.getElementById('my-certificates');
+    if (!viewer || viewer.role === 'teacher' || !viewer.name) { box.style.display = 'none'; return; }
+    const snap = await db.ref('art/certificates').once('value');
+    const all = snap.val() || {};
+    const mine = Object.values(all).filter(c => c.studentName === viewer.name);
+    if (!mine.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = mine.map(c => {
+      const url = certificateUrl(c.token_id);
+      return `<a href="${url}" target="_blank" rel="noopener"
+        style="display:block; padding:12px 14px; margin-bottom:8px; border:1px solid var(--rule); border-radius:12px;
+        background:var(--card); color:var(--text); text-decoration:none; font-size:14px;">
+        🏅 わたしの修了証（${c.periodText || ''}）を見る →</a>`;
+    }).join('');
   }
 
   // ===== ARTWORKS (Firebase) =====
@@ -3990,6 +4009,7 @@
       if (!viewer) { showViewerModal(); return; }
       // 生徒の過去会話を読み込む
       if (_wakeHistory.length === 0) loadStudentHistory(viewer.name);
+      loadMyCertificates();
     }
 
     // 未読バッジを既読にする（先生が開いた時）
