@@ -105,17 +105,18 @@
       });
     }
 
-    // テキストを折り返して描画し、次の y を返す
-    function drawWrapped(ctx, text, x, y, maxW, lineH) {
+    // テキストを折り返して描画し、次の y を返す（measureOnly=true なら描画せず y のみ計算）
+    function drawWrapped(ctx, text, x, y, maxW, lineH, measureOnly) {
       const paragraphs = (text || '').split('\n');
       for (const para of paragraphs) {
         let line = '';
         for (const ch of para) {
           if (ctx.measureText(line + ch).width > maxW && line) {
-            ctx.fillText(line, x, y); y += lineH; line = ch;
+            if (!measureOnly) ctx.fillText(line, x, y);
+            y += lineH; line = ch;
           } else { line += ch; }
         }
-        if (line) { ctx.fillText(line, x, y); y += lineH; }
+        if (line) { if (!measureOnly) ctx.fillText(line, x, y); y += lineH; }
       }
       return y;
     }
@@ -125,8 +126,19 @@
       if (!data) return;
       const { cert, imgs } = data;
       const cv = document.getElementById('cert-canvas');
-      const W = cv.width, H = cv.height;
+      const W = cv.width;
       const ctx = cv.getContext('2d');
+
+      // ── 高さを動的計算（長文でもはみ出さないように）──
+      // メッセージ描画開始 y を再現: 作品が1点以上あれば 270+220+40=530、無ければ 270。+10 はメッセージ上余白。
+      const msgStartY = (imgs.slice(0, 2).length ? 530 : 270) + 10;
+      ctx.font = '22px sans-serif';
+      const msgEndY = drawWrapped(ctx, cert.wakeMessage, 90, msgStartY, W - 180, 36, true) + 20;
+      // メッセージ後の固定要素（在籍記録2行 + バッジ + Token ID）に必要な高さ + 下余白
+      const neededH = msgEndY + 32 + 44 + 36 + 40 + 60;
+      cv.height = Math.max(1188, Math.ceil(neededH));
+
+      const H = cv.height;
 
       // 背景グラデーション
       const g = ctx.createLinearGradient(0, 0, W, H);
