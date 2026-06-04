@@ -4190,10 +4190,16 @@
     [...convos].reverse().forEach(c => {
       const d = new Date(c.created_at);
       const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const delBtn = c.id
+        ? `<button onclick="deleteConvo('${c.id}', this)" title="この質問と回答を削除"
+            style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;">🗑 削除</button>`
+        : '';
       msgEl.innerHTML += `
-        <div style="margin-bottom:16px;">
+        <div class="wake-convo-item" style="margin-bottom:16px;">
           <div class="wake-bubble user">${escapeHtml(c.question)}</div>
-          <div style="text-align:right;font-size:10px;color:var(--muted);margin:3px 4px 6px;">${dateStr}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:3px 4px 6px;">
+            <span style="font-size:10px;color:var(--muted);">${dateStr}</span>${delBtn}
+          </div>
           <div class="wake-bubble ai"><div class="wake-sender"><span class="wake-en">Wake</span>先生</div>${escapeHtml(c.answer).replace(/\n/g,'<br>')}</div>
         </div>`;
     });
@@ -4211,6 +4217,27 @@
     document.getElementById('wake-convo-view').style.display = 'none';
     document.getElementById('wake-teacher-list').style.display = 'flex';
     loadTeacherWakeView();
+  }
+
+  // 不適切な質問を削除（先生のみ。会話画面は先生専用）
+  async function deleteConvo(id, btn) {
+    if (!confirm('この質問と回答を削除しますか？\n（取り消せません）')) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/history', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+      // 画面から該当Q&Aブロックを除去
+      const item = btn.closest('.wake-convo-item');
+      if (item) item.remove();
+    } catch (e) {
+      btn.disabled = false;
+      alert('削除に失敗しました：' + e.message);
+    }
   }
 
   // Firebase 未読バッジ（先生向け）

@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -53,6 +53,18 @@ module.exports = async (req, res) => {
       .eq('read_by_teacher', false);
     if (studentName) query = query.eq('student_name', studentName);
     const { error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ ok: true });
+  }
+
+  // DELETE: 1件の会話を削除（先生が不適切な質問を消す用途）
+  if (req.method === 'DELETE') {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'id is required' });
+    const { error } = await supabase
+      .from('art_conversations')
+      .delete()
+      .eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true });
   }
