@@ -23,6 +23,7 @@
     .cert-artworks img { width:120px; height:120px; object-fit:cover; border-radius:12px; border:1px solid rgba(52,200,214,.3); }
     .cert-message { font-size:14px; line-height:1.9; color:#eaf7fa; text-align:left;
       background:rgba(52,200,214,.06); border:1px solid rgba(52,200,214,.18); border-radius:14px; padding:16px; margin:16px 0; white-space:pre-wrap; }
+    .cert-msg-label { font-size:11px; color:#34c8d6; font-weight:700; letter-spacing:.08em; text-align:left; margin:14px 4px 4px; }
     .cert-record { font-size:13px; color:#8fc4d2; line-height:1.8; }
     .cert-badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
     .cert-badge { font-size:11px; padding:5px 10px; border-radius:999px; border:1px solid rgba(52,200,214,.35); color:#9fe7e0; }
@@ -81,6 +82,8 @@
           <div class="cert-school">子どもアート教室 <span style="font-family:'Times New Roman',serif">rowke</span></div>
           <div class="cert-name">${esc(cert.studentName)}</div>
           <div class="cert-artworks">${imgs.map(b => `<img src="${b}" alt="">`).join('')}</div>
+          ${cert.teacherMessage ? `<div class="cert-msg-label">先生より</div><div class="cert-message">${esc(cert.teacherMessage)}</div>` : ''}
+          <div class="cert-msg-label"><span style="font-family:'Times New Roman',serif">Wake</span>先生より</div>
           <div class="cert-message">${esc(cert.wakeMessage)}</div>
           <div class="cert-record">
             在籍期間：${esc(cert.periodText) || '—'}　／　作品数：${cert.artworkCount || 0}点<br>
@@ -131,9 +134,14 @@
 
       // ── 高さを動的計算（長文でもはみ出さないように）──
       // メッセージ描画開始 y を再現: 作品が1点以上あれば 270+220+40=530、無ければ 270。+10 はメッセージ上余白。
-      const msgStartY = (imgs.slice(0, 2).length ? 530 : 270) + 10;
       ctx.font = '22px sans-serif';
-      const msgEndY = drawWrapped(ctx, cert.wakeMessage, 90, msgStartY, W - 180, 36, true) + 20;
+      let measureY = (imgs.slice(0, 2).length ? 530 : 270) + 10;
+      if (cert.teacherMessage) {
+        measureY += 30; // 「先生より」ラベル分
+        measureY = drawWrapped(ctx, cert.teacherMessage, 90, measureY, W - 180, 36, true) + 16;
+      }
+      measureY += 30; // 「Wake先生より」ラベル分
+      const msgEndY = drawWrapped(ctx, cert.wakeMessage, 90, measureY, W - 180, 36, true) + 20;
       // メッセージ後の固定要素（在籍記録2行 + バッジ + Token ID）に必要な高さ + 下余白
       const neededH = msgEndY + 32 + 44 + 36 + 40 + 60;
       cv.height = Math.max(1188, Math.ceil(neededH));
@@ -176,9 +184,19 @@
         y += size + 40;
       }
 
-      // Wake先生の言葉（左寄せ折返し）
-      ctx.textAlign = 'left'; ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
-      y = drawWrapped(ctx, cert.wakeMessage, 90, y + 10, W - 180, 36) + 20;
+      // メッセージ（先生より → Wake先生より の順、ラベル付き・左寄せ折返し）
+      y += 10;
+      ctx.textAlign = 'left';
+      if (cert.teacherMessage) {
+        ctx.fillStyle = '#34c8d6'; ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('先生より', 90, y); y += 30;
+        ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
+        y = drawWrapped(ctx, cert.teacherMessage, 90, y, W - 180, 36) + 16;
+      }
+      ctx.fillStyle = '#34c8d6'; ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('Wake先生より', 90, y); y += 30;
+      ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
+      y = drawWrapped(ctx, cert.wakeMessage, 90, y, W - 180, 36) + 20;
 
       // 在籍記録
       ctx.textAlign = 'center'; ctx.fillStyle = '#8fc4d2'; ctx.font = '20px sans-serif';

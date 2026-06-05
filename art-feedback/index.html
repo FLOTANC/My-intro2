@@ -1418,6 +1418,10 @@
         <input id="cert-period" class="cert-period-input" type="text" placeholder="例：2025.4〜2026.3">
       </div>
       <div style="margin-top:14px;">
+        <div class="cert-field-label">先生からの言葉</div>
+        <textarea id="cert-teacher-message" class="cert-msg-area" placeholder="先生からその子へのメッセージ（任意）"></textarea>
+      </div>
+      <div style="margin-top:14px;">
         <div class="cert-field-label">Wake先生の言葉</div>
         <textarea id="cert-message" class="cert-msg-area" placeholder="「Wake先生の言葉を生成」を押すか、直接入力してください"></textarea>
         <button class="btn-secondary" style="margin-top:8px;padding:10px 14px;font-size:13px;"
@@ -1856,7 +1860,7 @@
 
   // 証明書を発行して Firebase に保存。保存した token_id を返す。
   // ※将来の本物 SBT 化は、この関数内に mint 処理を足すだけで済むよう集約している。
-  async function issueCertificate({ studentName, artworkIds, wakeMessage, periodText, artworkCount }) {
+  async function issueCertificate({ studentName, artworkIds, wakeMessage, teacherMessage, periodText, artworkCount }) {
     const tokenId = await generateTokenId();
     const viewer = getViewer();
     const record = {
@@ -1864,6 +1868,7 @@
       studentName,
       artworkIds,
       wakeMessage,
+      teacherMessage: teacherMessage || '',
       periodText,
       artworkCount,
       issuedAt: Date.now(),
@@ -1902,6 +1907,7 @@
     document.getElementById('cert-detail-section').style.display = 'none';
     document.getElementById('cert-issue-result').style.display = 'none';
     document.getElementById('cert-message').value = '';
+    document.getElementById('cert-teacher-message').value = '';
     document.getElementById('cert-period').value = '';
     switchTab('cert-issue');
   }
@@ -1971,6 +1977,7 @@
   async function submitCertificate() {
     const name = document.getElementById('cert-student').value;
     const wakeMessage = document.getElementById('cert-message').value.trim();
+    const teacherMessage = document.getElementById('cert-teacher-message').value.trim();
     const periodText = document.getElementById('cert-period').value.trim();
     if (!name) { alert('生徒を選んでください'); return; }
     if (!_certSelectedArtworkIds.length) { alert('代表作品を1点以上選んでください'); return; }
@@ -1980,6 +1987,7 @@
         studentName: name,
         artworkIds: _certSelectedArtworkIds.slice(),
         wakeMessage,
+        teacherMessage,
         periodText,
         artworkCount: studentArtworkEntries(name).length
       });
