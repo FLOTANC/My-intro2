@@ -277,6 +277,12 @@
     }
 
     /* === wordmark on sky === */
+    .rowke-reading {
+      display:block;
+      font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+      font-size:15px; font-weight:600; letter-spacing:.34em;
+      margin-top:8px; opacity:.92; text-indent:.34em;
+    }
     .rowke-wordmark {
       font-family:'Cormorant Garamond', Georgia, serif;
       font-size:72px; font-weight:500;
@@ -976,7 +982,7 @@
     </div>
 
     <!-- wordmark -->
-    <div class="rowke-wordmark" id="anim-wordmark">rowke</div>
+    <div class="rowke-wordmark" id="anim-wordmark">rowke<span class="rowke-reading">ローク</span></div>
 
     <!-- cream wave transition -->
     <svg class="hero-wave" viewBox="0 0 480 52" preserveAspectRatio="none">
@@ -1296,7 +1302,7 @@
       <svg class="sea-wave sea-wave-1" style="--spd:9s" viewBox="0 0 960 40" preserveAspectRatio="none"><path d="M0,22 C120,40 240,4 480,22 C600,40 720,4 960,22 L960,40 L0,40 Z" fill="rgba(255,255,255,.13)"/></svg>
       <svg class="sea-wave sea-wave-2" style="--spd:13s" viewBox="0 0 960 40" preserveAspectRatio="none"><path d="M0,18 C80,4 220,36 480,16 C660,4 800,36 960,18 L960,40 L0,40 Z" fill="rgba(255,255,255,.09)"/></svg>
     </div>
-    <div class="rowke-wordmark" id="contact-wordmark" style="font-size:60px;padding-bottom:0;margin-bottom:32px;opacity:0;">rowke</div>
+    <div class="rowke-wordmark" id="contact-wordmark" style="font-size:60px;padding-bottom:0;margin-bottom:32px;opacity:0;">rowke<span class="rowke-reading">ローク</span></div>
 
     <!-- About text inside hero -->
     <div style="position:relative;z-index:2;padding-bottom:48px;">
@@ -1353,7 +1359,7 @@
         <input type="file" id="wake-avatar-file" accept="image/*" style="display:none">
       </div>
       <div>
-        <div style="font-size:17px;font-weight:700;color:var(--text);"><span class="wake-en">Wake</span>先生</div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);"><span class="wake-en">Wake</span>先生<span style="font-size:11px;font-weight:500;color:var(--muted);margin-left:7px;">ウェイク先生</span></div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">美術やアートのことを何でも聞いてね</div>
       </div>
     </div>
@@ -4038,7 +4044,7 @@
       const res = await fetch(`/api/history?studentName=${encodeURIComponent(studentName)}&limit=10`);
       const { conversations } = await res.json();
       if (!conversations?.length) {
-        appendWakeMessage('ai', 'こんにちは！Wake先生です 🎨 美術やアートのことを何でも聞いてね。');
+        appendWakeMessage('ai', 'こんにちは！Wake先生（ウェイク先生）です 🎨 美術やアートのことを何でも聞いてね。');
         return;
       }
       const chatEl = document.getElementById('wake-chat-messages');
@@ -4052,7 +4058,7 @@
       });
       chatEl.scrollTop = chatEl.scrollHeight;
     } catch(e) {
-      appendWakeMessage('ai', 'こんにちは！Wake先生です 🎨 美術やアートのことを何でも聞いてね。');
+      appendWakeMessage('ai', 'こんにちは！Wake先生（ウェイク先生）です 🎨 美術やアートのことを何でも聞いてね。');
     }
   }
 
