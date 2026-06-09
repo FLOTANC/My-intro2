@@ -7,37 +7,90 @@
   <meta property="og:title" content="rowke 修了証">
   <meta property="og:description" content="子どもの航跡の証 — Wake先生より">
   <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Hiragino Sans','Yu Gothic',sans-serif; background:#04141f; color:#eaf7fa;
-      min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px; }
-    .cert-card { width:100%; max-width:420px; background:linear-gradient(160deg,#072a3f,#0e3a52);
-      border:1px solid rgba(52,200,214,.3); border-radius:20px; padding:30px 24px; text-align:center;
-      box-shadow:0 18px 50px rgba(0,0,0,.5); }
-    .cert-kicker { font-size:12px; letter-spacing:.25em; color:#34c8d6; text-transform:uppercase; }
-    .cert-school { font-size:14px; color:#9fe7e0; margin-top:4px; }
-    .cert-name { font-size:30px; font-weight:800; margin:18px 0 4px;
-      background:linear-gradient(120deg,#9fe7e0,#34c8d6,#ffd98a); -webkit-background-clip:text; background-clip:text; color:transparent; }
-    .cert-name .en { font-family:'Times New Roman',Times,serif; }
-    .cert-artworks { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:18px 0; }
-    .cert-artworks img { width:120px; height:120px; object-fit:cover; border-radius:12px; border:1px solid rgba(52,200,214,.3); }
-    .cert-message { font-size:14px; line-height:1.9; color:#eaf7fa; text-align:left;
-      background:rgba(52,200,214,.06); border:1px solid rgba(52,200,214,.18); border-radius:14px; padding:16px; margin:16px 0; white-space:pre-wrap; }
-    .cert-msg-label { font-size:11px; color:#34c8d6; font-weight:700; letter-spacing:.08em; text-align:left; margin:14px 4px 4px; }
-    .cert-record { font-size:13px; color:#8fc4d2; line-height:1.8; }
-    .cert-badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
-    .cert-badge { font-size:11px; padding:5px 10px; border-radius:999px; border:1px solid rgba(52,200,214,.35); color:#9fe7e0; }
-    .cert-badge.soul { background:rgba(255,217,138,.12); border-color:#ffd98a; color:#ffd98a; }
-    .cert-token { font-size:11px; color:#5f8fa0; margin-top:12px; word-break:break-all; }
+    body {
+      font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
+      background:#2a2620; min-height:100vh;
+      display:flex; flex-direction:column; align-items:center; padding:22px 14px;
+    }
+    /* 古紙 */
+    .cert-paper {
+      width:100%; max-width:460px; position:relative;
+      background:
+        radial-gradient(120% 80% at 50% 0%, #f7efd6 0%, #efe3c2 55%, #e4d3a8 100%);
+      border:2px solid #9c7b45;
+      box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px #cdb582;
+      padding:18px;
+    }
+    /* 内側の二重罫 */
+    .cert-inner {
+      border:1.5px solid #b2925b; outline:1px solid #cdb582; outline-offset:3px;
+      padding:30px 24px 26px; text-align:center; color:#3c2f1c;
+    }
+    .cert-kicker {
+      font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:.22em;
+      text-transform:uppercase; color:#8a6d3b; margin-bottom:6px;
+    }
+    .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; }
+    .cert-school .en { font-family:'Playfair Display',serif; font-weight:700; }
+    .cert-title {
+      font-family:'Playfair Display',serif; font-weight:900;
+      font-size:46px; letter-spacing:.06em; color:#2c2010; margin:8px 0 2px;
+    }
+    .cert-sub-en {
+      font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px;
+      color:#8a6d3b; letter-spacing:.14em; margin-bottom:14px;
+    }
+    .cert-rule { height:2px; background:linear-gradient(90deg,transparent,#9c7b45,transparent); margin:8px 0 18px; }
+    /* 作品（大きく） */
+    .cert-art {
+      margin:6px auto 18px; padding:8px; background:#fbf6e6;
+      border:1px solid #c7ab74; box-shadow:0 8px 22px rgba(60,40,15,.28);
+      display:inline-block; max-width:100%;
+    }
+    .cert-art img { display:block; width:100%; max-width:360px; height:auto; }
+    .cert-name {
+      font-family:'Playfair Display',serif; font-weight:700; font-size:30px;
+      color:#2c2010; margin:6px 0 2px;
+    }
+    .cert-name span { font-family:'Hiragino Mincho ProN',serif; font-size:18px; color:#6b5630; margin-left:6px; }
+    .cert-proclaim { font-size:13px; line-height:2; color:#4a3b25; margin:10px 4px 18px; }
+    .cert-msg-label { font-size:11px; letter-spacing:.1em; color:#8a6d3b; margin:16px 0 4px; }
+    .cert-msg { font-size:13px; line-height:2; color:#3c2f1c; text-align:left;
+      background:rgba(156,123,69,.07); border:1px solid rgba(156,123,69,.25);
+      border-radius:6px; padding:14px 16px; white-space:pre-wrap; }
+    /* 手書きサイン */
+    .cert-sign { margin:20px 0 4px; text-align:right; }
+    .cert-sign .name {
+      font-family:'Dancing Script',cursive; font-weight:700; font-size:40px;
+      color:#2c2010; line-height:1; transform:rotate(-3deg); display:inline-block;
+    }
+    .cert-sign .line { height:1px; background:#9c7b45; margin:6px 0 4px; }
+    .cert-sign .role { font-size:10.5px; color:#6b5630; letter-spacing:.05em; }
+    .cert-meta {
+      margin-top:22px; font-size:10.5px; line-height:1.9; color:#7a6537;
+      border-top:1px solid rgba(156,123,69,.3); padding-top:12px;
+    }
+    .cert-seal {
+      display:inline-block; margin-top:10px; font-size:10px; letter-spacing:.08em;
+      color:#8a6d3b; border:1px solid #b2925b; border-radius:999px; padding:4px 12px;
+    }
     .cert-actions { margin-top:22px; }
-    .cert-dl { font-size:14px; font-weight:700; padding:12px 22px; border-radius:999px; border:none; cursor:pointer;
-      background:linear-gradient(135deg,#34c8d6,#0e6e8e); color:#04141f; }
-    .cert-loading, .cert-error { margin-top:40px; color:#8fc4d2; font-size:14px; }
+    .cert-dl {
+      font-family:'Hiragino Mincho ProN',serif; font-size:14px; font-weight:700;
+      padding:12px 24px; border-radius:8px; border:1px solid #9c7b45; cursor:pointer;
+      background:#3c2f1c; color:#f7efd6; letter-spacing:.06em;
+    }
+    .cert-loading, .cert-error { margin-top:40px; color:#e4d3a8; font-size:14px; }
   </style>
 </head>
 <body>
   <div id="cert-root"><div class="cert-loading">証明書を読み込み中…</div></div>
-  <canvas id="cert-canvas" width="840" height="1188" style="display:none;"></canvas>
+  <canvas id="cert-canvas" width="900" height="1300" style="display:none;"></canvas>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -65,7 +118,6 @@
       const cert = snap.val();
       if (!cert) { root.innerHTML = '<div class="cert-error">証明書が見つかりませんでした。</div>'; return; }
 
-      // 作品画像を取得（base64）
       const imgs = [];
       for (const id of (cert.artworkIds || [])) {
         const aSnap = await db.ref('art/artworks/' + id + '/imageBase64').once('value');
@@ -76,29 +128,52 @@
 
       const issued = new Date(cert.issuedAt);
       const issuedText = `${issued.getFullYear()}年${issued.getMonth() + 1}月${issued.getDate()}日`;
+
+      const teacherBlock = cert.teacherMessage ? `
+        <div class="cert-msg-label">先生より</div>
+        <div class="cert-msg">${esc(cert.teacherMessage)}</div>
+        <div class="cert-sign">
+          <div class="name">rowke 先生</div>
+          <div class="line"></div>
+          <div class="role">rowke 主宰</div>
+        </div>` : '';
+
       root.innerHTML = `
-        <div class="cert-card">
-          <div class="cert-kicker">Certificate</div>
-          <div class="cert-school">子どもアート教室 <span style="font-family:'Times New Roman',serif">rowke</span></div>
-          <div class="cert-name">${esc(cert.studentName)}</div>
-          <div class="cert-artworks">${imgs.map(b => `<img src="${b}" alt="">`).join('')}</div>
-          ${cert.teacherMessage ? `<div class="cert-msg-label">先生より</div><div class="cert-message">${esc(cert.teacherMessage)}</div>` : ''}
-          <div class="cert-msg-label"><span style="font-family:'Times New Roman',serif">Wake</span>先生より</div>
-          <div class="cert-message">${esc(cert.wakeMessage)}</div>
-          <div class="cert-record">
-            在籍期間：${esc(cert.periodText) || '—'}　／　作品数：${cert.artworkCount || 0}点<br>
-            発行日：${issuedText}　／　発行：${esc(cert.issuer)}
+        <div class="cert-paper">
+          <div class="cert-inner">
+            <div class="cert-kicker">⚓ Certificate of Completion ⚓</div>
+            <div class="cert-school">子どもアート教室 <span class="en">rowke</span>（ローク）</div>
+            <div class="cert-title">修了証</div>
+            <div class="cert-sub-en">The Voyage of ${esc(cert.studentName)}</div>
+            <div class="cert-rule"></div>
+
+            ${imgs.length ? `<div class="cert-art"><img src="${imgs[0]}" alt="代表作品"></div>` : ''}
+
+            <div class="cert-name">${esc(cert.studentName)}<span>殿</span></div>
+            <p class="cert-proclaim">あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。<br>その歩みのすべてを、ここに称えます。</p>
+
+            ${teacherBlock}
+
+            <div class="cert-msg-label"><span style="font-family:'Playfair Display',serif">Wake</span>先生より</div>
+            <div class="cert-msg">${esc(cert.wakeMessage)}</div>
+            <div class="cert-sign">
+              <div class="name">Wake</div>
+              <div class="line"></div>
+              <div class="role">Wake先生（ウェイク先生）／ rowke AIアート講師</div>
+            </div>
+
+            <div class="cert-meta">
+              在籍期間：${esc(cert.periodText) || '—'}　・　作品数：${cert.artworkCount || 0}点　・　発行日：${issuedText}<br>
+              発行：${esc(cert.issuer)}
+              <br><span class="cert-seal">SOULBOUND（譲渡不可）・ ${esc(cert.token_id)}</span>
+            </div>
+
+            <div class="cert-actions"><button class="cert-dl" onclick="downloadPng()">画像で保存（PNG）</button></div>
           </div>
-          <div class="cert-badges">
-            <span class="cert-badge soul">Soulbound（譲渡不可）</span>
-            <span class="cert-badge"><span style="font-family:'Times New Roman',serif">Wake</span>先生 認定</span>
-          </div>
-          <div class="cert-token">Token ID: ${esc(cert.token_id)}</div>
-          <div class="cert-actions"><button class="cert-dl" onclick="downloadPng()">画像で保存（PNG）</button></div>
         </div>`;
     }
 
-    // 画像を読み込んで Image を返す
+    // ===== PNG（ヴィンテージ証書） =====
     function loadImg(src) {
       return new Promise((resolve, reject) => {
         const im = new Image();
@@ -107,16 +182,13 @@
         im.src = src;
       });
     }
-
-    // テキストを折り返して描画し、次の y を返す（measureOnly=true なら描画せず y のみ計算）
     function drawWrapped(ctx, text, x, y, maxW, lineH, measureOnly) {
       const paragraphs = (text || '').split('\n');
       for (const para of paragraphs) {
         let line = '';
         for (const ch of para) {
           if (ctx.measureText(line + ch).width > maxW && line) {
-            if (!measureOnly) ctx.fillText(line, x, y);
-            y += lineH; line = ch;
+            if (!measureOnly) ctx.fillText(line, x, y); y += lineH; line = ch;
           } else { line += ch; }
         }
         if (line) { if (!measureOnly) ctx.fillText(line, x, y); y += lineH; }
@@ -128,98 +200,151 @@
       const data = window._certData;
       if (!data) return;
       const { cert, imgs } = data;
+
+      // フォントを確実に読み込む
+      try {
+        await Promise.all([
+          document.fonts.load('900 70px "Playfair Display"'),
+          document.fonts.load('700 64px "Dancing Script"'),
+          document.fonts.load('italic 600 26px "Cormorant Garamond"')
+        ]);
+        await document.fonts.ready;
+      } catch (e) {}
+
       const cv = document.getElementById('cert-canvas');
       const W = cv.width;
       const ctx = cv.getContext('2d');
+      const PAD = 60, INNER = 30;
+      const contentX = PAD + INNER;
+      const contentW = W - (PAD + INNER) * 2;
 
-      // ── 高さを動的計算（長文でもはみ出さないように）──
-      // メッセージ描画開始 y を再現: 作品が1点以上あれば 270+220+40=530、無ければ 270。+10 はメッセージ上余白。
-      ctx.font = '22px sans-serif';
-      let measureY = (imgs.slice(0, 2).length ? 530 : 270) + 10;
-      if (cert.teacherMessage) {
-        measureY += 30; // 「先生より」ラベル分
-        measureY = drawWrapped(ctx, cert.teacherMessage, 90, measureY, W - 180, 36, true) + 16;
+      // 代表作品（大きく・アスペクト比維持）
+      let artEl = null, artW = 0, artH = 0;
+      if (imgs.length) {
+        artEl = await loadImg(imgs[0]);
+        const maxW = contentW, maxH = 460;
+        const scale = Math.min(maxW / artEl.width, maxH / artEl.height);
+        artW = Math.round(artEl.width * scale);
+        artH = Math.round(artEl.height * scale);
       }
-      measureY += 30; // 「Wake先生より」ラベル分
-      const msgEndY = drawWrapped(ctx, cert.wakeMessage, 90, measureY, W - 180, 36, true) + 20;
-      // メッセージ後の固定要素（在籍記録2行 + バッジ + Token ID）に必要な高さ + 下余白
-      const neededH = msgEndY + 32 + 44 + 36 + 40 + 60;
-      cv.height = Math.max(1188, Math.ceil(neededH));
 
+      // 高さを事前計算
+      let y = PAD + 70; // kicker
+      y += 30;          // school
+      y += 70;          // title
+      y += 30;          // sub-en
+      y += 30;          // rule
+      if (artEl) y += artH + 36;
+      y += 50;          // name
+      ctx.font = '24px "Hiragino Mincho ProN", serif';
+      y = drawWrapped(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', contentX, y, contentW, 38, true) + 18;
+      const sigBlock = 120; // 署名1つ分の高さ
+      if (cert.teacherMessage) {
+        y += 28; // label
+        y = drawWrapped(ctx, cert.teacherMessage, contentX, y, contentW, 36, true) + sigBlock;
+      }
+      y += 28; // wake label
+      y = drawWrapped(ctx, cert.wakeMessage, contentX, y, contentW, 36, true) + sigBlock;
+      y += 90; // meta
+      const neededH = y + PAD + 30;
+      cv.height = Math.max(1100, Math.ceil(neededH));
       const H = cv.height;
 
-      // 背景グラデーション
-      const g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, '#072a3f'); g.addColorStop(1, '#0e3a52');
-      ctx.fillStyle = '#04141f'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = g;
-      ctx.fillRect(40, 40, W - 80, H - 80);
-      ctx.strokeStyle = 'rgba(52,200,214,.4)'; ctx.lineWidth = 2;
-      ctx.strokeRect(40, 40, W - 80, H - 80);
+      // ── 古紙背景 ──
+      const g = ctx.createRadialGradient(W/2, 60, 100, W/2, H*0.4, H);
+      g.addColorStop(0, '#f7efd6'); g.addColorStop(0.55, '#efe3c2'); g.addColorStop(1, '#e0cda0');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // 外枠
+      ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 4;
+      ctx.strokeRect(PAD-16, PAD-16, W-(PAD-16)*2, H-(PAD-16)*2);
+      // 内側二重罫
+      ctx.strokeStyle = '#b2925b'; ctx.lineWidth = 2;
+      ctx.strokeRect(PAD-4, PAD-4, W-(PAD-4)*2, H-(PAD-4)*2);
 
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#34c8d6'; ctx.font = '20px sans-serif';
-      ctx.fillText('CERTIFICATE', W / 2, 110);
-      ctx.fillStyle = '#9fe7e0'; ctx.font = '24px serif';
-      ctx.fillText('子どもアート教室 rowke', W / 2, 150);
+      // kicker
+      ctx.fillStyle = '#8a6d3b'; ctx.font = '22px "Cormorant Garamond", serif';
+      let cy = PAD + 34;
+      ctx.fillText('⚓  CERTIFICATE OF COMPLETION  ⚓', W/2, cy); cy += 38;
+      // school
+      ctx.fillStyle = '#6b5630'; ctx.font = '22px "Hiragino Mincho ProN", serif';
+      ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 56;
+      // title 修了証
+      ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Playfair Display", serif';
+      ctx.fillText('修 了 証', W/2, cy); cy += 22;
+      // sub en
+      ctx.fillStyle = '#8a6d3b'; ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
+      ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 44;
+      // rule
+      ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(contentX, cy); ctx.lineTo(W-contentX, cy); ctx.stroke(); cy += 24;
 
-      // 生徒名
-      ctx.fillStyle = '#9fe7e0'; ctx.font = 'bold 56px sans-serif';
-      ctx.fillText(cert.studentName, W / 2, 230);
-
-      // 代表作品（最大2点を中央に並べる）
-      let y = 270;
-      const shown = imgs.slice(0, 2);
-      if (shown.length) {
-        const imEls = await Promise.all(shown.map(loadImg));
-        const size = 220, gap = 24;
-        const totalW = imEls.length * size + (imEls.length - 1) * gap;
-        let ix = (W - totalW) / 2;
-        for (const im of imEls) {
-          ctx.drawImage(im, ix, y, size, size);
-          ctx.strokeStyle = 'rgba(52,200,214,.3)'; ctx.lineWidth = 2;
-          ctx.strokeRect(ix, y, size, size);
-          ix += size + gap;
-        }
-        y += size + 40;
+      // artwork
+      if (artEl) {
+        const ax = (W - artW)/2;
+        ctx.fillStyle = '#fbf6e6'; ctx.fillRect(ax-8, cy-8, artW+16, artH+16);
+        ctx.drawImage(artEl, ax, cy, artW, artH);
+        ctx.strokeStyle = '#c7ab74'; ctx.lineWidth = 2; ctx.strokeRect(ax-8, cy-8, artW+16, artH+16);
+        cy += artH + 36;
       }
 
-      // メッセージ（先生より → Wake先生より の順、ラベル付き・左寄せ折返し）
-      y += 10;
-      ctx.textAlign = 'left';
+      // name
+      ctx.fillStyle = '#2c2010'; ctx.font = '700 40px "Playfair Display", serif';
+      ctx.fillText(cert.studentName + '  殿', W/2, cy); cy += 44;
+      // proclaim
+      ctx.fillStyle = '#4a3b25'; ctx.font = '24px "Hiragino Mincho ProN", serif';
+      cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 38) + 14;
+
+      // ── 署名ブロック描画ヘルパー ──
+      function drawMessage(label, msg, signName, signRole) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#8a6d3b'; ctx.font = '20px "Hiragino Mincho ProN", serif';
+        ctx.fillText(label, contentX, cy); cy += 30;
+        ctx.fillStyle = '#3c2f1c'; ctx.font = '23px "Hiragino Mincho ProN", serif';
+        cy = drawWrapped(ctx, msg, contentX, cy, contentW, 36) + 18;
+        // 手書きサイン（右寄せ）
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#2c2010'; ctx.font = '700 56px "Dancing Script", cursive';
+        ctx.fillText(signName, W - contentX, cy + 30); cy += 46;
+        ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(W - contentX - 240, cy); ctx.lineTo(W - contentX, cy); ctx.stroke(); cy += 18;
+        ctx.fillStyle = '#6b5630'; ctx.font = '16px "Hiragino Mincho ProN", serif';
+        ctx.fillText(signRole, W - contentX, cy); cy += 26;
+        ctx.textAlign = 'center';
+      }
+
       if (cert.teacherMessage) {
-        ctx.fillStyle = '#34c8d6'; ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('先生より', 90, y); y += 30;
-        ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
-        y = drawWrapped(ctx, cert.teacherMessage, 90, y, W - 180, 36) + 16;
+        drawMessage('先生より', cert.teacherMessage, 'rowke', 'rowke 主宰');
       }
-      ctx.fillStyle = '#34c8d6'; ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('Wake先生より', 90, y); y += 30;
-      ctx.fillStyle = '#eaf7fa'; ctx.font = '22px sans-serif';
-      y = drawWrapped(ctx, cert.wakeMessage, 90, y, W - 180, 36) + 20;
+      drawMessage('Wake先生より', cert.wakeMessage, 'Wake', 'Wake先生（ウェイク先生）／ rowke AIアート講師');
 
-      // 在籍記録
-      ctx.textAlign = 'center'; ctx.fillStyle = '#8fc4d2'; ctx.font = '20px sans-serif';
+      // meta footer
+      cy += 6;
+      ctx.strokeStyle = 'rgba(156,123,69,.4)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(contentX, cy); ctx.lineTo(W-contentX, cy); ctx.stroke(); cy += 26;
+      ctx.fillStyle = '#7a6537'; ctx.font = '18px "Hiragino Mincho ProN", serif';
       const issued = new Date(cert.issuedAt);
-      ctx.fillText(`在籍期間：${cert.periodText || '—'} ／ 作品数：${cert.artworkCount || 0}点`, W / 2, y);
-      y += 32;
-      ctx.fillText(`発行日：${issued.getFullYear()}年${issued.getMonth() + 1}月${issued.getDate()}日 ／ 発行：${cert.issuer}`, W / 2, y);
-      y += 44;
+      ctx.fillText(`在籍期間：${cert.periodText || '—'}　・　作品数：${cert.artworkCount || 0}点　・　発行日：${issued.getFullYear()}年${issued.getMonth()+1}月${issued.getDate()}日`, W/2, cy); cy += 28;
+      ctx.fillStyle = '#8a6d3b'; ctx.font = '16px "Hiragino Mincho ProN", serif';
+      ctx.fillText(`SOULBOUND（譲渡不可）・ ${cert.token_id}`, W/2, cy);
 
-      // Soulbound バッジ
-      ctx.fillStyle = '#ffd98a'; ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('● Soulbound（譲渡不可）／ Wake先生 認定 ●', W / 2, y);
-      y += 36;
-
-      // Token ID
-      ctx.fillStyle = '#5f8fa0'; ctx.font = '16px monospace';
-      ctx.fillText('Token ID: ' + cert.token_id, W / 2, y);
-
-      // ダウンロード
       const a = document.createElement('a');
       a.href = cv.toDataURL('image/png');
       a.download = `rowke-certificate-${cert.token_id}.png`;
       a.click();
+    }
+
+    // 中央寄せ折返し（戻り値=次のy）
+    function drawWrapped2center(ctx, text, cx, y, maxW, lineH) {
+      const words = (text || '').split('');
+      let line = '';
+      for (const ch of words) {
+        if (ctx.measureText(line + ch).width > maxW && line) {
+          ctx.fillText(line, cx, y); y += lineH; line = ch;
+        } else { line += ch; }
+      }
+      if (line) { ctx.fillText(line, cx, y); y += lineH; }
+      return y;
     }
 
     load().catch(e => { root.innerHTML = '<div class="cert-error">読み込みエラー：' + esc(e.message) + '</div>'; });
