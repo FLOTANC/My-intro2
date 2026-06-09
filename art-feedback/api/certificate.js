@@ -30,25 +30,14 @@ module.exports = async (req, res) => {
     `代表作のタイトル：${titles.length ? titles.join('、') : '（記載なし）'}\n\n` +
     `この子の修了証に刻む、お祝いの言葉を書いてください。`;
 
+  const body = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    generationConfig: { temperature: 0.9, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } }
+  };
+
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } }
-        })
-      }
-    );
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Gemini error ${geminiRes.status}`);
-    }
-    const data = await geminiRes.json();
-    const message = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const message = await generateWithFallback(body);
     if (!message) throw new Error('Gemini returned no message');
     return res.status(200).json({ message });
   } catch (err) {
@@ -56,3 +45,29 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 };
+
+// 混雑（503/high demand）時にモデルを切り替えながら生成する
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+async function generateWithFallback(body) {
+  let lastErr = '';
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+        lastErr = 'empty response';
+        continue;
+      }
+      const errBody = await res.json().catch(() => ({}));
+      lastErr = errBody.error?.message || `Gemini error ${res.status}`;
+      if (res.status !== 429 && res.status !== 500 && res.status !== 503) break;
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+  throw new Error(lastErr || 'generation failed');
+}

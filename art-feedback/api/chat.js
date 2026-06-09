@@ -25,6 +25,33 @@ rowkeは「Row（漕ぐ）と Wake（波）」から生まれた名前で、自�
 - 必ず日本語で答える
 - 絵文字はときどき使ってOK（使いすぎない）`;
 
+// 混雑（503/high demand）時にモデルを切り替えながら生成する
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+async function generateWithFallback(body) {
+  let lastErr = '';
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+        lastErr = 'empty response';
+        continue;
+      }
+      const errBody = await res.json().catch(() => ({}));
+      lastErr = errBody.error?.message || `Gemini error ${res.status}`;
+      // 過負荷/レート以外（400等）は次モデルでも無駄なので即中断
+      if (res.status !== 429 && res.status !== 500 && res.status !== 503) break;
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+  throw new Error(lastErr || 'generation failed');
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -48,26 +75,13 @@ module.exports = async (req, res) => {
       { role: 'user', parts: [{ text: question }] }
     ];
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPromptWithName }] },
-          contents,
-          generationConfig: { temperature: 0.85, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
-        })
-      }
-    );
-
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Gemini error ${geminiRes.status}`);
-    }
-
-    const geminiData = await geminiRes.json();
-    const answer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const body = {
+      system_instruction: { parts: [{ text: systemPromptWithName }] },
+      contents,
+      generationConfig: { temperature: 0.85, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
+    };
+    // 混雑時に備え、複数モデルを順に試す（2.5が高負荷なら2.0へフォールバック）
+    const answer = await generateWithFallback(body);
     if (!answer) throw new Error('Gemini returned no answer');
 
     // ── Supabase に保存 ──
