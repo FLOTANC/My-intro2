@@ -133,9 +133,9 @@
         <div class="cert-msg-label">先生より</div>
         <div class="cert-msg">${esc(cert.teacherMessage)}</div>
         <div class="cert-sign">
-          <div class="name">rowke 先生</div>
+          <div class="name">flotan</div>
           <div class="line"></div>
-          <div class="role">rowke 主宰</div>
+          <div class="role">flotan 先生 ／ rowke 主宰</div>
         </div>` : '';
 
       root.innerHTML = `
@@ -314,7 +314,7 @@
       }
 
       if (cert.teacherMessage) {
-        drawMessage('先生より', cert.teacherMessage, 'rowke', 'rowke 主宰');
+        drawMessage('先生より', cert.teacherMessage, 'flotan', 'flotan 先生 ／ rowke 主宰');
       }
       drawMessage('Wake先生より', cert.wakeMessage, 'Wake', 'Wake先生（ウェイク先生）／ rowke AIアート講師');
 
