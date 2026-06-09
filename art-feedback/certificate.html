@@ -46,16 +46,16 @@
       font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:.22em;
       text-transform:uppercase; color:#8a6d3b; margin-bottom:6px;
     }
-    .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; }
+    .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; margin-bottom:18px; }
     .cert-school .en { font-family:'Playfair Display',serif; font-weight:700; }
     .cert-title {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:900;
-      font-size:46px; letter-spacing:.42em; color:#2c2010; margin:8px 0 2px;
+      font-size:46px; line-height:1.2; letter-spacing:.42em; color:#2c2010; margin:6px 0 14px;
       padding-left:.42em;
     }
     .cert-sub-en {
       font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px;
-      color:#8a6d3b; letter-spacing:.14em; margin-bottom:14px;
+      color:#8a6d3b; letter-spacing:.14em; margin-bottom:16px;
     }
     .cert-rule { height:2px; background:linear-gradient(90deg,transparent,#9c7b45,transparent); margin:8px 0 18px; }
     /* 作品（大きく） */
@@ -67,7 +67,7 @@
     .cert-art img { display:block; width:100%; max-width:360px; height:auto; }
     .cert-name {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:700; font-size:30px;
-      letter-spacing:.32em; padding-left:.32em; color:#2c2010; margin:6px 0 2px;
+      letter-spacing:.32em; padding-left:.32em; color:#2c2010; margin:22px 0 4px;
     }
     .cert-name span { font-family:'Hiragino Mincho ProN',serif; font-size:18px; color:#6b5630; margin-left:6px; }
     .cert-proclaim { font-size:13px; line-height:2; color:#4a3b25; margin:10px 4px 18px; }
@@ -326,12 +326,12 @@
 
       // 高さを事前計算
       let y = PAD + 70; // kicker
-      y += 30;          // school
-      y += 70;          // title
-      y += 30;          // sub-en
+      y += 46;          // school
+      y += 90;          // title
+      y += 40;          // sub-en
       y += 30;          // rule
-      if (artEl) y += artH + 36;
-      y += 50;          // name
+      if (artEl) y += artH + 54;
+      y += 60;          // name
       ctx.font = '24px "Hiragino Mincho ProN", serif';
       y = drawWrapped(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', contentX, y, contentW, 38, true) + 18;
       const sigBlock = 120; // 署名1つ分の高さ
@@ -390,13 +390,13 @@
       ctx.fillText('⚓  CERTIFICATE OF COMPLETION  ⚓', W/2, cy); cy += 38;
       // school
       ctx.fillStyle = '#6b5630'; ctx.font = '22px "Hiragino Mincho ProN", serif';
-      ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 56;
+      ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 76;
       // title 修了証
       ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Hiragino Mincho ProN", "Yu Mincho", serif';
-      drawTracked(ctx, '修了証', W/2, cy, 30); cy += 22;
+      drawTracked(ctx, '修了証', W/2, cy, 30); cy += 40;
       // sub en
       ctx.fillStyle = '#8a6d3b'; ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
-      ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 44;
+      ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 52;
       // rule
       ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(contentX, cy); ctx.lineTo(W-contentX, cy); ctx.stroke(); cy += 24;
@@ -407,7 +407,7 @@
         ctx.fillStyle = '#fbf6e6'; ctx.fillRect(ax-8, cy-8, artW+16, artH+16);
         ctx.drawImage(artEl, ax, cy, artW, artH);
         ctx.strokeStyle = '#c7ab74'; ctx.lineWidth = 2; ctx.strokeRect(ax-8, cy-8, artW+16, artH+16);
-        cy += artH + 36;
+        cy += artH + 54;
       }
 
       // name
