@@ -46,7 +46,7 @@
       font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:.22em;
       text-transform:uppercase; color:#8a6d3b; margin-bottom:6px;
     }
-    .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; margin-bottom:18px; }
+    .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; margin-bottom:36px; }
     .cert-school .en { font-family:'Playfair Display',serif; font-weight:700; }
     .cert-title {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:900;
@@ -67,7 +67,7 @@
     .cert-art img { display:block; width:100%; max-width:360px; height:auto; }
     .cert-name {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:700; font-size:30px;
-      letter-spacing:.32em; padding-left:.32em; color:#2c2010; margin:22px 0 4px;
+      letter-spacing:.32em; padding-left:.32em; color:#2c2010; margin:66px 0 24px;
     }
     .cert-name span { font-family:'Hiragino Mincho ProN',serif; font-size:18px; color:#6b5630; margin-left:6px; }
     .cert-proclaim { font-size:13px; line-height:2; color:#4a3b25; margin:10px 4px 18px; }
@@ -326,12 +326,12 @@
 
       // 高さを事前計算
       let y = PAD + 70; // kicker
-      y += 46;          // school
+      y += 74;          // school
       y += 90;          // title
       y += 40;          // sub-en
       y += 30;          // rule
-      if (artEl) y += artH + 54;
-      y += 60;          // name
+      if (artEl) y += artH + 120;
+      y += 100;         // name
       ctx.font = '24px "Hiragino Mincho ProN", serif';
       y = drawWrapped(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', contentX, y, contentW, 46, true) + 24;
       const sigBlock = 160; // 署名＋メッセージ枠の余白ぶん
@@ -392,7 +392,7 @@
       ctx.fillText('⚓  CERTIFICATE OF COMPLETION  ⚓', W/2, cy); cy += 38;
       // school
       ctx.fillStyle = '#6b5630'; ctx.font = '22px "Hiragino Mincho ProN", serif';
-      ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 76;
+      ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 104;
       // title 修了証
       ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Hiragino Mincho ProN", "Yu Mincho", serif';
       drawTracked(ctx, '修了証', W/2, cy, 30); cy += 40;
@@ -413,12 +413,12 @@
         ctx.fillStyle = '#fbf6e6'; ctx.fillRect(ax-8, cy-8, artW+16, artH+16);
         ctx.drawImage(artEl, ax, cy, artW, artH);
         ctx.strokeStyle = '#c7ab74'; ctx.lineWidth = 2; ctx.strokeRect(ax-8, cy-8, artW+16, artH+16);
-        cy += artH + 54;
+        cy += artH + 120;
       }
 
       // name
       ctx.fillStyle = '#2c2010'; ctx.font = '700 42px "Hiragino Mincho ProN", "Yu Mincho", serif';
-      drawTracked(ctx, cert.studentName + '　殿', W/2, cy, 14); cy += 44;
+      drawTracked(ctx, cert.studentName + '　殿', W/2, cy, 14); cy += 90;
       // proclaim
       ctx.fillStyle = '#4a3b25'; ctx.font = '24px "Hiragino Mincho ProN", serif';
       cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 46) + 24;
