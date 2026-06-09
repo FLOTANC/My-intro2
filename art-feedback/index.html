@@ -277,30 +277,41 @@
     }
 
     /* === wordmark on sky === */
-    /* 海の上にふわっと浮かぶ rowke 紹介カード */
-    .about-rowke {
-      margin:-44px 18px 8px; position:relative; z-index:3;
-      border-radius:20px; overflow:hidden;
-      background:linear-gradient(160deg, #8fbdd4 0%, #5a93b0 45%, #2f6082 100%);
-      box-shadow:0 16px 40px rgba(20,60,85,.28);
-    }
+    /* 海の上に白文字で浮かぶ rowke 紹介（ヒーロー内） */
+    .about-rowke { position:relative; z-index:3; padding-bottom:104px; }
     .about-toggle {
       width:100%; display:flex; align-items:center; justify-content:space-between;
-      background:transparent; border:none; padding:16px 18px;
-      font-size:14px; font-weight:700; color:#fff; cursor:pointer; font-family:inherit;
-      text-shadow:0 1px 6px rgba(10,40,60,.25);
+      background:transparent; border:none; padding:6px 0; cursor:pointer; font-family:inherit;
+      font-size:14px; font-weight:700; color:#fff; text-shadow:0 1px 8px rgba(10,40,60,.35);
     }
     .about-toggle:active { opacity:.8; }
-    .about-caret { transition:transform .25s; color:rgba(255,255,255,.8); }
+    .about-caret { transition:transform .25s; color:rgba(255,255,255,.85); }
     .about-caret.open { transform:rotate(180deg); }
-    .about-body { padding:0 20px 22px; }
-    .about-body p { font-size:13px; line-height:2.1; color:rgba(255,255,255,.9); margin:10px 0; }
+    .about-body { padding-top:6px; }
+    .about-body p { font-size:13px; line-height:2.1; color:rgba(255,255,255,.92);
+      margin:12px 0; text-shadow:0 1px 8px rgba(10,40,60,.3); }
     .about-body blockquote {
-      border-left:2px solid rgba(255,255,255,.45); padding-left:16px; margin:16px 0;
-      font-style:italic; font-family:'Cormorant Garamond',serif; font-size:16px; color:#fff;
+      border-left:2px solid rgba(255,255,255,.5); padding-left:16px; margin:18px 0;
+      font-style:italic; font-family:'Cormorant Garamond',serif; font-size:17px; color:#fff;
+      text-shadow:0 1px 10px rgba(10,40,60,.35);
     }
     .about-body blockquote span { display:block; font-style:normal; font-family:inherit;
-      font-size:10px; color:rgba(255,255,255,.55); margin-top:8px; letter-spacing:.06em; }
+      font-size:10px; color:rgba(255,255,255,.6); margin-top:8px; letter-spacing:.06em; text-shadow:none; }
+
+    /* 泡 */
+    .bubble {
+      position:absolute; bottom:40px; left:var(--bl);
+      width:var(--bs); height:var(--bs); border-radius:50%; z-index:1; pointer-events:none;
+      background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.6), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.28);
+      animation:bubble-rise var(--bd) linear infinite; animation-delay:var(--bdl); opacity:0;
+    }
+    @keyframes bubble-rise {
+      0%   { transform:translateY(0) scale(.5); opacity:0; }
+      12%  { opacity:.75; }
+      85%  { opacity:.5; }
+      100% { transform:translateY(-360px) scale(1); opacity:0; }
+    }
     .rowke-reading {
       display:block;
       font-family:'Hiragino Sans','Yu Gothic',sans-serif;
@@ -313,7 +324,7 @@
       color:#ffffff;
       letter-spacing:-.01em;
       line-height:1;
-      padding-bottom:120px;
+      padding-bottom:18px;
       padding-top:8px;
       position:relative; z-index:2;
       text-shadow:0 2px 20px rgba(10,40,60,.2);
@@ -1005,29 +1016,38 @@
       <div class="reed"      style="--h:75px;--l:90%; --dur:3.0s;--d:.3s"></div>
     </div>
 
+    <!-- rising bubbles -->
+    <div class="bubble" style="--bl:12%;--bs:10px;--bd:9s;--bdl:0s;"></div>
+    <div class="bubble" style="--bl:24%;--bs:6px;--bd:11s;--bdl:2s;"></div>
+    <div class="bubble" style="--bl:40%;--bs:14px;--bd:8s;--bdl:1s;"></div>
+    <div class="bubble" style="--bl:55%;--bs:8px;--bd:12s;--bdl:3s;"></div>
+    <div class="bubble" style="--bl:68%;--bs:5px;--bd:10s;--bdl:.5s;"></div>
+    <div class="bubble" style="--bl:80%;--bs:11px;--bd:9.5s;--bdl:2.5s;"></div>
+    <div class="bubble" style="--bl:90%;--bs:7px;--bd:13s;--bdl:1.5s;"></div>
+
     <!-- wordmark -->
     <div class="rowke-wordmark" id="anim-wordmark">rowke<span class="rowke-reading">ローク</span></div>
+
+    <!-- rowke について（海の上に白文字で浮かぶ・折りたたみ・初回は自動で開く） -->
+    <div class="about-rowke">
+      <button class="about-toggle" id="about-toggle" onclick="toggleAbout()">
+        <span>rowke（ローク）ってどんな教室？</span>
+        <span class="about-caret" id="about-caret">▾</span>
+      </button>
+      <div class="about-body" id="about-body" style="display:none;">
+        <p>Row（漕ぐ）と Wake（航跡）を組み合わせた造語です。船が進んだあとに波の跡が残るように、アートを通じて自分だけの道を切り開いてほしいという想いを込めています。</p>
+        <blockquote>
+          「僕の前に道はない、僕の後ろに道はできる」
+          <span>— 詩人・高村光太郎「道程」より</span>
+        </blockquote>
+        <p>正解のない道を自分で漕ぎ進み、その軌跡そのものが唯一無二の表現になる。rowke はそんな子どもたちの航跡を大切にするアート教室です。さぁ自分の手でパドルを握って、まだ見ぬ世界へ航海に出かけましょう。</p>
+      </div>
+    </div>
 
     <!-- cream wave transition -->
     <svg class="hero-wave" viewBox="0 0 480 52" preserveAspectRatio="none">
       <path d="M0,30 C60,52 120,8 200,30 C280,52 360,8 480,28 L480,52 L0,52 Z" fill="#fafaf8"/>
     </svg>
-  </div>
-
-  <!-- rowke について（折りたたみ・初回は自動で開く） -->
-  <div class="about-rowke">
-    <button class="about-toggle" id="about-toggle" onclick="toggleAbout()">
-      <span>rowke（ローク）ってどんな教室？</span>
-      <span class="about-caret" id="about-caret">▾</span>
-    </button>
-    <div class="about-body" id="about-body" style="display:none;">
-      <p>Row（漕ぐ）と Wake（航跡）を組み合わせた造語です。船が進んだあとに波の跡が残るように、アートを通じて自分だけの道を切り開いてほしいという想いを込めています。</p>
-      <blockquote>
-        「僕の前に道はない、僕の後ろに道はできる」
-        <span>— 詩人・高村光太郎「道程」より</span>
-      </blockquote>
-      <p>正解のない道を自分で漕ぎ進み、その軌跡そのものが唯一無二の表現になる。rowke はそんな子どもたちの航跡を大切にするアート教室です。さぁ自分の手でパドルを握って、まだ見ぬ世界へ航海に出かけましょう。</p>
-    </div>
   </div>
 
   <div class="home-stats">
