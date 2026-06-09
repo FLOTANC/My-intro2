@@ -50,8 +50,8 @@
     .cert-school .en { font-family:'Playfair Display',serif; font-weight:700; }
     .cert-title {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:900;
-      font-size:46px; letter-spacing:.12em; color:#2c2010; margin:8px 0 2px;
-      padding-left:.12em;
+      font-size:46px; letter-spacing:.42em; color:#2c2010; margin:8px 0 2px;
+      padding-left:.42em;
     }
     .cert-sub-en {
       font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px;
@@ -67,7 +67,7 @@
     .cert-art img { display:block; width:100%; max-width:360px; height:auto; }
     .cert-name {
       font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:700; font-size:30px;
-      letter-spacing:.12em; padding-left:.12em; color:#2c2010; margin:6px 0 2px;
+      letter-spacing:.32em; padding-left:.32em; color:#2c2010; margin:6px 0 2px;
     }
     .cert-name span { font-family:'Hiragino Mincho ProN',serif; font-size:18px; color:#6b5630; margin-left:6px; }
     .cert-proclaim { font-size:13px; line-height:2; color:#4a3b25; margin:10px 4px 18px; }
@@ -393,7 +393,7 @@
       ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 56;
       // title 修了証
       ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Hiragino Mincho ProN", "Yu Mincho", serif';
-      drawTracked(ctx, '修了証', W/2, cy, 14); cy += 22;
+      drawTracked(ctx, '修了証', W/2, cy, 30); cy += 22;
       // sub en
       ctx.fillStyle = '#8a6d3b'; ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
       ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 44;
@@ -412,7 +412,7 @@
 
       // name
       ctx.fillStyle = '#2c2010'; ctx.font = '700 42px "Hiragino Mincho ProN", "Yu Mincho", serif';
-      drawTracked(ctx, cert.studentName + ' 殿', W/2, cy, 8); cy += 44;
+      drawTracked(ctx, cert.studentName + '　殿', W/2, cy, 14); cy += 44;
       // proclaim
       ctx.fillStyle = '#4a3b25'; ctx.font = '24px "Hiragino Mincho ProN", serif';
       cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 38) + 14;
