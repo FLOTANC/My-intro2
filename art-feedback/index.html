@@ -277,6 +277,14 @@
     }
 
     /* === wordmark on sky === */
+    /* 授業タブ（成長タブと同じピル型に統一） */
+    .student-tab {
+      padding:8px 20px; border-radius:20px; border:1px solid var(--rule);
+      background:var(--card); color:var(--text);
+      font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:inherit;
+    }
+    .student-tab.active { background:var(--navy); color:#fff; }
+
     /* 海の上に白文字で浮かぶ rowke 紹介（ヒーロー内） */
     .about-rowke { position:relative; z-index:3; padding-bottom:104px; }
     .about-toggle {
