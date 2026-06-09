@@ -201,14 +201,17 @@
       if (!data) return;
       const { cert, imgs } = data;
 
-      // フォントを確実に読み込む
+      // フォントを確実に読み込む（端末でWebフォント未ロードだと文字が崩れるため）
       try {
-        await Promise.all([
+        await Promise.allSettled([
+          document.fonts.load('700 70px "Playfair Display"'),
           document.fonts.load('900 70px "Playfair Display"'),
-          document.fonts.load('700 64px "Dancing Script"'),
-          document.fonts.load('italic 600 26px "Cormorant Garamond"')
+          document.fonts.load('700 56px "Dancing Script"'),
+          document.fonts.load('600 24px "Cormorant Garamond"'),
+          document.fonts.load('italic 600 24px "Cormorant Garamond"')
         ]);
         await document.fonts.ready;
+        await new Promise(r => setTimeout(r, 150)); // 念のため描画前バッファ
       } catch (e) {}
 
       const cv = document.getElementById('cert-canvas');
