@@ -333,14 +333,14 @@
       if (artEl) y += artH + 54;
       y += 60;          // name
       ctx.font = '24px "Hiragino Mincho ProN", serif';
-      y = drawWrapped(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', contentX, y, contentW, 38, true) + 18;
-      const sigBlock = 120; // 署名1つ分の高さ
+      y = drawWrapped(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', contentX, y, contentW, 46, true) + 24;
+      const sigBlock = 160; // 署名＋メッセージ枠の余白ぶん
       if (cert.teacherMessage) {
-        y += 28; // label
-        y = drawWrapped(ctx, cert.teacherMessage, contentX, y, contentW, 36, true) + sigBlock;
+        y += 38; // label
+        y = drawWrapped(ctx, cert.teacherMessage, contentX, y, contentW, 46, true) + sigBlock;
       }
-      y += 28; // wake label
-      y = drawWrapped(ctx, cert.wakeMessage, contentX, y, contentW, 36, true) + sigBlock;
+      y += 38; // wake label
+      y = drawWrapped(ctx, cert.wakeMessage, contentX, y, contentW, 46, true) + sigBlock;
       y += 90; // meta
       const neededH = y + PAD + 30;
       cv.height = Math.max(1100, Math.ceil(neededH));
@@ -351,8 +351,8 @@
       const paper = jaggedRectPath(12, 12, W - 24, H - 24, 16, 8);
       ctx.save();
       ctx.clip(paper);
-      const g = ctx.createRadialGradient(W/2, 60, 100, W/2, H*0.4, H);
-      g.addColorStop(0, '#f7efd6'); g.addColorStop(0.55, '#efe3c2'); g.addColorStop(1, '#e0cda0');
+      const g = ctx.createRadialGradient(W/2, 0, 80, W/2, 0, H*1.15);
+      g.addColorStop(0, '#f7efd6'); g.addColorStop(0.55, '#efe3c2'); g.addColorStop(1, '#e2d0a3');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       // シミ（セピアの染み）
       const stains = [[0.18,0.12,180],[0.84,0.78,220],[0.7,0.3,150],[0.3,0.62,160],[0.9,0.5,120]];
@@ -376,12 +376,14 @@
       ctx.restore();
       // 破れた縁のライン
       ctx.strokeStyle = 'rgba(120,90,45,0.55)'; ctx.lineWidth = 2; ctx.stroke(paper);
-      // 外枠
-      ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 4;
-      ctx.strokeRect(PAD-16, PAD-16, W-(PAD-16)*2, H-(PAD-16)*2);
-      // 内側二重罫
-      ctx.strokeStyle = '#b2925b'; ctx.lineWidth = 2;
-      ctx.strokeRect(PAD-4, PAD-4, W-(PAD-4)*2, H-(PAD-4)*2);
+      // 枠（HTMLに合わせて：紙ふちの金線＋明るい細線＋主たる内罫の二重）
+      const frame = (inset, color, wdt) => {
+        ctx.strokeStyle = color; ctx.lineWidth = wdt;
+        ctx.strokeRect(inset, inset, W - inset*2, H - inset*2);
+      };
+      frame(42, '#9c7b45', 3);    // 紙ふち寄りの金線
+      frame(57, '#cdb582', 1);    // 明るい外側の細線
+      frame(60, '#b2925b', 1.5);  // 主たる内側の罫
 
       ctx.textAlign = 'center';
       // kicker
@@ -397,8 +399,12 @@
       // sub en
       ctx.fillStyle = '#8a6d3b'; ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
       ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 52;
-      // rule
-      ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 2;
+      // rule（両端が薄いグラデーション）
+      const ruleG = ctx.createLinearGradient(contentX, 0, W-contentX, 0);
+      ruleG.addColorStop(0, 'rgba(156,123,69,0)');
+      ruleG.addColorStop(0.5, 'rgba(156,123,69,0.9)');
+      ruleG.addColorStop(1, 'rgba(156,123,69,0)');
+      ctx.strokeStyle = ruleG; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(contentX, cy); ctx.lineTo(W-contentX, cy); ctx.stroke(); cy += 24;
 
       // artwork
@@ -415,15 +421,34 @@
       drawTracked(ctx, cert.studentName + '　殿', W/2, cy, 14); cy += 44;
       // proclaim
       ctx.fillStyle = '#4a3b25'; ctx.font = '24px "Hiragino Mincho ProN", serif';
-      cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 38) + 14;
+      cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 46) + 24;
 
-      // ── 署名ブロック描画ヘルパー ──
+      // 角丸矩形
+      function roundRect(c, x, y, w, h, r) {
+        c.beginPath();
+        c.moveTo(x+r, y); c.arcTo(x+w, y, x+w, y+h, r); c.arcTo(x+w, y+h, x, y+h, r);
+        c.arcTo(x, y+h, x, y, r); c.arcTo(x, y, x+w, y, r); c.closePath();
+      }
+      // ── 署名ブロック描画ヘルパー（メッセージを枠で囲む）──
       function drawMessage(label, msg, signName, signRole) {
         ctx.textAlign = 'left';
+        // ラベル
         ctx.fillStyle = '#8a6d3b'; ctx.font = '20px "Hiragino Mincho ProN", serif';
-        ctx.fillText(label, contentX, cy); cy += 30;
-        ctx.fillStyle = '#3c2f1c'; ctx.font = '23px "Hiragino Mincho ProN", serif';
-        cy = drawWrapped(ctx, msg, contentX, cy, contentW, 36) + 18;
+        ctx.fillText(label, contentX, cy); cy += 34;
+        // メッセージ枠（HTMLの .cert-msg と同じく薄い背景＋ボーダー）
+        ctx.font = '23px "Hiragino Mincho ProN", serif';
+        const pad = 18, lineH = 46;
+        const innerW = contentW - pad * 2;
+        const lines = Math.round(drawWrapped(ctx, msg, 0, 0, innerW, lineH, true) / lineH);
+        const boxTop = cy;
+        const boxH = lines * lineH + pad * 2 - 6;
+        roundRect(ctx, contentX, boxTop, contentW, boxH, 8);
+        ctx.fillStyle = 'rgba(156,123,69,0.07)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(156,123,69,0.30)'; ctx.lineWidth = 1.5; ctx.stroke();
+        // メッセージ本文
+        ctx.fillStyle = '#3c2f1c';
+        drawWrapped(ctx, msg, contentX + pad, boxTop + pad + 26, innerW, lineH);
+        cy = boxTop + boxH + 26;
         // 手書きサイン（右寄せ）
         ctx.textAlign = 'right';
         ctx.fillStyle = '#2c2010'; ctx.font = '700 56px "Dancing Script", cursive';
