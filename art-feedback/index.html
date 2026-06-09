@@ -277,26 +277,30 @@
     }
 
     /* === wordmark on sky === */
-    .about-rowke { margin:0 20px 4px; }
+    /* 海の上にふわっと浮かぶ rowke 紹介カード */
+    .about-rowke {
+      margin:-44px 18px 8px; position:relative; z-index:3;
+      border-radius:20px; overflow:hidden;
+      background:linear-gradient(160deg, #8fbdd4 0%, #5a93b0 45%, #2f6082 100%);
+      box-shadow:0 16px 40px rgba(20,60,85,.28);
+    }
     .about-toggle {
       width:100%; display:flex; align-items:center; justify-content:space-between;
-      background:#fff; border:1px solid #e8e4de; border-radius:14px; padding:13px 16px;
-      font-size:14px; font-weight:600; color:#2a4150; cursor:pointer; font-family:inherit;
+      background:transparent; border:none; padding:16px 18px;
+      font-size:14px; font-weight:700; color:#fff; cursor:pointer; font-family:inherit;
+      text-shadow:0 1px 6px rgba(10,40,60,.25);
     }
-    .about-toggle:active { opacity:.7; }
-    .about-caret { transition:transform .25s; color:#8aa3b0; }
+    .about-toggle:active { opacity:.8; }
+    .about-caret { transition:transform .25s; color:rgba(255,255,255,.8); }
     .about-caret.open { transform:rotate(180deg); }
-    .about-body {
-      background:#fff; border:1px solid #e8e4de; border-top:none;
-      border-radius:0 0 14px 14px; margin-top:-1px; padding:4px 18px 18px;
-    }
-    .about-body p { font-size:13px; line-height:2; color:#5a6b76; margin:12px 0; }
+    .about-body { padding:0 20px 22px; }
+    .about-body p { font-size:13px; line-height:2.1; color:rgba(255,255,255,.9); margin:10px 0; }
     .about-body blockquote {
-      border-left:2px solid #cdd9df; padding-left:14px; margin:14px 0;
-      font-style:italic; font-family:'Cormorant Garamond',serif; font-size:15px; color:#2a4150;
+      border-left:2px solid rgba(255,255,255,.45); padding-left:16px; margin:16px 0;
+      font-style:italic; font-family:'Cormorant Garamond',serif; font-size:16px; color:#fff;
     }
     .about-body blockquote span { display:block; font-style:normal; font-family:inherit;
-      font-size:10px; color:#9bb0bb; margin-top:6px; letter-spacing:.06em; }
+      font-size:10px; color:rgba(255,255,255,.55); margin-top:8px; letter-spacing:.06em; }
     .rowke-reading {
       display:block;
       font-family:'Hiragino Sans','Yu Gothic',sans-serif;
