@@ -49,8 +49,9 @@
     .cert-school { font-size:13px; color:#6b5630; letter-spacing:.04em; }
     .cert-school .en { font-family:'Playfair Display',serif; font-weight:700; }
     .cert-title {
-      font-family:'Playfair Display',serif; font-weight:900;
-      font-size:46px; letter-spacing:.06em; color:#2c2010; margin:8px 0 2px;
+      font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:900;
+      font-size:46px; letter-spacing:.12em; color:#2c2010; margin:8px 0 2px;
+      padding-left:.12em;
     }
     .cert-sub-en {
       font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px;
@@ -65,8 +66,8 @@
     }
     .cert-art img { display:block; width:100%; max-width:360px; height:auto; }
     .cert-name {
-      font-family:'Playfair Display',serif; font-weight:700; font-size:30px;
-      color:#2c2010; margin:6px 0 2px;
+      font-family:'Hiragino Mincho ProN','Yu Mincho',serif; font-weight:700; font-size:30px;
+      letter-spacing:.12em; padding-left:.12em; color:#2c2010; margin:6px 0 2px;
     }
     .cert-name span { font-family:'Hiragino Mincho ProN',serif; font-size:18px; color:#6b5630; margin-left:6px; }
     .cert-proclaim { font-size:13px; line-height:2; color:#4a3b25; margin:10px 4px 18px; }
@@ -241,6 +242,39 @@
         im.src = src;
       });
     }
+    // 中央寄せで字間（トラッキング）付きテキスト
+    function drawTracked(ctx, text, cx, y, tracking) {
+      const chars = [...text];
+      const prevAlign = ctx.textAlign;
+      ctx.textAlign = 'left';
+      let total = 0;
+      for (const ch of chars) total += ctx.measureText(ch).width + tracking;
+      total -= tracking;
+      let x = cx - total / 2;
+      for (const ch of chars) {
+        ctx.fillText(ch, x, y);
+        x += ctx.measureText(ch).width + tracking;
+      }
+      ctx.textAlign = prevAlign;
+    }
+    // 破れた縁のギザギザ矩形パス
+    function jaggedRectPath(x, y, w, h, seg, jit) {
+      const pts = [];
+      function edge(x1, y1, x2, y2) {
+        const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+        const n = Math.max(2, Math.round(len / seg)), nx = -dy/len, ny = dx/len;
+        for (let i = 0; i < n; i++) {
+          const t = i / n, j = (Math.random()*2 - 1) * jit;
+          pts.push([x1 + dx*t + nx*j, y1 + dy*t + ny*j]);
+        }
+      }
+      edge(x, y, x+w, y); edge(x+w, y, x+w, y+h); edge(x+w, y+h, x, y+h); edge(x, y+h, x, y);
+      const p = new Path2D();
+      p.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1]);
+      p.closePath();
+      return p;
+    }
     function drawWrapped(ctx, text, x, y, maxW, lineH, measureOnly) {
       const paragraphs = (text || '').split('\n');
       for (const para of paragraphs) {
@@ -312,7 +346,11 @@
       cv.height = Math.max(1100, Math.ceil(neededH));
       const H = cv.height;
 
-      // ── 古紙背景 ──
+      // ── 古紙背景（破れた縁・外側は透明）──
+      ctx.clearRect(0, 0, W, H);
+      const paper = jaggedRectPath(12, 12, W - 24, H - 24, 16, 8);
+      ctx.save();
+      ctx.clip(paper);
       const g = ctx.createRadialGradient(W/2, 60, 100, W/2, H*0.4, H);
       g.addColorStop(0, '#f7efd6'); g.addColorStop(0.55, '#efe3c2'); g.addColorStop(1, '#e0cda0');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -330,6 +368,14 @@
         ctx.fillStyle = `rgba(${Math.random()<0.5?'120,90,45':'255,250,235'},${(Math.random()*0.05).toFixed(3)})`;
         ctx.fillRect(px, py, 1.4, 1.4);
       }
+      // 縁の内側を少し焼けたように暗く
+      const edge = ctx.createLinearGradient(0, 0, 0, H);
+      edge.addColorStop(0, 'rgba(120,85,35,0.18)'); edge.addColorStop(0.06, 'rgba(120,85,35,0)');
+      edge.addColorStop(0.94, 'rgba(120,85,35,0)'); edge.addColorStop(1, 'rgba(120,85,35,0.18)');
+      ctx.fillStyle = edge; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      // 破れた縁のライン
+      ctx.strokeStyle = 'rgba(120,90,45,0.55)'; ctx.lineWidth = 2; ctx.stroke(paper);
       // 外枠
       ctx.strokeStyle = '#9c7b45'; ctx.lineWidth = 4;
       ctx.strokeRect(PAD-16, PAD-16, W-(PAD-16)*2, H-(PAD-16)*2);
@@ -346,8 +392,8 @@
       ctx.fillStyle = '#6b5630'; ctx.font = '22px "Hiragino Mincho ProN", serif';
       ctx.fillText('子どもアート教室 rowke（ローク）', W/2, cy); cy += 56;
       // title 修了証
-      ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Playfair Display", serif';
-      ctx.fillText('修 了 証', W/2, cy); cy += 22;
+      ctx.fillStyle = '#2c2010'; ctx.font = '900 70px "Hiragino Mincho ProN", "Yu Mincho", serif';
+      drawTracked(ctx, '修了証', W/2, cy, 14); cy += 22;
       // sub en
       ctx.fillStyle = '#8a6d3b'; ctx.font = 'italic 600 24px "Cormorant Garamond", serif';
       ctx.fillText('The Voyage of ' + cert.studentName, W/2, cy + 14); cy += 44;
@@ -365,8 +411,8 @@
       }
 
       // name
-      ctx.fillStyle = '#2c2010'; ctx.font = '700 40px "Playfair Display", serif';
-      ctx.fillText(cert.studentName + '  殿', W/2, cy); cy += 44;
+      ctx.fillStyle = '#2c2010'; ctx.font = '700 42px "Hiragino Mincho ProN", "Yu Mincho", serif';
+      drawTracked(ctx, cert.studentName + ' 殿', W/2, cy, 8); cy += 44;
       // proclaim
       ctx.fillStyle = '#4a3b25'; ctx.font = '24px "Hiragino Mincho ProN", serif';
       cy = drawWrapped2center(ctx, 'あなたは rowke にて、自分だけの“航跡”を漕ぎ進みました。その歩みのすべてを、ここに称えます。', W/2, cy, contentW, 38) + 14;
