@@ -277,6 +277,26 @@
     }
 
     /* === wordmark on sky === */
+    .about-rowke { margin:0 20px 4px; }
+    .about-toggle {
+      width:100%; display:flex; align-items:center; justify-content:space-between;
+      background:#fff; border:1px solid #e8e4de; border-radius:14px; padding:13px 16px;
+      font-size:14px; font-weight:600; color:#2a4150; cursor:pointer; font-family:inherit;
+    }
+    .about-toggle:active { opacity:.7; }
+    .about-caret { transition:transform .25s; color:#8aa3b0; }
+    .about-caret.open { transform:rotate(180deg); }
+    .about-body {
+      background:#fff; border:1px solid #e8e4de; border-top:none;
+      border-radius:0 0 14px 14px; margin-top:-1px; padding:4px 18px 18px;
+    }
+    .about-body p { font-size:13px; line-height:2; color:#5a6b76; margin:12px 0; }
+    .about-body blockquote {
+      border-left:2px solid #cdd9df; padding-left:14px; margin:14px 0;
+      font-style:italic; font-family:'Cormorant Garamond',serif; font-size:15px; color:#2a4150;
+    }
+    .about-body blockquote span { display:block; font-style:normal; font-family:inherit;
+      font-size:10px; color:#9bb0bb; margin-top:6px; letter-spacing:.06em; }
     .rowke-reading {
       display:block;
       font-family:'Hiragino Sans','Yu Gothic',sans-serif;
@@ -990,6 +1010,22 @@
     </svg>
   </div>
 
+  <!-- rowke について（折りたたみ・初回は自動で開く） -->
+  <div class="about-rowke">
+    <button class="about-toggle" id="about-toggle" onclick="toggleAbout()">
+      <span>rowke（ローク）ってどんな教室？</span>
+      <span class="about-caret" id="about-caret">▾</span>
+    </button>
+    <div class="about-body" id="about-body" style="display:none;">
+      <p>Row（漕ぐ）と Wake（航跡）を組み合わせた造語です。船が進んだあとに波の跡が残るように、アートを通じて自分だけの道を切り開いてほしいという想いを込めています。</p>
+      <blockquote>
+        「僕の前に道はない、僕の後ろに道はできる」
+        <span>— 詩人・高村光太郎「道程」より</span>
+      </blockquote>
+      <p>正解のない道を自分で漕ぎ進み、その軌跡そのものが唯一無二の表現になる。rowke はそんな子どもたちの航跡を大切にするアート教室です。さぁ自分の手でパドルを握って、まだ見ぬ世界へ航海に出かけましょう。</p>
+    </div>
+  </div>
+
   <div class="home-stats">
     <div class="home-stat" id="anim-stat1">
       <div class="home-stat-num" id="stat-artworks">0</div>
@@ -1304,19 +1340,8 @@
     </div>
     <div class="rowke-wordmark" id="contact-wordmark" style="font-size:60px;padding-bottom:0;margin-bottom:32px;opacity:0;">rowke<span class="rowke-reading">ローク</span></div>
 
-    <!-- About text inside hero -->
-    <div style="position:relative;z-index:2;padding-bottom:48px;">
-      <div id="contact-text1" style="font-size:13px;line-height:2.1;color:rgba(255,255,255,.85);margin-bottom:28px;opacity:0;">
-        Row（漕ぐ）と Wake（航跡）を組み合わせた造語です。<br>
-        船が進んだあとに波の跡が残るように、アートを通じて<br>自分だけの道を切り開いてほしいという想いを込めています。
-      </div>
-      <div id="contact-quote" style="border-left:2px solid rgba(255,255,255,.4);padding-left:16px;margin-bottom:28px;opacity:0;">
-        <div style="font-size:15px;line-height:1.9;color:#fff;font-style:italic;font-family:'Cormorant Garamond',serif;">「僕の前に道はない、僕の後ろに道はできる」</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:8px;letter-spacing:.08em;">— 詩人・高村光太郎「道程」より</div>
-      </div>
-      <div id="contact-text2" style="font-size:13px;line-height:2.1;color:rgba(255,255,255,.75);opacity:0;">
-        正解のない道を自分で漕ぎ進み、その軌跡そのものが唯一無二の表現になる。rowkeはそんな子どもたちの航跡を大切にするアート教室です。さぁ自分の手でパドルを握ってまだ見ぬ世界へ航海に出かけましょう。
-      </div>
+    <div style="position:relative;z-index:2;padding-bottom:24px;font-size:13px;line-height:1.9;color:rgba(255,255,255,.8);">
+      お休み・遅刻・ご相談など、先生へのご連絡はこちらから。
     </div>
   </div>
 
@@ -1834,6 +1859,25 @@
     }
   }
   function goBack() { switchTab('artworks'); }
+
+  // rowke について（折りたたみ）
+  function setAboutOpen(open) {
+    document.getElementById('about-body').style.display = open ? 'block' : 'none';
+    document.getElementById('about-caret').classList.toggle('open', open);
+  }
+  function toggleAbout() {
+    const isOpen = document.getElementById('about-body').style.display !== 'none';
+    setAboutOpen(!isOpen);
+  }
+  // 初回訪問時だけ自動で開く
+  (function initAboutFirstVisit() {
+    try {
+      if (!localStorage.getItem('rowke_about_seen')) {
+        setAboutOpen(true);
+        localStorage.setItem('rowke_about_seen', '1');
+      }
+    } catch (e) { /* localStorage 不可環境では何もしない */ }
+  })();
 
   // ===== 修了証（SBT 体験デモ） =====
   // その生徒の作品キー一覧（新しい順）
@@ -3629,16 +3673,7 @@
     gsap.timeline({ defaults:{ ease:'power3.out' } })
       .fromTo('#contact-wordmark',
         { opacity:0, y:30 },
-        { opacity:1, y:0, duration:0.9 })
-      .fromTo('#contact-text1',
-        { opacity:0, y:24 },
-        { opacity:1, y:0, duration:0.8 }, '-=0.4')
-      .fromTo('#contact-quote',
-        { opacity:0, x:-20 },
-        { opacity:1, x:0, duration:0.75 }, '-=0.3')
-      .fromTo('#contact-text2',
-        { opacity:0, y:20 },
-        { opacity:1, y:0, duration:0.75 }, '-=0.2');
+        { opacity:1, y:0, duration:0.9 });
 
     const viewer = getViewer();
     const formArea  = document.getElementById('contact-form-area');
