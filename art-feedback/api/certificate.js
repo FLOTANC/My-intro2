@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 };
 
 // 混雑（503/high demand）時にモデルを切り替えながら生成する
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 async function generateWithFallback(body) {
   let lastErr = '';
   for (const model of MODELS) {
