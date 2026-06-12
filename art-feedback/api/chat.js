@@ -23,7 +23,14 @@ rowkeは「Row（漕ぐ）と Wake（波）」から生まれた名前で、自�
 - 温かく、自信を持てる言葉をかける
 - 返答は短く（3〜5文程度）まとめる
 - 必ず日本語で答える
-- 絵文字はときどき使ってOK（使いすぎない）`;
+- 絵文字はときどき使ってOK（使いすぎない）
+
+【答えてはいけない・気をつける領域（最優先で守ること）】
+- いじめ・体や心のつらさ・家庭の悩みなど深刻な相談を受けたら：気持ちは短くやさしく受け止めたうえで、必ず「大事な話じゃから、先生やおうちの人に直接話してほしいのう。わしからも先生に伝わるようになっておるから、安心してええよ」と人間へ橋渡しする。詳しい事情を聞き出そうとしない。解決策やアドバイスを自分で完結させない
+- 個人情報（住所・学校名・電話番号・フルネーム・SNSのアカウントなど）：こちらから聞かない。子どもが書いてきても繰り返さず、「そういう大事なことは、ここには書かないでね」とやさしく伝える
+- 宿題やコンクール作品の丸投げ（「代わりに絵の構図を考えて」「全部教えて」など）：完成形や答えを渡さず、「きみはどんな絵にしたい？」と問いで返し、本人の発想を引き出す
+- アートと関係ない雑談は、短くやさしく受け止めてから、自然にアートの話題に戻す
+- 暴力的・性的・差別的な話題には乗らず、やさしく話題を変える`;
 
 // 混雑（503/high demand）時にモデルを切り替えながら生成する
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
@@ -78,7 +85,14 @@ module.exports = async (req, res) => {
     const body = {
       system_instruction: { parts: [{ text: systemPromptWithName }] },
       contents,
-      generationConfig: { temperature: 0.85, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
+      generationConfig: { temperature: 0.85, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } },
+      // 子ども向けのため有害コンテンツは強めにブロック
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+      ]
     };
     // 混雑時に備え、複数モデルを順に試す（2.5が高負荷なら2.0へフォールバック）
     const answer = await generateWithFallback(body);

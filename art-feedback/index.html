@@ -1122,8 +1122,8 @@
     <div class="topbar-back" onclick="goBack()">‹</div>
     <div class="topbar-title">フィードバック</div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <div onclick="deleteArtwork()" style="font-size:12px;color:#e05a5a;cursor:pointer;border:1px solid #fccfcf;border-radius:6px;padding:5px 10px;font-weight:600;">削除</div>
-      <div onclick="openAnalysis()" style="font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--sub);border:1px solid var(--rule);border-radius:6px;padding:5px 10px;">記録</div>
+      <div id="fb-delete-btn" onclick="deleteArtwork()" style="font-size:12px;color:#e05a5a;cursor:pointer;border:1px solid #fccfcf;border-radius:6px;padding:5px 10px;font-weight:600;">削除</div>
+      <div id="fb-analysis-btn" onclick="openAnalysis()" style="font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--sub);border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;">記録</div>
     </div>
   </div>
 
@@ -1161,10 +1161,7 @@
   </div>
 
   <div class="message-bar">
-    <select id="sender-role" style="background:var(--bg);border:1px solid var(--rule);border-radius:20px;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;cursor:pointer;color:var(--text);" onchange="onRoleChange()">
-      <option value="teacher">先生</option>
-      <option value="parent">保護者</option>
-    </select>
+    <span id="sender-as" style="font-size:11px;color:var(--muted);white-space:nowrap;"></span>
     <button class="attach-btn" id="attach-btn" onclick="attachCommentImage()" title="画像を添付">🖼</button>
     <input type="file" id="attach-file" accept="image/*" style="display:none" onchange="onAttachSelected(event)">
     <input class="message-input" id="comment-input" placeholder="コメントを入力…" onkeydown="if(event.key==='Enter')postComment()">
@@ -1738,11 +1735,20 @@
     input.click();
   }
 
-  // show/hide attach button based on role
-  function onRoleChange() {
-    const role = document.getElementById('sender-role').value;
-    document.getElementById('attach-btn').style.display =
-      role === 'teacher' ? 'block' : 'none';
+  // 投稿者はログイン中の身元から自動決定（プルダウン廃止：なりすまし防止）
+  function isTeacherViewer() { return getViewer()?.role === 'teacher'; }
+  function senderRole() { return isTeacherViewer() ? 'teacher' : 'parent'; }
+  function updateSenderUI() {
+    const teacher = isTeacherViewer();
+    const label = document.getElementById('sender-as');
+    if (label) label.textContent = teacher ? '👩‍🎨 先生として送信' : '👤 保護者として送信';
+    document.getElementById('attach-btn').style.display = teacher ? 'block' : 'none';
+  }
+  // 先生専用操作のガード（ボタンを隠すだけでなく関数側でも防ぐ）
+  function requireTeacher() {
+    if (isTeacherViewer()) return true;
+    alert('この操作は先生のみ行えます');
+    return false;
   }
 
   function attachCommentImage() {
@@ -2159,10 +2165,10 @@
       div.innerHTML = `
         <div class="gallery-thumb" style="position:relative;">
           ${art.imageBase64 ? `<img src="${art.imageBase64}">` : '🎨'}
-          <button onclick="event.stopPropagation();confirmDeleteArtwork('${id}')"
+          ${isTeacherViewer() ? `<button onclick="event.stopPropagation();confirmDeleteArtwork('${id}')"
             style="position:absolute;top:5px;right:5px;background:rgba(255,255,255,.9);border:none;
             border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;
-            display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);">✕</button>
+            display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);">✕</button>` : ''}
         </div>
         <div class="gallery-info">
           <div class="gallery-name">${art.studentName||''}（${art.age||'?'}さい）</div>
@@ -2379,6 +2385,11 @@
     currentArtworkId = id;
     const art = artworks[id];
     if (!art) return;
+    // 先生専用ボタンの表示制御＋送信者ラベル更新
+    const _tv = isTeacherViewer();
+    document.getElementById('fb-delete-btn').style.display = _tv ? '' : 'none';
+    document.getElementById('fb-analysis-btn').style.display = _tv ? '' : 'none';
+    updateSenderUI();
     document.getElementById('fb-name').textContent = `${art.studentName||''}（${art.age||'?'}さい）の作品`;
     document.getElementById('fb-meta').textContent = `${formatDate(art.ts)} にアップロード`;
     const avatarEl = document.getElementById('fb-avatar');
@@ -2507,10 +2518,10 @@
         </div>
         <div class="comment-label">${label}</div>
         <div class="comment-date">${formatShortDate(ts)}</div>
-        ${isEditable ? `<button class="comment-edit-btn" onclick="toggleCommentEdit('${uid}')" title="編集">✏️</button>` : ''}
-        ${editInfo && editInfo.type === 'teacher' ? `<button class="comment-delete-btn" onclick="deleteTeacherComment()" title="コメントを削除">🗑</button>` : ''}
-        ${editInfo && editInfo.type === 'student' ? `<button class="comment-delete-btn" onclick="deleteStudentComment()" title="コメントを削除">🗑</button>` : ''}
-        ${editInfo && editInfo.type === 'comment' && editInfo.key ? `<button class="comment-delete-btn" onclick="deleteParentComment('${editInfo.key}')" title="コメントを削除">🗑</button>` : ''}
+        ${isEditable && isTeacherViewer() ? `<button class="comment-edit-btn" onclick="toggleCommentEdit('${uid}')" title="編集">✏️</button>` : ''}
+        ${isTeacherViewer() && editInfo && editInfo.type === 'teacher' ? `<button class="comment-delete-btn" onclick="deleteTeacherComment()" title="コメントを削除">🗑</button>` : ''}
+        ${isTeacherViewer() && editInfo && editInfo.type === 'student' ? `<button class="comment-delete-btn" onclick="deleteStudentComment()" title="コメントを削除">🗑</button>` : ''}
+        ${isTeacherViewer() && editInfo && editInfo.type === 'comment' && editInfo.key ? `<button class="comment-delete-btn" onclick="deleteParentComment('${editInfo.key}')" title="コメントを削除">🗑</button>` : ''}
       </div>
       <div class="comment-bubble ${role}" id="bubble_${uid}">
         ${linkify(text)}
@@ -2559,8 +2570,8 @@
         const meta = document.createElement('div');
         meta.className = 'reply-meta';
         meta.innerHTML = `<span class="reply-role ${isTeacher ? 'teacher' : ''}">${isTeacher ? '先生' : 'おうちの方'}</span><span class="reply-date-small">${formatShortDate(r.ts)}</span>`;
-        // 削除ボタン
-        if (r._key) {
+        // 削除ボタン（先生のみ）
+        if (r._key && isTeacherViewer()) {
           const delBtn = document.createElement('button');
           delBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);margin-left:6px;padding:0;line-height:1;';
           delBtn.title = '返信を削除';
@@ -2699,7 +2710,7 @@
   function postComment() {
     if (!currentArtworkId) return;
     const text = document.getElementById('comment-input').value.trim();
-    const role = document.getElementById('sender-role').value;
+    const role = senderRole();
     if (!text && !pendingCommentImages.length) return;
     const imgs = [...pendingCommentImages];
 
@@ -2796,6 +2807,7 @@
   }
 
   function deleteStudentComment() {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('生徒のコメントを削除しますか？')) return;
     db.ref('art/artworks/' + currentArtworkId).update({ studentComment: null })
@@ -2804,6 +2816,7 @@
 
   // ===== REPLY =====
   function deleteReply(replyParent, replyKey) {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('この返信を削除しますか？')) return;
     let ref;
@@ -2841,6 +2854,7 @@
   }
 
   function deleteParentComment(key) {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('このコメントを削除しますか？')) return;
     db.ref('art/artworks/' + currentArtworkId + '/comments/' + key).remove()
@@ -2848,6 +2862,7 @@
   }
 
   function deleteTeacherComment() {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('先生からのコメントを削除しますか？')) return;
     db.ref('art/artworks/' + currentArtworkId).update({
@@ -2860,6 +2875,7 @@
 
   // ===== DELETE =====
   function deleteArtwork() {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('この作品を削除しますか？\n削除すると元に戻せません。')) return;
     db.ref('art/artworks/' + currentArtworkId).remove().then(() => {
@@ -2868,12 +2884,14 @@
     });
   }
   function confirmDeleteArtwork(id) {
+    if (!requireTeacher()) return;
     if (!confirm('この作品を削除しますか？\n削除すると元に戻せません。')) return;
     db.ref('art/artworks/' + id).remove();
   }
 
   // ===== ANALYSIS =====
   function openAnalysis() {
+    if (!requireTeacher()) return;
     if (!currentArtworkId) { alert('作品を選んでから分析を記録してください'); return; }
     const art = artworks[currentArtworkId];
     const artType = art.artworkType || 'drawing';
@@ -3822,6 +3840,9 @@
     document.getElementById('viewer-overlay').style.display = 'none';
     updateIdentityLabel();
     initGrowth();
+    // 役割で表示が変わるUIを更新（ギャラリーの削除✕、開いている作品画面）
+    renderGallery();
+    if (currentArtworkId) renderFeedback(currentArtworkId);
   }
   function setViewerByInput() {
     const name = document.getElementById('viewer-name-input').value.trim();
