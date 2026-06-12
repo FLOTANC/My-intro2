@@ -5,7 +5,7 @@
 
 ## 目的
 
-1. 先生PINの照合をサーバー側に移す（現在はクライアントに `r1043` が直書きで、Git履歴にも残っている＝漏洩済み扱い）
+1. 先生PINの照合をサーバー側に移す（現在は旧PINがクライアントコードに直書きで、Git履歴にも残っている＝漏洩済み扱い）
 2. Firebase Realtime DB への書き込みを Vercel API に集約し、ブラウザからの直接書き込みをルールで全面遮断する
 3. rowke 専用の Firebase プロジェクトに分離する（family-compass との共用を解消し、被害波及を防ぐ）
 
@@ -14,7 +14,7 @@
 ### やること
 - 新規エンドポイント `api/db.js`（汎用書き込みAPI、firebase-admin 使用）
 - クライアント（index.html / certificate.html）の全書き込み約40箇所を `dbWrite(action, payload)` ラッパー経由に置換
-- 先生PIN照合のサーバー化（`TEACHER_PIN` 環境変数）、`r1043` のコード削除
+- 先生PIN照合のサーバー化（`TEACHER_PIN` 環境変数）、旧PINのコード削除
 - 新 Firebase プロジェクトへのデータ移行（一時アクション `migrate` で実施、完了後削除）
 - 新旧プロジェクトのルール設定
 
@@ -76,7 +76,7 @@
 
 - `dbWrite(action, payload)` ラッパーを追加（fetch で `/api/db` を呼ぶ。先生PINは localStorage に保持しヘッダ送信）
 - 約40箇所の `db.ref(...).set/update/push/remove` をラッパー呼び出しに置換（読み取り `.once/.on` は変更しない）
-- `checkTeacherPw()` は `verifyPin` アクションでサーバー照合。成功時にPINを localStorage（`rowke_teacher_pin`）へ保存。`btoa('r1043')` 比較は削除
+- `checkTeacherPw()` は `verifyPin` アクションでサーバー照合。成功時にPINを localStorage（`rowke_teacher_pin`）へ保存。クライアント内のPIN直書き比較は削除
 - `issueCertificate()` はAPI呼び出しに置換（採番・保存はサーバー）
 - `firebaseConfig` を新プロジェクトのWeb設定に差し替え（index.html / certificate.html の2箇所）
 
