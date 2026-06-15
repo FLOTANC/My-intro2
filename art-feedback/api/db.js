@@ -23,7 +23,7 @@ const TEACHER_ACTIONS = new Set([
   'critiqueWorkAdd', 'critiqueWorkUpdate', 'critiqueWorkDelete',
   'critiqueSessionUpdate', 'critiqueSessionDelete',
   'contactRead', 'contactDelete', 'setStudentAvatar',
-  'issueCertificate', 'migrate'
+  'issueCertificate'
 ]);
 
 function pinOk(req) {
@@ -274,19 +274,6 @@ module.exports = async (req, res) => {
         // ※将来の本物SBT mintはここに追加する
         await db.ref('art/certificates/' + tokenId).set(record);
         return res.status(200).json({ ok: true, tokenId });
-      }
-
-      // ===== 一時（移行完了後に削除）=====
-      case 'migrate': {
-        const OLD = 'https://family-compass-37891-default-rtdb.asia-southeast1.firebasedatabase.app/art.json';
-        const r = await fetch(OLD);
-        if (!r.ok) throw new Error('old DB read failed: ' + r.status);
-        const data = await r.json();
-        if (!data) return res.status(400).json({ error: 'old data empty' });
-        await db.ref('art').set(data);
-        const counts = {};
-        for (const k of Object.keys(data)) counts[k] = typeof data[k] === 'object' ? Object.keys(data[k]).length : 1;
-        return res.status(200).json({ ok: true, counts });
       }
 
       default:
