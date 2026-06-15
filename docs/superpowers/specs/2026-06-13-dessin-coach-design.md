@@ -16,7 +16,9 @@
 ## コアループ
 
 ```
-AIが課題を提示（過去の弱点＋志望校基準＋残り時間で調整）
+AIが課題ドラフトを提案（過去の弱点＋志望校基準＋残り時間で調整）
+   ↕  先生がAIと相談しながら課題を調整・確定（または先生が手動で作成）
+課題を生徒に提示（制限時間つき＝必須）
    ↓
 生徒がデッサンを描いて写真で提出
    ↓
@@ -29,7 +31,7 @@ AIが画像をルーブリック採点＋講評＋合格ギャップ＋次の課
 毎回違うモチーフを積み上げ、成長グラフで経過観察
 ```
 
-毎回違うモチーフを積み上げる方式。AIは直近の低スコア軸（弱点）と志望校基準を見て次の課題を寄せる。
+毎回違うモチーフを積み上げる方式。AIは直近の低スコア軸（弱点）と志望校基準を見て次の課題を寄せる。**課題はAIと先生の協働で決める**（AIが提案→先生がAIと対話しながら微調整・確定、または先生が直接作成）。**制限時間は必須**（時間どおりに仕上げる訓練は受験で重要）。
 
 ## アーキテクチャ（案A：rowkeインフラ流用の独立アプリ）
 
@@ -57,15 +59,28 @@ dessin/
     createdAt
     streak            : { count, lastSubmitDate }   ← 連続提出
     badges            : { badgeKey: ts, ... }
-    bestScores        : { proportion, volume, texture, composition, observation }  ← 自己ベスト
+    bestScores        : { proportion, volume, texture, composition, observation,
+                          space, light, structure, process }  ← 自己ベスト（9軸）
+
+  assignments/{assignmentId}
+    studentName
+    motif, focus, stage(基礎/応用/実戦)
+    timeLimit         : 制限時間（分）※必須
+    origin            : 'ai' | 'teacher'      ← 提案元
+    aiDraft           : AIが最初に出したドラフト（参考保持）
+    teacherChat       : [{ role:'teacher'|'ai', text, ts }]  ← 課題決めの相談ログ
+    status            : 'draft' | 'published'  ← published で生徒に提示
+    ts
 
   submissions/{submissionId}
     studentName
-    assignment    : { motif, focus, stage(基礎/応用/実戦), timeLimit, ts }  ← AIが出した課題
+    assignmentId  : 紐づく課題
+    assignment    : { motif, focus, stage, timeLimit }  ← 提示された課題のスナップショット
     imageBase64   : 提出デッサン写真
     ts
     aiReview      : {
-                      scores: { proportion, volume, texture, composition, observation },  ← 各1〜5
+                      scores: { proportion, volume, texture, composition, observation,
+                                space, light, structure, process },  ← 各1〜5（9軸）
                       comment,
                       passGap,            ← 合格ラインまであと何が足りないか
                       nextAssignment
@@ -74,21 +89,36 @@ dessin/
     teacherReview : { annotatedImage, comment, ts }   ← 任意。先生の手描き添削
 ```
 
-ルーブリック5軸（受験デッサン基準）：**形・プロポーション / 量感・立体（明暗）/ 質感の描き分け / 構図・画面構成 / 観察・描き込み**。
+### ルーブリック9軸（受験デッサン基準）
+
+| キー | 軸 | 見る内容 |
+|---|---|---|
+| proportion | 形・プロポーション | 比率、角度、傾き、左右差 |
+| volume | 量感・立体 | 面、明暗、丸み、厚み |
+| texture | 質感の描き分け | 金属、紙、布、木、石膏など |
+| composition | 構図・画面構成 | 配置、余白、見せ場、密度の配分 |
+| observation | 観察・描き込み | 情報量、細部観察、粘り、エッジの描き分け |
+| space | 空間把握 | 奥行き、接地、前後関係、パース |
+| light | 光源理解 | 光・影・反射光・投影の一貫性、階調の幅 |
+| structure | 構造理解 | 見えない内部形態、軸、骨格 |
+| process | 制作プロセス | 大づかみ、修正力、全体管理（描き進め方） |
+
+`students.bestScores` と `submissions.aiReview.scores` はこの9キーで統一。
 
 ## 画面構成
 
-1. **きょうの課題**：AIが提示するモチーフ・狙い・段階（必要なら制限時間）→「描いたら写真をアップ」。ログインボーナス（ストリーク表示＋AI/先生からの一言）もここ
-2. **提出＆AI講評**：写真提出 → AIがその場で採点・講評・合格ギャップ・次の課題。下で対話。自己ベスト更新時は演出
-3. **これまで（経過）**：提出の時系列カード＋成長グラフ（5軸の推移）＋合格ライン進捗バー＋獲得バッジ。先生添削済みはバッジ表示
-4. **先生モード（PIN）**：生徒プロフィール編集（志望校・基準）／未添削の提出一覧 → 画像に手描き添削＋コメント
+1. **きょうの課題**：先生が確定した課題（モチーフ・狙い・段階・**制限時間**）を提示 →「描いたら写真をアップ」。ログインボーナス（ストリーク表示＋AI/先生からの一言）もここ。タイマー付きで取り組める
+2. **提出＆AI講評**：写真提出 → AIがその場で9軸採点・講評・合格ギャップ・次の課題。下で対話。自己ベスト更新時は演出
+3. **これまで（経過）**：提出の時系列カード＋成長グラフ（9軸の推移）＋合格ライン進捗バー＋獲得バッジ。先生添削済みはバッジ表示
+4. **先生モード（PIN）**：生徒プロフィール編集（志望校・基準）／**課題づくり：AIが提案→AIと相談して微調整→確定して生徒に提示**（または手動作成）／未添削の提出一覧 → 画像に手描き添削＋コメント
 
 ## AI設計（/api/ai、Gemini Vision）
 
-3つの役割（アクション）:
+4つの役割（アクション）:
 
-- `assignment`：生徒の level・直近スコアの弱点・examInfo・examDate までの残り時間から、次の課題（motif/focus/stage/timeLimit）を生成。カリキュラム3段階（基礎→応用→実戦）を踏まえる
-- `review`：提出画像を見て、受験基準の5軸を1〜5で採点し、講評・**合格ギャップ（あと何が足りないか）**・次の課題を返す。examInfo を最優先の判断基準にする。子ども安全ガード（rowke chat と同じ：深刻な相談は人間へ橋渡し、個人情報を聞かない）を適用
+- `assignmentDraft`：生徒の level・直近スコアの弱点（9軸）・examInfo・examDate までの残り時間から、次の課題ドラフト（motif/focus/stage/**timeLimit＝必須**）を生成。カリキュラム3段階（基礎→応用→実戦）を踏まえる
+- `assignmentChat`（先生のみ・PIN）：先生が「もっと質感重視で」「制限時間を90分に」などとAIに相談し、課題を一緒に詰める。確定すると assignments に published で保存
+- `review`：提出画像を見て、受験基準の**9軸**を1〜5で採点し、講評・**合格ギャップ（あと何が足りないか）**・次の課題を返す。examInfo を最優先の判断基準にする。子ども安全ガード（rowke chat と同じ：深刻な相談は人間へ橋渡し、個人情報を聞かない）を適用
 - `chat`：その提出について生徒と対話。aiReview と（あれば）teacherReview を文脈に含める
 
 Gemini は thinkingBudget:0＋モデルフォールバック（2.5-flash → 2.5-flash-lite）＋safetySettings を rowke と同様に設定。
