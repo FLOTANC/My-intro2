@@ -1701,8 +1701,7 @@
       const file = e.target.files[0];
       if (!file) return;
       compressImage(file, 200, b64 => {
-        const key = studentName.replace(/[.#$\[\]/]/g, '_');
-        db.ref('art/avatars/' + key).set(b64);
+        dbWriteSafe('setStudentAvatar', { studentName, image: b64 });
       });
     };
     input.click();
@@ -1726,7 +1725,7 @@
             : 'unknown';
           const key = 'parent_' + studentName.replace(/[.#$\[\]/]/g, '_');
           parentAvatarCache[key] = b64;
-          db.ref('art/avatars/' + key).set(b64);
+          dbWriteSafe('setParentAvatar', { studentName, image: b64 });
         }
         if (currentArtworkId && artworks[currentArtworkId])
           renderComments(artworks[currentArtworkId]);
@@ -1749,6 +1748,22 @@
     if (isTeacherViewer()) return true;
     alert('この操作は先生のみ行えます');
     return false;
+  }
+
+  // ===== 書き込みはすべて /api/db 経由（直接書き込みはルールで遮断済み）=====
+  function teacherPin() { try { return localStorage.getItem('rowke_teacher_pin') || ''; } catch(e) { return ''; } }
+  async function dbWrite(action, payload) {
+    const headers = { 'Content-Type': 'application/json' };
+    const pin = teacherPin();
+    if (pin) headers['x-teacher-pin'] = pin;
+    const res = await fetch('/api/db', { method: 'POST', headers, body: JSON.stringify({ action, payload }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+  // 既存の .then()なし呼び出しの置換用：失敗時はalert
+  function dbWriteSafe(action, payload) {
+    return dbWrite(action, payload).catch(e => alert('保存に失敗しました：' + e.message));
   }
 
   function attachCommentImage() {
@@ -1792,13 +1807,13 @@
 
   // Firebase
   const firebaseConfig = {
-    apiKey: "AIzaSyCio3NPmFHG9HEuNkCS4QnSNGlbeM_ZLCs",
-    authDomain: "family-compass-37891.firebaseapp.com",
-    projectId: "family-compass-37891",
-    storageBucket: "family-compass-37891.firebasestorage.app",
-    messagingSenderId: "832790097576",
-    appId: "1:832790097576:web:7451a91920051c1c769c9d",
-    databaseURL: "https://family-compass-37891-default-rtdb.asia-southeast1.firebasedatabase.app"
+    apiKey: "AIzaSyBaHdrESJGmNEPCBOh_XlOjgy_4lhFg5LE",
+    authDomain: "rowke-app.firebaseapp.com",
+    databaseURL: "https://rowke-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "rowke-app",
+    storageBucket: "rowke-app.firebasestorage.app",
+    messagingSenderId: "950459153761",
+    appId: "1:950459153761:web:ea18c5d7cb55ed589a9920"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
@@ -1937,44 +1952,13 @@
   }
 
   // 一意 token_id を生成: ROWKE-{年}-{4桁連番}-{4桁hash}
-  async function generateTokenId() {
-    const year = new Date().getFullYear();
-    const snap = await db.ref('art/certificates').once('value');
-    const all = snap.val() || {};
-    const seq = Object.keys(all).filter(k => k.startsWith(`ROWKE-${year}-`)).length + 1;
-    const hash = Math.random().toString(36).slice(2, 6);
-    return `ROWKE-${year}-${String(seq).padStart(4, '0')}-${hash}`;
-  }
-
-  // 証明書を発行して Firebase に保存。保存した token_id を返す。
-  // ※将来の本物 SBT 化は、この関数内に mint 処理を足すだけで済むよう集約している。
+  // 証明書を発行（採番・保存はサーバー側 /api/db で実施。先生PIN必須）。token_id を返す。
   async function issueCertificate({ studentName, artworkIds, wakeMessage, teacherMessage, periodText, artworkCount }) {
-    const tokenId = await generateTokenId();
-    const viewer = getViewer();
-    const record = {
-      token_id: tokenId,
-      studentName,
-      artworkIds,
-      wakeMessage,
-      teacherMessage: teacherMessage || '',
-      periodText,
-      artworkCount,
-      issuedAt: Date.now(),
-      issuer: (viewer && viewer.role === 'teacher') ? '先生' : (viewer?.name || 'unknown'),
-      soulbound: true,
-      metadata: {
-        name: `rowke 修了証 — ${studentName}`,
-        description: `${studentName}の航跡の証。Wake先生より。`,
-        image: '',
-        attributes: [
-          { trait_type: 'period',       value: periodText || '' },
-          { trait_type: 'artworkCount', value: artworkCount },
-          { trait_type: 'soulbound',    value: 'true' }
-        ]
-      }
-    };
-    await db.ref('art/certificates/' + tokenId).set(record);
-    return tokenId;
+    const r = await dbWrite('issueCertificate', {
+      studentName, artworkIds, wakeMessage, teacherMessage: teacherMessage || '',
+      periodText, artworkCount
+    });
+    return r.tokenId;
   }
 
   // 証明書ページの URL を組み立てる
@@ -2595,10 +2579,6 @@
       inputArea.id = 'replyarea_' + uid;
       inputArea.style.display = 'none';
       inputArea.innerHTML = `
-        <select class="reply-role-select" id="replyrole_${uid}">
-          <option value="teacher">👩‍🎨 先生として返信</option>
-          <option value="parent">👨‍👩‍👦 おうちの方として返信</option>
-        </select>
         <textarea class="reply-textarea" id="replytext_${uid}" rows="2" placeholder="返信を入力…"></textarea>
         <div class="reply-send-row">
           <button class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="cancelReply('${uid}')">キャンセル</button>
@@ -2686,20 +2666,16 @@
     if (!newText || !currentArtworkId) return;
 
     if (editInfo.type === 'teacher') {
-      const update = { teacherComment: newText, teacherCommentDate: Date.now() };
+      const p = { artworkId: currentArtworkId, target: 'teacher', text: newText };
       if (uid in _editImages) {
-        update.teacherCommentImages = _editImages[uid].length ? _editImages[uid] : null;
-        update.teacherCommentImage = null; // 旧フィールドをクリア
+        p.images = _editImages[uid].length ? _editImages[uid] : null;
         delete _editImages[uid];
       }
-      db.ref('art/artworks/' + currentArtworkId).update(update);
+      dbWriteSafe('editComment', p);
     } else if (editInfo.type === 'student') {
-      db.ref('art/artworks/' + currentArtworkId).update({ studentComment: newText });
+      dbWriteSafe('editComment', { artworkId: currentArtworkId, target: 'student', text: newText });
     } else if (editInfo.type === 'comment' && editInfo.key) {
-      db.ref('art/artworks/' + currentArtworkId + '/comments/' + editInfo.key).update({
-        text: newText,
-        edited: true
-      });
+      dbWriteSafe('editComment', { artworkId: currentArtworkId, target: 'comment', key: editInfo.key, text: newText });
     }
     const bubble = document.getElementById('bubble_' + uid);
     bubble.classList.remove('editing');
@@ -2715,15 +2691,9 @@
     const imgs = [...pendingCommentImages];
 
     if (role === 'teacher') {
-      const update = { teacherCommentDate: Date.now() };
-      if (text) update.teacherComment = text;
-      if (imgs.length) update.teacherCommentImages = imgs;
-      db.ref('art/artworks/' + currentArtworkId).update(update);
+      dbWriteSafe('teacherComment', { artworkId: currentArtworkId, text, images: imgs });
     } else {
-      const data = { role, text: text||'', ts: Date.now() };
-      if (imgs.length === 1) data.imageBase64 = imgs[0];
-      else if (imgs.length > 1) data.imageBase64s = imgs;
-      db.ref('art/artworks/' + currentArtworkId + '/comments').push(data);
+      dbWriteSafe('postComment', { artworkId: currentArtworkId, text, images: imgs });
     }
     document.getElementById('comment-input').value = '';
     removeAttach();
@@ -2735,7 +2705,7 @@
     const newLikes = (art.likes || 0) + (currentLiked ? -1 : 1);
     currentLiked = !currentLiked;
     localStorage.setItem('liked_' + currentArtworkId, currentLiked ? '1' : '0');
-    db.ref('art/artworks/' + currentArtworkId).update({ likes: Math.max(0, newLikes) });
+    dbWriteSafe('like', { artworkId: currentArtworkId, likes: Math.max(0, newLikes) });
     document.getElementById('like-icon').textContent = currentLiked ? '❤️' : '🤍';
     document.getElementById('like-btn').classList.toggle('liked', currentLiked);
     document.getElementById('like-count').textContent = Math.max(0, newLikes);
@@ -2794,24 +2764,25 @@
     const comment = document.getElementById('up-comment').value.trim();
     const artworkType = document.querySelector('input[name="up-type"]:checked').value;
     if (!name || !title) { alert('生徒名とタイトルを入力してください'); return; }
-    const data = { studentName: name, age, title, artworkType, ts: Date.now(), likes: 0 };
+    const data = { studentName: name, age, title, artworkType };
     if (pendingImageBase64) data.imageBase64 = pendingImageBase64;
     if (comment) data.studentComment = comment;
-    db.ref('art/artworks').push(data).then(() => {
+    dbWrite('uploadArtwork', { data }).then(() => {
       closeUpload();
       ['up-name','up-age','up-title','up-comment'].forEach(id => document.getElementById(id).value = '');
       // ラジオをデフォルトに戻す
       document.querySelector('input[name="up-type"][value="drawing"]').checked = true;
       onTypeChange();
-    });
+    }).catch(e => alert('アップロードに失敗しました：' + e.message));
   }
 
   function deleteStudentComment() {
     if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('生徒のコメントを削除しますか？')) return;
-    db.ref('art/artworks/' + currentArtworkId).update({ studentComment: null })
-      .then(() => renderComments(artworks[currentArtworkId]));
+    dbWrite('deleteComment', { artworkId: currentArtworkId, target: 'student' })
+      .then(() => renderComments(artworks[currentArtworkId]))
+      .catch(e => alert('削除に失敗しました：' + e.message));
   }
 
   // ===== REPLY =====
@@ -2819,13 +2790,8 @@
     if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('この返信を削除しますか？')) return;
-    let ref;
-    if (replyParent.type === 'teacher') {
-      ref = db.ref('art/artworks/' + currentArtworkId + '/teacherCommentReplies/' + replyKey);
-    } else {
-      ref = db.ref('art/artworks/' + currentArtworkId + '/comments/' + replyParent.key + '/replies/' + replyKey);
-    }
-    ref.remove();
+    const parent = replyParent.type === 'teacher' ? 'teacher' : replyParent.key;
+    dbWriteSafe('deleteReply', { artworkId: currentArtworkId, parent, key: replyKey });
   }
 
   function toggleReplyArea(uid) {
@@ -2839,17 +2805,12 @@
     document.getElementById('replytext_' + uid).value = '';
   }
   function postReply(uid, replyParent) {
-    const role = document.getElementById('replyrole_' + uid).value;
     const text = document.getElementById('replytext_' + uid).value.trim();
     if (!text || !currentArtworkId) return;
-    const data = { role, text, ts: Date.now() };
-    let ref;
-    if (replyParent.type === 'teacher') {
-      ref = db.ref('art/artworks/' + currentArtworkId + '/teacherCommentReplies').push();
-    } else {
-      ref = db.ref('art/artworks/' + currentArtworkId + '/comments/' + replyParent.key + '/replies').push();
-    }
-    ref.set(data);
+    const parent = replyParent.type === 'teacher' ? 'teacher' : replyParent.key;
+    // role はサーバーがPINの有無で決定（なりすまし防止）
+    dbWriteSafe('postReply', { artworkId: currentArtworkId, parent, text });
+    document.getElementById('replytext_' + uid).value = '';
     // UIはFirebaseのon('value')→renderFeedbackで自動更新
   }
 
@@ -2857,20 +2818,18 @@
     if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('このコメントを削除しますか？')) return;
-    db.ref('art/artworks/' + currentArtworkId + '/comments/' + key).remove()
-      .then(() => renderComments(artworks[currentArtworkId]));
+    dbWrite('deleteComment', { artworkId: currentArtworkId, target: 'comment', key })
+      .then(() => renderComments(artworks[currentArtworkId]))
+      .catch(e => alert('削除に失敗しました：' + e.message));
   }
 
   function deleteTeacherComment() {
     if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('先生からのコメントを削除しますか？')) return;
-    db.ref('art/artworks/' + currentArtworkId).update({
-      teacherComment: null,
-      teacherCommentDate: null,
-      teacherCommentImage: null,
-      teacherCommentImages: null
-    }).then(() => renderComments(artworks[currentArtworkId]));
+    dbWrite('deleteComment', { artworkId: currentArtworkId, target: 'teacher' })
+      .then(() => renderComments(artworks[currentArtworkId]))
+      .catch(e => alert('削除に失敗しました：' + e.message));
   }
 
   // ===== DELETE =====
@@ -2878,15 +2837,15 @@
     if (!requireTeacher()) return;
     if (!currentArtworkId) return;
     if (!confirm('この作品を削除しますか？\n削除すると元に戻せません。')) return;
-    db.ref('art/artworks/' + currentArtworkId).remove().then(() => {
+    dbWrite('deleteArtwork', { artworkId: currentArtworkId }).then(() => {
       currentArtworkId = null;
       switchTab('artworks');
-    });
+    }).catch(e => alert('削除に失敗しました：' + e.message));
   }
   function confirmDeleteArtwork(id) {
     if (!requireTeacher()) return;
     if (!confirm('この作品を削除しますか？\n削除すると元に戻せません。')) return;
-    db.ref('art/artworks/' + id).remove();
+    dbWriteSafe('deleteArtwork', { artworkId: id });
   }
 
   // ===== ANALYSIS =====
@@ -2933,7 +2892,7 @@
       const el = document.getElementById('score-' + key);
       if (el) analysis[key] = +el.value;
     });
-    db.ref('art/artworks/' + currentArtworkId + '/analysis').set(analysis);
+    dbWriteSafe('saveAnalysis', { artworkId: currentArtworkId, analysis });
     closeAnalysis();
     alert('スキル分析を保存しました');
   }
@@ -3189,20 +3148,16 @@
       intentionMedia:   pendingNMedia.intention.length  ? pendingNMedia.intention  : null,
       referencesMedia:  pendingNMedia.refs.length       ? pendingNMedia.refs       : null,
     };
-    const ref = currentNextStudent
-      ? db.ref('art/next_class_students/' + currentNextStudent.replace(/[.#$\[\]/]/g,'_'))
-      : db.ref('art/next_class');
-    ref.set(data).then(() => renderNextClass(data));
+    dbWrite('nextClassSet', { student: currentNextStudent || null, data })
+      .then(() => renderNextClass(data))
+      .catch(e => alert('保存に失敗しました：' + e.message));
     closeNextEdit();
   }
 
   function deleteNextClass() {
     const label = currentNextStudent ? `${currentNextStudent}の授業情報` : '共通の授業情報';
     if (!confirm(`「${label}」を削除してよろしいですか？`)) return;
-    const ref = currentNextStudent
-      ? db.ref('art/next_class_students/' + currentNextStudent.replace(/[.#$\[\]/]/g,'_'))
-      : db.ref('art/next_class');
-    ref.remove();
+    dbWriteSafe('nextClassDelete', { student: currentNextStudent || null });
     closeNextEdit();
   }
 
@@ -3576,7 +3531,7 @@
   function saveCritique() {
     const text = document.getElementById('cw-critique-input')?.value.trim() || '';
     if (!currentCWKey) return;
-    db.ref('art/critique/works/' + currentCWKey).update({ critique: text });
+    dbWriteSafe('critiqueWorkUpdate', { workKey: currentCWKey, critique: text });
   }
 
   function postCWComment(workKey) {
@@ -3586,25 +3541,27 @@
     const text  = input?.value.trim();
     if (!text) return;
     const name = viewer.name || (viewer.role === 'teacher' ? '先生' : '不明');
-    db.ref('art/critique/works/' + workKey + '/comments').push({ name, text, ts: Date.now() });
+    dbWrite('critiqueCommentAdd', { workKey, name, text })
+      .then(() => db.ref('art/critique/works/' + workKey).once('value', snap => {
+        renderCWComments(workKey, (snap.val()||{}).comments || {});
+      }))
+      .catch(e => alert('保存に失敗しました：' + e.message));
     if (input) input.value = '';
-    db.ref('art/critique/works/' + workKey).once('value', snap => {
-      renderCWComments(workKey, (snap.val()||{}).comments || {});
-    });
   }
 
   function deleteCWComment(workKey, commentKey) {
-    db.ref('art/critique/works/' + workKey + '/comments/' + commentKey).remove().then(() => {
-      db.ref('art/critique/works/' + workKey).once('value', snap => {
+    const viewer = getViewer();
+    dbWrite('critiqueCommentDelete', { workKey, commentKey, name: viewer?.name })
+      .then(() => db.ref('art/critique/works/' + workKey).once('value', snap => {
         renderCWComments(workKey, (snap.val()||{}).comments || {});
-      });
-    });
+      }))
+      .catch(e => alert('削除に失敗しました：' + e.message));
   }
 
   function deleteCritiqueWork() {
     if (!currentCWKey) return;
     if (!confirm('この作品を削除しますか？')) return;
-    db.ref('art/critique/works/' + currentCWKey).remove();
+    dbWriteSafe('critiqueWorkDelete', { workKey: currentCWKey });
     closeCritiqueWork();
   }
 
@@ -3654,7 +3611,7 @@
   function saveCritiqueSession() {
     const iso  = document.getElementById('ce-date').value;
     const time = document.getElementById('ce-time').value;
-    db.ref('art/critique').update({
+    dbWriteSafe('critiqueSessionUpdate', { update: {
       title:    document.getElementById('ce-title').value.trim()    || null,
       dateISO:  iso  || null,
       timeVal:  time || null,
@@ -3666,12 +3623,12 @@
       zoomUrl:      document.getElementById('ce-zoom').value.trim()  || null,
       teamsUrl:     document.getElementById('ce-teams').value.trim() || null,
       postVideoUrl: document.getElementById('ce-video').value.trim() || null,
-    });
+    } });
     closeCritiqueEdit();
   }
   function deleteCritiqueSession() {
     if (!confirm('この講評セッションをすべて削除しますか？')) return;
-    db.ref('art/critique').remove();
+    dbWriteSafe('critiqueSessionDelete', {});
     closeCritiqueEdit();
   }
 
@@ -3711,7 +3668,7 @@
   function saveAddWork() {
     const name = document.getElementById('caw-name').value.trim();
     if (!pendingCWImg && !name) return;
-    db.ref('art/critique/works').push({ studentName: name, image: pendingCWImg||'', critique:'', comments:{} });
+    dbWriteSafe('critiqueWorkAdd', { studentName: name, image: pendingCWImg||'' });
     closeAddWork();
   }
 
@@ -3813,7 +3770,7 @@
       ? (_quickMsgPrefix + (extra ? `\n${extra}` : ''))
       : extra;
     const name = viewer.name || (viewer.role === 'teacher' ? '先生' : '不明');
-    db.ref('art/messages').push({ role: viewer.role, name, text, ts: Date.now(), read: false });
+    dbWriteSafe('contactSend', { name, text });
     input.value = '';
     input.placeholder = '先生へのメッセージを入力...';
     // ボタンの選択状態リセット
@@ -3824,11 +3781,11 @@
   }
 
   function markContactRead(key) {
-    db.ref('art/messages/' + key).update({ read: true });
+    dbWriteSafe('contactRead', { key });
   }
 
   function deleteContactMsg(key) {
-    db.ref('art/messages/' + key).remove();
+    dbWriteSafe('contactDelete', { key });
   }
 
   // ===== VIEWER IDENTITY =====
@@ -3851,6 +3808,7 @@
   }
   function changeViewer() {
     localStorage.removeItem('rowke_viewer');
+    try { localStorage.removeItem('rowke_teacher_pin'); } catch(e) {}
     // reset pw area
     document.getElementById('teacher-pw-area').style.display = 'none';
     document.getElementById('teacher-pw-input').value = '';
@@ -3874,9 +3832,18 @@
       setTimeout(() => document.getElementById('teacher-pw-input').focus(), 50);
     }
   }
-  function checkTeacherPw() {
+  async function checkTeacherPw() {
     const val = document.getElementById('teacher-pw-input').value;
-    if (btoa(val) === btoa('r1043')) {
+    let ok = false;
+    try {
+      const res = await fetch('/api/db', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verifyPin', payload: { pin: val } })
+      });
+      ok = res.ok;
+    } catch (e) { ok = false; }
+    if (ok) {
+      try { localStorage.setItem('rowke_teacher_pin', val); } catch(e) {}
       setViewer('teacher', null);
     } else {
       document.getElementById('teacher-pw-err').style.display = 'block';
@@ -4184,13 +4151,8 @@
       _wakeHistory.push({ question, answer });
       if (_wakeHistory.length > 10) _wakeHistory.shift();
 
-      // Firebase に未読通知を書き込む（先生への通知）
-      db.ref('art/wake_notifications').push({
-        studentName: viewer.name || viewer.role,
-        question,
-        ts: Date.now(),
-        read: false
-      });
+      // 先生への未読通知を書き込む（API経由）
+      dbWriteSafe('wakeNotification', { studentName: viewer.name || viewer.role, question });
 
     } catch(err) {
       removeWakeTyping();
