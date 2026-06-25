@@ -1586,7 +1586,12 @@
     <button class="sheet-close" onclick="closeNextEdit()">✕</button>
     <div class="sheet-title">次の授業を編集</div>
     <div class="field"><label>テーマ</label><input id="next-input-theme" type="text" placeholder="例：動物の動き"></div>
-    <div class="field"><label>日程</label><input id="next-input-date" type="text" placeholder="例：6月10日（火）14:00〜"></div>
+    <div class="field"><label>日程（日付を選ぶと曜日は自動）</label>
+      <div style="display:flex;gap:8px;">
+        <input id="next-input-datepick" type="date" style="flex:2;min-width:0;">
+        <input id="next-input-timepick" type="time" style="flex:1;min-width:0;">
+      </div>
+    </div>
     <div class="field">
       <label>持ち物（改行で区切る）</label>
       <textarea id="next-input-materials" placeholder="スケッチブック&#10;鉛筆（2B・4B）&#10;消しゴム"></textarea>
@@ -3122,6 +3127,20 @@
       </div>`).join('');
   }
 
+  const NC_WD=['日','月','火','水','木','金','土'];
+  function parseNextDate(str){ str=str||''; let iso='',time='';
+    const tm=str.match(/(\d{1,2}):(\d{2})/); if(tm) time=String(tm[1]).padStart(2,'0')+':'+tm[2];
+    const md=str.match(/(\d{1,2})月(\d{1,2})日/);
+    if(md){ const mo=+md[1], da=+md[2]; let y=new Date().getFullYear();
+      let dt=new Date(y,mo-1,da); const today=new Date(); today.setHours(0,0,0,0);
+      if((dt-today)/86400000 < -30){ y++; dt=new Date(y,mo-1,da); }
+      iso=y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0'); }
+    return {iso,time};
+  }
+  function composeNextDate(iso,time){ if(!iso) return time?('時間 '+time):'';
+    const p=iso.split('-'); const dt=new Date(+p[0],+p[1]-1,+p[2]);
+    return (dt.getMonth()+1)+'月'+dt.getDate()+'日（'+NC_WD[dt.getDay()]+'）'+(time?time+'〜':'');
+  }
   function openNextEdit() {
     const ref = currentNextStudent
       ? db.ref('art/next_class_students/' + currentNextStudent.replace(/[.#$\[\]/]/g,'_'))
@@ -3130,7 +3149,7 @@
       const d = snap.val() || {};
       document.getElementById('next-input-intention').value  = d.intention || '';
       document.getElementById('next-input-theme').value      = d.theme || '';
-      document.getElementById('next-input-date').value       = d.date  || '';
+      { const pd=parseNextDate(d.date||''); document.getElementById('next-input-datepick').value=pd.iso; document.getElementById('next-input-timepick').value=pd.time; }
       document.getElementById('next-input-materials').value  = (d.materials  ||[]).join('\n');
       document.getElementById('next-input-supplies').value   = (d.supplies   ||[]).join('\n');
       document.getElementById('next-input-advice').value     = d.advice || '';
@@ -3154,7 +3173,7 @@
     const data = {
       intention:  document.getElementById('next-input-intention').value.trim(),
       theme:      document.getElementById('next-input-theme').value.trim(),
-      date:       document.getElementById('next-input-date').value.trim(),
+      date:       composeNextDate(document.getElementById('next-input-datepick').value, document.getElementById('next-input-timepick').value),
       materials:  toArr(document.getElementById('next-input-materials').value),
       supplies:   toArr(document.getElementById('next-input-supplies').value),
       advice:     document.getElementById('next-input-advice').value.trim(),
