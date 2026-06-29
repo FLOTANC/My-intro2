@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>rowke バーチャル展示室</title>
+<style>
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;background:#0a0f1a;overflow:hidden;font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:#eaf2fb;}
+  #c{display:block;width:100%;height:100%;}
+  .overlay{position:fixed;pointer-events:none;}
+  /* タイトル */
+  #brand{top:14px;left:16px;font-size:13px;letter-spacing:.18em;color:rgba(255,255,255,.7);font-weight:700;}
+  #brand small{display:block;font-size:9px;letter-spacing:.3em;color:rgba(255,255,255,.4);margin-top:3px;}
+  /* 戻る */
+  #back{position:fixed;top:12px;right:14px;z-index:10;pointer-events:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+    color:#fff;font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);font-family:inherit;}
+  /* 作品情報 */
+  #info{left:50%;bottom:86px;transform:translateX(-50%);width:min(92%,520px);background:rgba(8,14,26,.82);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px;opacity:0;transition:opacity .3s;text-align:left;}
+  #info.show{opacity:1;}
+  #info .t{font-size:16px;font-weight:700;}
+  #info .n{font-size:12px;color:#9fc2e6;margin-top:2px;}
+  #info .c{font-size:13px;line-height:1.7;margin-top:8px;color:#dceaf7;border-top:1px solid rgba(255,255,255,.12);padding-top:8px;}
+  #info .c b{color:#7fd3ff;font-weight:700;}
+  /* 操作ヒント */
+  #hint{left:50%;bottom:18px;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,.55);text-align:center;width:90%;}
+  /* スタート */
+  #start{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(120% 80% at 50% 30%,#16263f,#0a0f1a);text-align:center;padding:24px;}
+  #start h1{font-size:24px;font-weight:800;letter-spacing:.04em;}
+  #start p{font-size:13px;color:#9fb6cc;margin-top:10px;line-height:1.8;max-width:340px;}
+  #start button{margin-top:22px;background:linear-gradient(120deg,#2dd4e6,#3b82f6);color:#04121f;border:none;font-weight:800;
+    font-size:15px;padding:13px 30px;border-radius:999px;cursor:pointer;font-family:inherit;}
+  #loading{font-size:12px;color:#9fb6cc;margin-top:16px;}
+  /* モバイル操作 */
+  #touch{position:fixed;inset:0;z-index:8;display:none;}
+  #fwd{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:9;pointer-events:auto;width:84px;height:84px;border-radius:50%;
+    background:rgba(45,212,230,.18);border:2px solid rgba(45,212,230,.5);color:#bfeefc;font-size:13px;font-weight:700;display:none;
+    align-items:center;justify-content:center;font-family:inherit;}
+  .mobile #touch{display:block;} .mobile #fwd{display:flex;}
+</style>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="touch"></div>
+<button id="fwd">▲<br>進む</button>
+<button id="back" onclick="location.href='./'">← もどる</button>
+<div class="overlay" id="brand">rowke 展示室<small>VIRTUAL GALLERY</small></div>
+<div class="overlay" id="info"><div class="t"></div><div class="n"></div><div class="c"></div></div>
+<div class="overlay" id="hint"></div>
+
+<div id="start">
+  <h1>🖼 rowke バーチャル展示室</h1>
+  <p id="start-desc">生徒の作品を、ひとつの展示空間で。<br>歩いて近づくと、Wake先生と先生の講評が現れます。</p>
+  <button id="enter">展示室に入る</button>
+  <div id="loading">作品を読み込み中…</div>
+</div>
+
+<script>
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth<900);
+if(isMobile) document.body.classList.add('mobile');
+
+firebase.initializeApp({
+  apiKey:"AIzaSyBaHdrESJGmNEPCBOh_XlOjgy_4lhFg5LE", authDomain:"rowke-app.firebaseapp.com",
+  databaseURL:"https://rowke-app-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"rowke-app",
+  storageBucket:"rowke-app.firebasestorage.app", messagingSenderId:"950459153761", appId:"1:950459153761:web:ea18c5d7cb55ed589a9920"
+});
+
+let scene,camera,renderer,frames=[],artItems=[];
+let yaw=0,pitch=0, move=false;
+const keys={};
+const SPACING=6, HALLW=6;
+
+function buildArtList(data){
+  const arr=Object.entries(data||{}).map(([id,a])=>({
+    id, title:a.title||'無題', name:a.studentName||'', age:a.age||'',
+    img:a.imageBase64||null, teacher:a.teacherComment||'',
+    wake:firstComment(a.comments)
+  })).filter(a=>a.img);
+  arr.sort((a,b)=>0);
+  return arr;
+}
+function firstComment(comments){
+  if(!comments) return '';
+  const vals=Object.values(comments);
+  const w=vals.find(c=>/wake|ウェイク|先生/i.test((c.author||c.name||'')));
+  return (w&&(w.text||w.body))|| (vals[0]&&(vals[0].text||vals[0].body)) || '';
+}
+
+function init(items){
+  artItems=items;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0a0f1a);
+  scene.fog=new THREE.Fog(0x0a0f1a, 14, 46);
+  camera=new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 200);
+  camera.position.set(0,1.6,4);
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+
+  // 照明
+  scene.add(new THREE.AmbientLight(0x8fb6e0, .5));
+  const dir=new THREE.DirectionalLight(0xffffff,.5); dir.position.set(5,12,6); scene.add(dir);
+
+  const len = Math.max(3, Math.ceil(artItems.length/2)) * SPACING + 10;
+  // 床・天井
+  const floorMat=new THREE.MeshStandardMaterial({color:0x121a2a,roughness:.9});
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(HALLW*2,len),floorMat);
+  floor.rotation.x=-Math.PI/2; floor.position.z=-len/2+4; scene.add(floor);
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(HALLW*2,len),new THREE.MeshStandardMaterial({color:0x0c1322}));
+  ceil.rotation.x=Math.PI/2; ceil.position.set(0,4.2,-len/2+4); scene.add(ceil);
+  // 壁
+  const wallMat=new THREE.MeshStandardMaterial({color:0x18233a,roughness:.95});
+  [-HALLW,HALLW].forEach(x=>{ const w=new THREE.Mesh(new THREE.PlaneGeometry(len,4.2),wallMat);
+    w.position.set(x,2.1,-len/2+4); w.rotation.y=x<0?Math.PI/2:-Math.PI/2; scene.add(w); });
+
+  // 作品を左右交互に配置
+  const loader=new THREE.TextureLoader();
+  artItems.forEach((a,i)=>{
+    const side = i%2===0?-1:1;
+    const z = -(Math.floor(i/2))*SPACING - 4;
+    const x = side*(HALLW-0.15);
+    // フレーム
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(3.0,2.2,0.12), new THREE.MeshStandardMaterial({color:0x0d1626,roughness:.6}));
+    frame.position.set(x,2.0,z); frame.rotation.y=side<0?Math.PI/2:-Math.PI/2; scene.add(frame);
+    // スポット
+    const sp=new THREE.SpotLight(0xfff2d8,7,9,Math.PI/6,.5,1.2);
+    sp.position.set(x - side*0.2,3.9,z); sp.target.position.set(x,2.0,z); scene.add(sp); scene.add(sp.target);
+    // 画像
+    loader.load(a.img,(tex)=>{
+      tex.colorSpace=THREE.SRGBColorSpace;
+      const ratio=(tex.image.width||1)/(tex.image.height||1);
+      let w=2.6,h=2.6/ratio; if(h>1.9){h=1.9;w=1.9*ratio;}
+      const pic=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex}));
+      pic.position.set(x - side*0.07,2.0,z); pic.rotation.y=side<0?Math.PI/2:-Math.PI/2; scene.add(pic);
+    });
+    frames.push({mesh:frame,art:a,pos:new THREE.Vector3(x,2.0,z)});
+  });
+
+  addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  setupControls();
+  document.getElementById('hint').textContent = isMobile?'画面ドラッグで見回す／「進む」で前へ':'マウスで見回す・W/A/S/D（↑↓←→）で移動・クリックで視点固定';
+  animate();
+}
+
+function setupControls(){
+  if(!isMobile){
+    addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
+    addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+    const cv=document.getElementById('c');
+    cv.addEventListener('click',()=>{ if(document.pointerLockElement!==cv) cv.requestPointerLock(); });
+    addEventListener('mousemove',e=>{ if(document.pointerLockElement===document.getElementById('c')){
+      yaw-=e.movementX*0.0022; pitch-=e.movementY*0.0022; pitch=Math.max(-1.2,Math.min(1.2,pitch)); }});
+  } else {
+    const t=document.getElementById('touch'); let lx=0,ly=0,drag=false;
+    t.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+    t.addEventListener('touchmove',e=>{ if(!drag)return; const x=e.touches[0].clientX,y=e.touches[0].clientY;
+      yaw-=(x-lx)*0.005; pitch-=(y-ly)*0.005; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=x;ly=y; },{passive:true});
+    t.addEventListener('touchend',()=>drag=false);
+    const f=document.getElementById('fwd');
+    const on=()=>move=true,off=()=>move=false;
+    f.addEventListener('touchstart',e=>{e.preventDefault();on();}); f.addEventListener('touchend',off); f.addEventListener('touchcancel',off);
+  }
+}
+
+const fwd=new THREE.Vector3(), right=new THREE.Vector3(), info=document.getElementById('info');
+function animate(){
+  requestAnimationFrame(animate);
+  // 視線
+  camera.rotation.order='YXZ'; camera.rotation.y=yaw; camera.rotation.x=pitch;
+  // 移動
+  fwd.set(-Math.sin(yaw),0,-Math.cos(yaw)); right.set(Math.cos(yaw),0,-Math.sin(yaw));
+  const sp=0.12;
+  if(keys['w']||keys['arrowup']||move) camera.position.addScaledVector(fwd,sp);
+  if(keys['s']||keys['arrowdown']) camera.position.addScaledVector(fwd,-sp);
+  if(keys['a']||keys['arrowleft']) camera.position.addScaledVector(right,-sp);
+  if(keys['d']||keys['arrowright']) camera.position.addScaledVector(right,sp);
+  // 壁内に制限
+  camera.position.x=Math.max(-HALLW+1,Math.min(HALLW-1,camera.position.x));
+  camera.position.y=1.6;
+  // 最寄り作品
+  let near=null,nd=5.5;
+  frames.forEach(f=>{ const d=camera.position.distanceTo(f.pos); if(d<nd){nd=d;near=f;} });
+  if(near){ showInfo(near.art); } else { info.classList.remove('show'); }
+  renderer.render(scene,camera);
+}
+let curId=null;
+function showInfo(a){
+  if(curId!==a.id){ curId=a.id;
+    info.querySelector('.t').textContent=a.title;
+    info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
+    const parts=[]; if(a.wake) parts.push('<b>Wake先生</b> '+esc(a.wake)); if(a.teacher) parts.push('<b>先生</b> '+esc(a.teacher));
+    info.querySelector('.c').innerHTML=parts.join('<br>')||'（講評はまだありません）';
+  }
+  info.classList.add('show');
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+// 読み込み
+firebase.database().ref('art/artworks').once('value').then(snap=>{
+  const items=buildArtList(snap.val());
+  const ld=document.getElementById('loading');
+  if(!items.length){ ld.textContent='展示できる作品がまだありません'; }
+  else ld.textContent=items.length+' 点の作品を展示します';
+  document.getElementById('enter').onclick=()=>{ document.getElementById('start').style.display='none'; if(!scene) init(items); };
+}).catch(e=>{ document.getElementById('loading').textContent='読み込みに失敗しました'; });
+</script>
+</body>
+</html>
