@@ -30,8 +30,10 @@
     background:radial-gradient(120% 80% at 50% 30%,#16263f,#0a0f1a);text-align:center;padding:24px;}
   #start h1{font-size:24px;font-weight:800;letter-spacing:.04em;}
   #start p{font-size:13px;color:#9fb6cc;margin-top:10px;line-height:1.8;max-width:340px;}
-  #start button{margin-top:22px;background:linear-gradient(120deg,#2dd4e6,#3b82f6);color:#04121f;border:none;font-weight:800;
-    font-size:15px;padding:13px 30px;border-radius:999px;cursor:pointer;font-family:inherit;}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 18px rgba(45,212,230,.45),0 0 40px rgba(59,130,246,.3);}50%{box-shadow:0 0 30px rgba(45,212,230,.8),0 0 70px rgba(59,130,246,.55);}}
+  #start button{margin-top:26px;background:linear-gradient(120deg,#2dd4e6,#3b82f6);color:#fff;border:none;font-weight:300;letter-spacing:.08em;
+    font-size:16px;padding:14px 34px;border-radius:999px;cursor:pointer;font-family:inherit;animation:glowPulse 2.4s ease-in-out infinite;}
+  #start button:hover{filter:brightness(1.08);}
   #loading{font-size:12px;color:#9fb6cc;margin-top:16px;}
   /* モバイル操作 */
   #touch{position:fixed;inset:0;z-index:8;display:none;}
@@ -54,7 +56,7 @@
 <div class="overlay" id="hint"></div>
 
 <div id="start">
-  <h1>🖼 rowke バーチャル展示室</h1>
+  <h1>rowke バーチャル展示室</h1>
   <p id="start-desc">生徒の作品を、ひとつの展示空間で。<br>歩いて近づくと、Wake先生と先生の講評が現れます。</p>
   <button id="enter">展示室に入る</button>
   <div id="loading">作品を読み込み中…</div>
