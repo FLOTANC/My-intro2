@@ -21,8 +21,10 @@
   #info.show{opacity:1;}
   #info .t{font-size:16px;font-weight:700;}
   #info .n{font-size:12px;color:#9fc2e6;margin-top:2px;}
-  #info .c{font-size:13px;line-height:1.7;margin-top:8px;color:#dceaf7;border-top:1px solid rgba(255,255,255,.12);padding-top:8px;}
-  #info .c b{color:#7fd3ff;font-weight:700;}
+  #info .c{font-size:13px;line-height:1.8;margin-top:8px;color:#dceaf7;border-top:1px solid rgba(255,255,255,.12);padding-top:10px;word-break:break-word;}
+  #info .speaker{margin-bottom:12px;}
+  #info .speaker:last-child{margin-bottom:0;}
+  #info .speaker b{display:inline-block;color:#7fd3ff;font-weight:700;background:rgba(127,211,255,.12);padding:1px 8px;border-radius:6px;margin-right:6px;font-size:12px;}
   /* 操作ヒント */
   #hint{left:50%;bottom:18px;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,.55);text-align:center;width:90%;}
   /* スタート */
@@ -145,7 +147,7 @@ function init(items){
 
   addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
   setupControls();
-  document.getElementById('hint').textContent = isMobile?'画面ドラッグで見回す／「進む」で前へ':'マウスで見回す・W/A/S/D（↑↓←→）で移動・クリックで視点固定';
+  document.getElementById('hint').textContent = isMobile?'画面ドラッグで見回す／「進む」で前へ':'ドラッグで見回す・W/A/S/D（↑↓←→）で移動';
   animate();
 }
 
@@ -153,10 +155,11 @@ function setupControls(){
   if(!isMobile){
     addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
     addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-    const cv=document.getElementById('c');
-    cv.addEventListener('click',()=>{ if(document.pointerLockElement!==cv) cv.requestPointerLock(); });
-    addEventListener('mousemove',e=>{ if(document.pointerLockElement===document.getElementById('c')){
-      yaw-=e.movementX*0.0022; pitch-=e.movementY*0.0022; pitch=Math.max(-1.2,Math.min(1.2,pitch)); }});
+    const cv=document.getElementById('c'); let down=false,lx=0,ly=0;
+    cv.style.cursor='grab';
+    cv.addEventListener('mousedown',e=>{ down=true; lx=e.clientX; ly=e.clientY; cv.style.cursor='grabbing'; });
+    addEventListener('mouseup',()=>{ down=false; cv.style.cursor='grab'; });
+    addEventListener('mousemove',e=>{ if(!down)return; yaw-=(e.clientX-lx)*0.004; pitch-=(e.clientY-ly)*0.004; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=e.clientX; ly=e.clientY; });
   } else {
     const t=document.getElementById('touch'); let lx=0,ly=0,drag=false;
     t.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
@@ -195,12 +198,14 @@ function showInfo(a){
   if(curId!==a.id){ curId=a.id;
     info.querySelector('.t').textContent=a.title;
     info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
-    const parts=[]; if(a.wake) parts.push('<b>Wake先生</b> '+esc(a.wake)); if(a.teacher) parts.push('<b>先生</b> '+esc(a.teacher));
-    info.querySelector('.c').innerHTML=parts.join('<br>')||'（講評はまだありません）';
+    const block=(who,txt)=>`<div class="speaker"><b>${who}</b><span>${linkify(esc(txt))}</span></div>`;
+    const parts=[]; if(a.wake) parts.push(block('Wake先生',a.wake)); if(a.teacher) parts.push(block('先生',a.teacher));
+    info.querySelector('.c').innerHTML=parts.join('')||'（講評はまだありません）';
   }
   info.classList.add('show');
 }
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function linkify(s){ return s.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#9fd8ff;word-break:break-all;">$1</a>'); }
 
 // 読み込み
 firebase.database().ref('art/artworks').once('value').then(snap=>{
