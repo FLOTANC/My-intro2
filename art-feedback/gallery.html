@@ -80,19 +80,16 @@ const keys={};
 const SPACING=6, HALLW=6;
 
 function buildArtList(data){
-  const arr=Object.entries(data||{}).map(([id,a])=>({
-    id, title:a.title||'無題', name:a.studentName||'', age:a.age||'',
-    img:a.imageBase64||null, teacher:a.teacherComment||'',
-    wake:firstComment(a.comments)
-  })).filter(a=>a.img);
-  arr.sort((a,b)=>0);
-  return arr;
-}
-function firstComment(comments){
-  if(!comments) return '';
-  const vals=Object.values(comments);
-  const w=vals.find(c=>/wake|ウェイク|先生/i.test((c.author||c.name||'')));
-  return (w&&(w.text||w.body))|| (vals[0]&&(vals[0].text||vals[0].body)) || '';
+  return Object.entries(data||{}).map(([id,a])=>{
+    const comments=a.comments?Object.values(a.comments):[];
+    const parent=comments.find(c=>(c.role||'parent')!=='teacher');
+    const tFromComments=comments.find(c=>c.role==='teacher');
+    return {
+      id, title:a.title||'無題', name:a.studentName||'', age:a.age||'', img:a.imageBase64||null,
+      teacher: a.teacherComment || (tFromComments&&tFromComments.text) || '',
+      parent: (parent&&parent.text) || ''
+    };
+  }).filter(a=>a.img);
 }
 
 function init(items){
@@ -199,8 +196,8 @@ function showInfo(a){
     info.querySelector('.t').textContent=a.title;
     info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
     const block=(who,txt)=>`<div class="speaker"><b>${who}</b><span>${linkify(esc(txt))}</span></div>`;
-    const parts=[]; if(a.wake) parts.push(block('Wake先生',a.wake)); if(a.teacher) parts.push(block('先生',a.teacher));
-    info.querySelector('.c').innerHTML=parts.join('')||'（講評はまだありません）';
+    const parts=[]; if(a.teacher) parts.push(block('先生',a.teacher)); if(a.parent) parts.push(block('おうちの方',a.parent));
+    info.querySelector('.c').innerHTML=parts.join('')||'（コメントはまだありません）';
   }
   info.classList.add('show');
 }
