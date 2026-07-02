@@ -15,11 +15,20 @@
   /* 戻る */
   #back{position:fixed;top:12px;right:14px;z-index:10;pointer-events:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
     color:#fff;font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);font-family:inherit;}
+  /* 近づくと光るボタン */
+  #peek{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:9;pointer-events:auto;display:none;
+    background:linear-gradient(120deg,#2dd4e6,#3b82f6);color:#fff;font-weight:300;letter-spacing:.06em;font-size:14px;
+    border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;animation:glowPulse 2s ease-in-out infinite;}
+  #peek.show{display:inline-block;}
   /* 作品情報 */
-  #info{left:50%;bottom:86px;transform:translateX(-50%);width:min(92%,520px);background:rgba(8,14,26,.82);backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px;opacity:0;transition:opacity .3s;text-align:left;}
-  #info.show{opacity:1;}
-  #info .t{font-size:16px;font-weight:700;}
+  #info{left:50%;bottom:24px;width:min(92%,520px);max-height:58vh;overflow-y:auto;background:rgba(8,14,26,.9);backdrop-filter:blur(12px);
+    border:1px solid rgba(127,211,255,.22);border-radius:18px;padding:16px 16px 14px;opacity:0;transform:translate(-50%,16px);
+    transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1);text-align:left;pointer-events:none;
+    box-shadow:0 12px 44px rgba(0,0,0,.55), 0 0 34px rgba(45,212,230,.22);}
+  #info.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+  #info .close{position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  #info .t{font-size:16px;font-weight:700;padding-right:34px;}
   #info .n{font-size:12px;color:#9fc2e6;margin-top:2px;}
   #info .c{font-size:13px;line-height:1.8;margin-top:8px;color:#dceaf7;border-top:1px solid rgba(255,255,255,.12);padding-top:10px;word-break:break-word;}
   #info .speaker{margin-bottom:12px;}
@@ -53,8 +62,9 @@
 <div id="touch"></div>
 <button id="fwd">▲<br>進む</button>
 <button id="back" onclick="location.href='./'">← もどる</button>
+<button id="peek" onclick="openInfo()">コメントを見る</button>
 <div class="overlay" id="brand">rowke 展示室<small>VIRTUAL GALLERY</small></div>
-<div class="overlay" id="info"><div class="t"></div><div class="n"></div><div class="c"></div></div>
+<div class="overlay" id="info"><button class="close" onclick="closeInfo()">✕</button><div class="t"></div><div class="n"></div><div class="c"></div></div>
 <div class="overlay" id="hint"></div>
 
 <div id="start">
@@ -187,20 +197,24 @@ function animate(){
   // 最寄り作品
   let near=null,nd=5.5;
   frames.forEach(f=>{ const d=camera.position.distanceTo(f.pos); if(d<nd){nd=d;near=f;} });
-  if(near){ showInfo(near.art); } else { info.classList.remove('show'); }
+  const na=near?near.art:null;
+  if((na&&na.id)!==(nearArt&&nearArt.id)){
+    nearArt=na;
+    closeInfo();                       // 別の作品に移ったらコメントは閉じる
+    document.getElementById('peek').classList.toggle('show', !!na); // 近づいたらボタンを出す
+  }
   renderer.render(scene,camera);
 }
-let curId=null;
-function showInfo(a){
-  if(curId!==a.id){ curId=a.id;
-    info.querySelector('.t').textContent=a.title;
-    info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
-    const block=(who,txt)=>`<div class="speaker"><b>${who}</b><span>${linkify(esc(txt))}</span></div>`;
-    const parts=[]; if(a.teacher) parts.push(block('先生',a.teacher)); if(a.parent) parts.push(block('おうちの方',a.parent));
-    info.querySelector('.c').innerHTML=parts.join('')||'（コメントはまだありません）';
-  }
-  info.classList.add('show');
+let nearArt=null, peek=null;
+function fillInfo(a){
+  info.querySelector('.t').textContent=a.title;
+  info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
+  const block=(who,txt)=>`<div class="speaker"><b>${who}</b><span>${linkify(esc(txt))}</span></div>`;
+  const parts=[]; if(a.teacher) parts.push(block('先生',a.teacher)); if(a.parent) parts.push(block('おうちの方',a.parent));
+  info.querySelector('.c').innerHTML=parts.join('')||'（コメントはまだありません）';
 }
+function openInfo(){ if(!nearArt) return; fillInfo(nearArt); info.classList.add('show'); document.getElementById('peek').classList.remove('show'); }
+function closeInfo(){ info.classList.remove('show'); if(nearArt) document.getElementById('peek').classList.add('show'); }
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function linkify(s){ return s.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#9fd8ff;word-break:break-all;">$1</a>'); }
 
