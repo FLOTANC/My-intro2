@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wake Path — デッサン・トレーニング</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --navy:#0e3a52; --deep:#072a3f; --sea:#2f6082; --aqua:#34c8d6;
+    --foam:#9fe7e0; --ink:#1f2d36; --sub:#5a7180; --muted:#8aa0ac;
+    --bg:#f3f7f9; --card:#ffffff; --rule:#e3eaee; --gold:#e0a54a; --mint-d:#2a9d6f;
+  }
+  .lbl-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eef4f7;color:var(--sea);margin-right:4px;vertical-align:middle}
+  .month-head{font-size:13px;font-weight:700;color:var(--sea);margin:18px 2px 8px;padding-bottom:5px;border-bottom:2px solid var(--rule)}
+  /* バッジの泡 */
+  .bdg-wrap{position:relative;width:80px;height:80px;margin:0 auto;overflow:visible}
+  .bdg-bub{position:absolute;bottom:8px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95),rgba(159,231,224,.25));border:1px solid rgba(255,255,255,.55);pointer-events:none;opacity:0;animation:bdgRise var(--bd,3s) ease-in infinite;animation-delay:var(--bdl,0s)}
+  @keyframes bdgRise{0%{transform:translateY(0) scale(.5);opacity:0}20%{opacity:.8}100%{transform:translateY(-50px) scale(1);opacity:0}}
+  /* バッジ獲得の演出 */
+  #bdg-celebrate .cel-bub{position:absolute;bottom:-24px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95),rgba(159,231,224,.3));border:1px solid rgba(255,255,255,.5);pointer-events:none;animation:celRise var(--cd,3s) ease-in infinite;animation-delay:var(--cdl,0s)}
+  @keyframes celRise{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:.85}100%{transform:translateY(-105vh) scale(1.15);opacity:0}}
+  @keyframes celPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+  /* 成長の記録の海 */
+  @keyframes oaBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+  @keyframes oaWave{from{transform:translateX(0)}to{transform:translateX(-48px)}}
+  @keyframes oaBubRise{0%{transform:translateY(0) scale(.55);opacity:0}18%{opacity:.55}100%{transform:translateY(-260px) scale(1);opacity:0}}
+  @keyframes oaFlow{to{stroke-dashoffset:-280}}
+  .oa-card{position:relative;overflow:hidden}
+  .oa-sub{animation:oaBob 3.4s ease-in-out infinite}
+  .oa-ship{animation:oaBob 4.4s ease-in-out infinite}
+  .oa-wave{animation:oaWave 7s linear infinite}
+  .oa-wake-shimmer{animation:oaFlow 3.4s linear infinite}
+  .oa-bub{position:absolute;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.9),rgba(159,231,224,.18));border:1px solid rgba(255,255,255,.4);pointer-events:none;opacity:0;animation:oaBubRise var(--d,7s) linear infinite;animation-delay:var(--dl,0s)}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding-bottom:72px;max-width:720px;margin:0 auto;position:relative;min-height:100vh}
+  h2{font-size:18px;font-weight:700}
+  .en{font-family:'Poppins',sans-serif}
+  .screen{display:none;padding:16px}
+  .screen.active{display:block}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px;margin-bottom:14px}
+  .btn{font-family:inherit;font-size:14px;font-weight:600;border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--ink)}
+  .btn-primary{background:var(--navy);color:#fff;border:none}
+  .btn-aqua{background:linear-gradient(135deg,var(--aqua),var(--sea));color:#fff;border:none}
+  .btn:active{opacity:.8}
+  .field{width:100%;padding:11px 13px;border:1px solid var(--rule);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+  textarea.field{min-height:72px;resize:vertical;line-height:1.6}
+  label.lab{display:block;font-size:12px;font-weight:600;color:var(--sub);margin:10px 0 5px}
+  .muted{color:var(--muted);font-size:13px}
+  /* header（rowke と同じ海グラデーション）*/
+  .top-hero{
+    position:relative; overflow:hidden; color:#fff; padding:26px 18px 30px; border-radius:0 0 4px 4px;
+    background:linear-gradient(180deg,#cce9f5 0%,#9dd1ea 24%,#5ab8d8 44%,#2898be 60%,#1278a0 78%,#0a5a80 100%);
+  }
+  .top-hero .hero-wave{position:absolute;left:0;right:0;bottom:-1px;width:100%;display:block;z-index:3}
+  .top-hero .reeds{position:absolute;left:0;right:0;bottom:0;height:54px;pointer-events:none;z-index:2}
+  .top-hero .reeds .kelp{position:absolute;bottom:-2px;transform-origin:bottom center;opacity:.5;
+    animation:sway 3.8s ease-in-out infinite;animation-delay:var(--d,0s)}
+  .top-hero .reeds .kelp svg{display:block}
+  .top-hero .reeds .kelp path{fill:#0a3a52}
+  @keyframes sway{0%,100%{transform:rotate(-5deg) skewX(3deg)}50%{transform:rotate(5deg) skewX(-3deg)}}
+  /* 立ちのぼる泡 */
+  .top-hero .bub{position:absolute;bottom:8px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.7),rgba(255,255,255,.08));
+    border:1px solid rgba(255,255,255,.3);pointer-events:none;opacity:0;animation:rise var(--rd) linear infinite;animation-delay:var(--rdl)}
+  @keyframes rise{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:.7}90%{opacity:.4}100%{transform:translateY(-130px) scale(1);opacity:0}}
+  /* きらめき */
+  .top-hero .spk{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;pointer-events:none;opacity:0;
+    animation:twk var(--td) ease-in-out infinite;animation-delay:var(--tdl)}
+  @keyframes twk{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.9;transform:scale(1)}}
+  .brand{font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;letter-spacing:.02em;text-shadow:0 2px 14px rgba(10,40,60,.25);position:relative;z-index:2}
+  .brand small{display:block;font-weight:500;font-size:12px;opacity:.92;letter-spacing:.16em;margin-top:2px}
+  /* nav */
+  .nav{position:fixed;bottom:0;left:0;right:0;max-width:720px;margin:0 auto;background:#fff;border-top:1px solid var(--rule);
+    display:flex;justify-content:space-around;padding:8px 4px;z-index:50}
+  .nav button{flex:1;background:none;border:none;font-family:inherit;font-size:11px;color:var(--muted);cursor:pointer;padding:4px}
+  .nav button .ic{display:block;margin:0 auto 3px;width:22px;height:22px}
+  .nav button .ic svg{width:22px;height:22px;display:block}
+  .nav button{color:#9aa7af}
+  .nav button.active{color:#2a2a2a;font-weight:700}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(10,30,45,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+  .overlay.open{display:flex}
+  .modal{background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow:auto}
+  .pill{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;background:#eef4f7;color:var(--sea);font-weight:600}
+  .scorebar{height:8px;background:#eef2f4;border-radius:6px;overflow:hidden}
+  .scorebar > i{display:block;height:100%;background:linear-gradient(90deg,var(--aqua),var(--sea))}
+  .row{display:flex;align-items:center;gap:8px}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--rule);border-top-color:var(--sea);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- 画面：きょうの課題 -->
+<div id="screen-today" class="screen active"></div>
+<!-- 画面：提出＆講評 -->
+<div id="screen-submit" class="screen"></div>
+<!-- 画面：これまで -->
+<div id="screen-history" class="screen"></div>
+<!-- 画面：先生 -->
+<div id="screen-teacher" class="screen"></div>
+
+<!-- ナビ -->
+<div class="nav">
+  <button id="nav-today" class="active" onclick="switchTab('today',this)">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 5v14M4 12h10"/><path d="M14 5l4 3.5L14 12"/></svg></span>本日の課題</button>
+  <button id="nav-submit" onclick="switchTab('submit',this)">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg></span>提出</button>
+  <button id="nav-history" onclick="switchTab('history',this)">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15l4-5 3 3 4-6"/></svg></span>成長の記録</button>
+  <button id="nav-teacher" onclick="switchTab('teacher',this)">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></span>先生</button>
+</div>
+
+<!-- 身元モーダル -->
+<div id="viewer-overlay" class="overlay">
+  <div class="modal">
+    <h2 style="margin-bottom:4px;">ようこそ Wake Path へ</h2>
+    <p class="muted" style="margin-bottom:14px;">あなたは誰かな？</p>
+    <div id="viewer-student-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div class="muted" style="text-align:center;font-size:11px;margin:8px 0;">または</div>
+    <button class="btn btn-primary" style="width:100%;" onclick="toggleTeacherPw()">🧑‍🏫 先生として入る</button>
+    <div id="teacher-pw-area" style="display:none;margin-top:10px;">
+      <input id="teacher-pw-input" class="field" type="password" placeholder="先生PIN"
+        onkeydown="if(event.key==='Enter')checkTeacherPw()">
+      <div id="teacher-pw-err" style="display:none;color:#e05a5a;font-size:12px;margin-top:6px;">PINが違います</div>
+      <button class="btn btn-aqua" style="width:100%;margin-top:8px;" onclick="checkTeacherPw()">入る</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+  // ===== Firebase（rowke-app・読み取り専用、書き込みは /api/db）=====
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaHdrESJGmNEPCBOh_XlOjgy_4lhFg5LE",
+    authDomain: "rowke-app.firebaseapp.com",
+    databaseURL: "https://rowke-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "rowke-app",
+    storageBucket: "rowke-app.firebasestorage.app",
+    messagingSenderId: "950459153761",
+    appId: "1:950459153761:web:ea18c5d7cb55ed589a9920"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ===== 状態 =====
+  let students = {}, assignments = {}, submissions = {};
+  const AXES = ['proportion','volume','texture','composition','observation','space','light','structure','process'];
+  const AXIS_LABEL = { proportion:'形・プロポーション', volume:'量感・立体', texture:'質感・固有色',
+    composition:'構図', observation:'観察・描き込み', space:'空間把握', light:'光源理解',
+    structure:'構造理解', process:'制作プロセス' };
+  const GENRES = ['静物','石膏像','人物','手足','風景','想像','その他'];
+  function subMotif(s){ return (s.motif!=null?s.motif:((s.assignment&&s.assignment.motif)||'')); }
+  function subGenre(s){ return s.genre||''; }
+
+  db.ref('dessin/students').on('value', s => { students = s.val()||{}; renderAll(); if(_firstLoad){_firstLoad=false; if(!getViewer()) showViewerModal();} });
+  db.ref('dessin/assignments').on('value', s => { assignments = s.val()||{}; renderAll(); });
+  db.ref('dessin/submissions').on('value', s => { submissions = s.val()||{}; renderAll(); });
+  let _firstLoad = true;
+  function renderAll(){ try{
+    const v=getViewer(); if(!v) return;
+    if(document.getElementById('screen-today').classList.contains('active')) renderToday();
+    if(document.getElementById('screen-history').classList.contains('active')) renderHistory();
+    if(document.getElementById('screen-teacher').classList.contains('active')) renderTeacher();
+  }catch(e){console.error(e);} }
+
+  // ===== 身元 =====
+  function getViewer(){ try{return JSON.parse(localStorage.getItem('wakepath_viewer')||'null');}catch(e){return null;} }
+  function setViewer(role,name,studentId){
+    localStorage.setItem('wakepath_viewer', JSON.stringify({role,name:name||null,studentId:studentId||null}));
+    document.getElementById('viewer-overlay').classList.remove('open');
+    switchTab(role==='teacher'?'teacher':'today', document.getElementById(role==='teacher'?'nav-teacher':'nav-today'));
+  }
+  function isTeacher(){ return getViewer()?.role==='teacher'; }
+  let _teacherViewAs=null;
+  function currentStudent(){ const v=getViewer(); if(!v) return null;
+    if(v.role==='teacher'){ return _teacherViewAs && students[_teacherViewAs] ? {id:_teacherViewAs, ...students[_teacherViewAs]} : null; }
+    return v.studentId && students[v.studentId] ? {id:v.studentId, ...students[v.studentId]} : null; }
+  function setViewAs(id){ _teacherViewAs=id||null; renderToday(); renderHistory(); }
+  function teacherBar(){
+    if(!isTeacher()) return '';
+    const opts=Object.entries(students).map(([id,s])=>`<option value="${id}" ${_teacherViewAs===id?'selected':''}>${esc(s.name)}</option>`).join('');
+    return `<div style="padding:14px 16px 0;"><div class="card" style="margin-bottom:0;border-color:var(--aqua);background:#f0fbfc;">
+      <label class="lab" style="margin-top:0;">👩‍🏫 先生：生徒を選んで閲覧</label>
+      <select class="field" onchange="setViewAs(this.value)"><option value="">— 生徒を選択 —</option>${opts}</select></div></div>`;
+  }
+  function teacherPin(){ try{return localStorage.getItem('wakepath_teacher_pin')||'';}catch(e){return '';} }
+
+  function showViewerModal(){
+    const list=document.getElementById('viewer-student-list'); list.innerHTML='';
+    const entries=Object.entries(students);
+    if(!entries.length){ list.innerHTML='<div class="muted" style="text-align:center;">まだ生徒がいません。先生として入って登録してください。</div>'; }
+    entries.forEach(([id,s])=>{
+      const b=document.createElement('button'); b.className='btn'; b.style.cssText='width:100%;text-align:left;';
+      b.innerHTML=`👤 ${s.name}（${s.grade||''}）`;
+      b.onclick=()=>setViewer('student', s.name, id);
+      list.appendChild(b);
+    });
+    document.getElementById('teacher-pw-area').style.display='none';
+    document.getElementById('teacher-pw-input').value='';
+    document.getElementById('teacher-pw-err').style.display='none';
+    document.getElementById('viewer-overlay').classList.add('open');
+  }
+  function changeViewer(){ localStorage.removeItem('wakepath_viewer'); localStorage.removeItem('wakepath_teacher_pin'); showViewerModal(); }
+  function toggleTeacherPw(){ const a=document.getElementById('teacher-pw-area'); const open=a.style.display!=='none';
+    a.style.display=open?'none':'block'; if(!open) setTimeout(()=>document.getElementById('teacher-pw-input').focus(),50); }
+  async function checkTeacherPw(){
+    const val=document.getElementById('teacher-pw-input').value; let ok=false;
+    try{ const r=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'verifyPin',payload:{pin:val}})}); ok=r.ok; }catch(e){ok=false;}
+    if(ok){ try{localStorage.setItem('wakepath_teacher_pin',val);}catch(e){} setViewer('teacher',null); }
+    else{ document.getElementById('teacher-pw-err').style.display='block'; document.getElementById('teacher-pw-input').value=''; }
+  }
+
+  // ===== 通信ラッパー =====
+  async function dbWrite(action,payload){
+    const h={'Content-Type':'application/json'}; const p=teacherPin(); if(p) h['x-teacher-pin']=p;
+    const r=await fetch('/api/db',{method:'POST',headers:h,body:JSON.stringify({action,payload})});
+    const d=await r.json().catch(()=>({})); if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d;
+  }
+  function dbWriteSafe(action,payload){ return dbWrite(action,payload).catch(e=>alert('保存に失敗しました：'+e.message)); }
+  async function aiCall(action,payload){
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})});
+    const d=await r.json().catch(()=>({})); if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d;
+  }
+  function compressImage(file,max,cb){
+    const img=new Image(); const rd=new FileReader();
+    rd.onload=e=>{img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.85));};
+      img.src=e.target.result;}; rd.readAsDataURL(file);
+  }
+  function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+  // ★プライバシー切替：授業中は true（過去の講評に残る志望校名を「志望校」に伏せる）。授業後に false で元の表記に戻る。
+  const HIDE_SCHOOL = true;
+  function maskSchool(t){
+    if(!HIDE_SCHOOL || !t) return t||'';
+    // 特定の校名をコードに書かずに、文中の「○○高校／○○高等学校」を一般化して伏せる（授業後 HIDE_SCHOOL=false で元に戻る）
+    return t.replace(/[一-龥ぁ-んァ-ヶーｱ-ﾝ々〆]{2,12}(高等学校|高校)/g, '志望校');
+  }
+  function aiText(t){ return esc(maskSchool(t)); }
+  // Wake先生のアバター（イラストがあれば使用。無ければSVGにフォールバック）
+  function wakeAvatarSVG(px){ return `<svg width="${px}" height="${px}" viewBox="0 0 64 64" style="flex:none;border-radius:50%;box-shadow:0 1px 4px rgba(14,58,82,.25);vertical-align:middle;">
+    <defs><linearGradient id="wf-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd3e8"/><stop offset="1" stop-color="#1d6e98"/></linearGradient></defs>
+    <rect width="64" height="64" fill="url(#wf-bg)"/>
+    <circle cx="32" cy="35" r="15" fill="#f3d9bf"/>
+    <path d="M18 30 Q18 16 32 16 Q46 16 46 30 Q40 24 32 24 Q24 24 18 30Z" fill="#f5f7f8"/>
+    <path d="M17 33 Q18 52 32 56 Q46 52 47 33 Q44 47 32 49 Q20 47 17 33Z" fill="#f5f7f8"/>
+    <path d="M24 40 Q28 43 32 41 Q36 43 40 40" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M25 33 q2.4 -2.4 4.8 0" stroke="#3a2e25" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M34 33 q2.4 -2.4 4.8 0" stroke="#3a2e25" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M24 29 q3 -2 6 -0.5 M34 28.5 q3 -1.5 6 0.5" stroke="#dfe6ea" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="25" cy="38" r="2" fill="#f3b6a0" opacity=".6"/><circle cx="39" cy="38" r="2" fill="#f3b6a0" opacity=".6"/>
+    <path d="M14 27 Q32 12 50 27 L50 30 Q32 23 14 30 Z" fill="#0e3a52"/>
+    <rect x="12" y="27" width="40" height="5.5" rx="2.7" fill="#0a2c3f"/>
+    <circle cx="32" cy="23" r="3" fill="#ffd23f"/>
+  </svg>`; }
+  function wakeAvatar(px){ px=px||44;
+    return `<img src="wake-sensei.png" alt="Wake先生" width="${px}" height="${px}" style="flex:none;width:${px}px;height:${px}px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(14,58,82,.25);vertical-align:middle;" onerror="this.outerHTML=wakeAvatarSVG(${px})">`; }
+
+  // ===== ナビ =====
+  function switchTab(name,el){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    document.getElementById('screen-'+name).classList.add('active');
+    (el||document.getElementById('nav-'+name))?.classList.add('active');
+    window.scrollTo(0,0);
+    if(name==='today') renderToday();
+    if(name==='submit') renderSubmit();
+    if(name==='history') renderHistory();
+    if(name==='teacher') renderTeacher();
+    animateScreen('screen-'+name);
+  }
+
+  // ===== ヘルパー =====
+  function heroHTML(sub){
+    const kelpPath=(h,w,bend)=>{ // ゆらゆらした帯状（ワカメ）のシルエット
+      const cx=w/2;
+      return `M${cx-w*0.18} ${h} `+
+        `C${cx-w*0.45} ${h*0.74},${cx+w*0.5+bend} ${h*0.62},${cx-w*0.3+bend} ${h*0.44} `+
+        `C${cx-w*0.7+bend} ${h*0.3},${cx+w*0.35+bend*1.4} ${h*0.2},${cx+bend*1.6} 2 `+
+        `C${cx+w*0.55+bend*1.4} ${h*0.2},${cx-w*0.15+bend} ${h*0.32},${cx+w*0.42+bend} ${h*0.46} `+
+        `C${cx+w*0.95+bend} ${h*0.62},${cx+w*0.55} ${h*0.76},${cx+w*0.18} ${h} Z`;
+    };
+    const reeds = [3,11,18,25,74,82,90,97].map((l,i)=>{
+      const h=40+((i*23)%34), w=12+((i*7)%10), bend=(i%2?1:-1)*(5+i%4*2);
+      return `<span class="kelp" style="left:${l}%;--d:${(i%4)*0.25}s">`+
+        `<svg width="${w*2}" height="${h}" viewBox="0 0 ${w*2} ${h}">`+
+        `<path d="${kelpPath(h,w*2,bend)}"/></svg></span>`;
+    }).join('');
+    const bubs = [[14,9,9],[26,6,11],[42,13,8],[58,8,12],[70,5,10],[82,11,9.5],[91,7,13]]
+      .map(([l,s,d],i)=>`<span class="bub" style="left:${l}%;width:${s}px;height:${s}px;--rd:${d}s;--rdl:${(i*0.7).toFixed(1)}s"></span>`).join('');
+    const spks = [[22,40],[45,55],[66,48],[80,62],[34,70]]
+      .map(([l,t],i)=>`<span class="spk" style="left:${l}%;top:${t}%;--td:${3+i*0.5}s;--tdl:${(i*0.6).toFixed(1)}s"></span>`).join('');
+    return `<div class="top-hero">
+      ${spks}${bubs}
+      <div class="reeds">${reeds}</div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start;">
+        <div class="brand">Wake Path<small>DESSIN TRAINING</small></div>
+        <button class="btn" style="background:rgba(255,255,255,.22);color:#fff;border:none;font-size:11px;padding:6px 10px;" onclick="changeViewer()">切替</button>
+      </div>
+      ${sub?`<div style="margin-top:10px;position:relative;z-index:4;"><span style="display:inline-block;background:rgba(7,42,63,.6);color:#fff;font-size:14px;font-weight:600;padding:5px 13px;border-radius:999px;text-shadow:0 1px 2px rgba(0,0,0,.4);">${sub}</span></div>`:''}
+      <svg class="hero-wave" viewBox="0 0 480 28" preserveAspectRatio="none"><path d="M0,16 C80,28 160,4 260,14 C360,24 420,6 480,14 L480,28 L0,28 Z" fill="#f3f7f9"/></svg>
+    </div>`;
+  }
+  function animateScreen(id){
+    if(typeof gsap==='undefined') return;
+    const root=document.getElementById(id);
+    const hero=root.querySelector('.top-hero'); const cards=root.querySelectorAll('.card');
+    const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+    if(hero) tl.from(hero,{opacity:0,y:-16,duration:0.5});
+    if(hero) tl.from(hero.querySelectorAll('.reeds .kelp'),{scaleY:0,transformOrigin:'bottom center',duration:0.5,stagger:0.05},'-=0.25');
+    if(cards.length) tl.from(cards,{opacity:0,y:18,duration:0.45,stagger:0.07},'-=0.2');
+  }
+  function studentSubmissions(name){ return Object.entries(submissions).filter(([,s])=>s.studentName===name).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)); }
+  function latestPublishedAssignment(name){
+    const arr=Object.entries(assignments).filter(([,a])=>a.studentName===name&&a.status==='published').sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+    return arr.length?{id:arr[0][0],...arr[0][1]}:null;
+  }
+  function recentScores(name){ const subs=studentSubmissions(name); for(const [,s] of subs){ if(s.aiReview&&s.aiReview.scores) return s.aiReview.scores; } return {}; }
+  function scoreRow(k,v){ return `<div style="margin:6px 0;"><div class="row" style="justify-content:space-between;font-size:12px;"><span>${AXIS_LABEL[k]}</span><b>${v||'-'}</b></div><div class="scorebar"><i style="width:${(v||0)/5*100}%"></i></div></div>`; }
+
+  // ===== きょうの課題（Task 6）=====
+  let _timer=null, _spentSec=0, _deadline=null, _remainPause=null, _timerMin=0, _wakeLock=null;
+  function renderToday(){
+    const st=currentStudent(); const el=document.getElementById('screen-today');
+    if(!st){ el.innerHTML=heroHTML('')+teacherBar()+'<div style="padding:16px" class="muted">'+(isTeacher()?'上で生徒を選ぶと、その子の本日の課題が見られます。':'生徒として入ると、きょうの課題が表示されます。')+'</div>'; return; }
+    const a=latestPublishedAssignment(st.name);
+    const streak=(st.streak&&st.streak.count)||0;
+    // ログインボーナス（今日初回）
+    let bonus='';
+    try{ const key='wakepath_seen_'+st.name; const today=new Date().toDateString();
+      if(localStorage.getItem(key)!==today){ localStorage.setItem(key,today);
+        const msgs=['今日もよう来たのう。一本の線から始めようぞ。','描くほどに目は育つ。さあ、よく見ることからじゃ。','昨日の自分より一歩。それで十分えらいぞ。','力を抜いて、大きな形からいこうかの。'];
+        bonus=`<div class="card" style="border-color:var(--aqua);background:#f0fbfc;"><b>🌊 Wake先生より</b><div style="margin-top:6px;font-size:14px;">${msgs[Math.floor(Math.random()*msgs.length)]}</div></div>`; }
+    }catch(e){}
+    el.innerHTML = heroHTML(`${esc(st.name)} さん　🔥 ${streak}日連続`)+teacherBar()+`<div style="padding:16px">${bonus}`+(
+      a ? `<div class="card">
+        <span class="pill">${esc(a.stage||'基礎')}</span> <span class="pill" style="background:#cfe0ee;color:#0e3a52;">⏱ 制限 ${a.timeLimit}分</span>
+        <h2 style="margin:10px 0 8px;">${esc(a.title||a.motif||'本日の課題')}</h2>
+        ${a.motif?`<div style="margin-bottom:8px;"><span class="lbl-tag">モチーフ</span> ${esc(a.motif)}</div>`:''}
+        ${a.focus?`<div style="margin-bottom:8px;"><span class="lbl-tag" style="background:#dde9f3;color:#1d6e98;">ねらい</span> <span class="muted">${esc(a.focus)}</span></div>`:''}
+        ${a.caution?`<div style="margin-bottom:10px;"><span class="lbl-tag" style="background:#cfe0ee;color:#0e3a52;">気をつけて</span> <span class="muted">${esc(a.caution)}</span></div>`:''}
+        <div id="timer-box" style="margin:14px 0;text-align:center;">
+          <div class="muted" style="font-size:12px;">のこり時間</div>
+          <div id="timer-disp" style="font-family:'Poppins';font-size:34px;font-weight:700;color:var(--navy);">${a.timeLimit}分00秒</div>
+          <button class="btn btn-aqua" id="timer-btn" style="margin-top:6px;" onclick="toggleTimer(${a.timeLimit})">スタート</button>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="switchTab('submit')">描けたら写真をアップ →</button>
+        ${isTeacher()?`<button class="btn" style="width:100%;margin-top:8px;" onclick="openAssignmentMaker('${st.id}','${a.id}')">✎ この課題を修正</button>`:''}
+      </div>`
+      : `<div class="card muted">${isTeacher()?`課題がまだありません。<br><button class="btn btn-aqua" style="margin-top:10px;" onclick="openAssignmentMaker('${st.id}')">＋ 課題を作る</button>`:'先生が課題を準備中じゃ。少し待っておくれ。'}</div>`
+    )+`</div>`;
+  }
+  // 終了時刻ベース：画面オフ/スリープ/バックグラウンドでも実時間で正確（戻ったときに正しい残りを表示）
+  function toggleTimer(min){
+    _timerMin=min;
+    const btn=document.getElementById('timer-btn');
+    if(_timer){ // 一時停止
+      clearInterval(_timer); _timer=null;
+      _remainPause=Math.max(0,Math.round((_deadline-Date.now())/1000));
+      _deadline=null; if(btn) btn.textContent='再開'; releaseWake(); return;
+    }
+    const remain = (_remainPause!=null) ? _remainPause : min*60;
+    if(_remainPause==null) _spentSec=0; // 新規スタートのみリセット
+    _remainPause=null;
+    _deadline = Date.now()+remain*1000;
+    if(btn) btn.textContent='一時停止';
+    requestWake();
+    tickTimer();
+    _timer=setInterval(tickTimer,500);
+  }
+  function tickTimer(){
+    const disp=document.getElementById('timer-disp'); if(!disp||!_deadline) return;
+    const total=Math.max(0,Math.round((_deadline-Date.now())/1000));
+    _spentSec=Math.max(_spentSec, _timerMin*60-total);
+    const m=Math.floor(total/60), s=total%60; disp.textContent=`${m}分${String(s).padStart(2,'0')}秒`;
+    if(total<=0){ clearInterval(_timer); _timer=null; _deadline=null; disp.textContent='時間です！';
+      const b=document.getElementById('timer-btn'); if(b) b.textContent='スタート'; releaseWake(); }
+  }
+  async function requestWake(){ try{ if('wakeLock' in navigator) _wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} }
+  function releaseWake(){ try{ if(_wakeLock){ _wakeLock.release(); _wakeLock=null; } }catch(e){} }
+  // 復帰時に即再描画＋画面ロック再取得（Wake Lockは非表示で自動解除されるため）
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && _timer){ tickTimer(); requestWake(); } });
+
+  // ===== 提出＆AI講評（Task 7）=====
+  let _pendingImg=null, _currentSub=null;
+  function renderSubmit(){
+    const st=currentStudent(); const el=document.getElementById('screen-submit');
+    if(!st){ el.innerHTML='<div style="padding:16px" class="muted">生徒として入ると提出できます。</div>'; return; }
+    const a=latestPublishedAssignment(st.name);
+    el.innerHTML=`<div style="padding:16px">
+      <h2 style="margin-bottom:10px;">デッサンを提出</h2>
+      ${a?`<div class="card"><span class="pill">${esc(a.stage)}</span> <b style="margin-left:6px;">${esc(a.title||a.motif)}</b>${a.motif?`<div style="margin-top:6px;"><span class="lbl-tag">モチーフ</span> ${esc(a.motif)}</div>`:''}${a.focus?`<div class="muted" style="margin-top:4px;">ねらい：${esc(a.focus)}</div>`:''}${a.caution?`<div class="muted" style="margin-top:4px;">気をつけて：${esc(a.caution)}</div>`:''}</div>`:'<div class="card muted">課題がまだありません（先生が準備中）。提出は課題が出てから行えます。</div>'}
+      <div class="card">
+        <input type="file" id="sub-file" accept="image/*" style="display:none" onchange="onSubFile(event)">
+        <button class="btn" style="width:100%;" onclick="document.getElementById('sub-file').click()">📷 写真を選ぶ</button>
+        <div id="sub-prev" style="margin-top:10px;"></div>
+        <button class="btn btn-aqua" style="width:100%;margin-top:10px;" id="sub-go" onclick="submitDrawing()" disabled>提出してWake先生に見てもらう</button>
+      </div>
+      <div id="review-box"></div>
+    </div>`;
+    _pendingImg=null; _currentSub=null;
+  }
+  function onSubFile(e){ const f=e.target.files[0]; if(!f) return;
+    compressImage(f,1400,b64=>{ _pendingImg=b64;
+      document.getElementById('sub-prev').innerHTML=`<img src="${b64}" style="width:100%;border-radius:10px;border:1px solid var(--rule)">`;
+      document.getElementById('sub-go').disabled=false; }); }
+  async function submitDrawing(){
+    const st=currentStudent(); if(!st||!_pendingImg) return;
+    const a=latestPublishedAssignment(st.name);
+    const go=document.getElementById('sub-go'); go.disabled=true; go.textContent='提出中…';
+    const box=document.getElementById('review-box'); box.innerHTML='<div class="card row"><span class="spin"></span><span style="margin-left:8px;">Wake先生が見ています…</span></div>';
+    try{
+      const asg = a?{title:a.title,motif:a.motif,focus:a.focus,caution:a.caution,stage:a.stage,timeLimit:a.timeLimit}:{};
+      const sub = await dbWrite('submit',{studentId:st.id,studentName:st.name,assignmentId:a?a.id:'',assignment:asg,imageBase64:_pendingImg,spentSec:_spentSec});
+      _currentSub = sub.submissionId;
+      const r = await aiCall('review',{student:st,assignment:asg,imageBase64:_pendingImg});
+      const saved = await dbWrite('saveReview',{submissionId:sub.submissionId,studentId:st.id,aiReview:r.review});
+      // 航海バッジ（10枚刻みで10段階）＋獲得演出
+      const total=studentSubmissions(st.name).length;
+      if(total%10===0 && total>=10 && total<=100){
+        dbWriteSafe('awardBadge',{studentId:st.id,badgeKey:'submit_'+total});
+        const vb=VOYAGE_BADGES.find(b=>b[0]===total); if(vb) setTimeout(()=>celebrateBadge(total, vb[3]), 600);
+      }
+      renderReview(r.review, saved.bestUpdated||[]);
+    }catch(e){ box.innerHTML=`<div class="card" style="color:#e05a5a;">うまくいきませんでした：${esc(e.message)}<br>もう一度お試しください。</div>`; go.disabled=false; go.textContent='提出してWake先生に見てもらう'; }
+  }
+  function renderReview(rv,bestUpdated){
+    const box=document.getElementById('review-box');
+    const best = bestUpdated.length?`<div class="card" style="border-color:var(--gold);background:#fffaf0;text-align:center;"><b>🎉 自己ベスト更新！</b><div class="muted">${bestUpdated.map(k=>AXIS_LABEL[k]).join('・')}</div></div>`:'';
+    box.innerHTML=best+`<div class="card">
+      <div class="row" style="gap:10px;align-items:center;margin-bottom:10px;">${wakeAvatar(44)}<h2>Wake先生の講評</h2></div>
+      ${AXES.map(k=>scoreRow(k,rv.scores?rv.scores[k]:0)).join('')}
+      <div style="margin-top:12px;font-size:14px;line-height:1.8;">${aiText(rv.comment)}</div>
+      <div class="card" style="background:#f0fbfc;border-color:var(--aqua);margin-top:12px;"><b>合格まであと</b><div style="margin-top:4px;font-size:14px;">${aiText(rv.passGap)}</div></div>
+      <div class="muted" style="margin-top:10px;">次の課題のヒント：${aiText(rv.nextAssignment)}</div>
+    </div>
+    <div class="card">
+      <b>Wake先生にきく</b>
+      <div id="chat-log" style="margin:8px 0;"></div>
+      <div class="row"><input id="chat-in" class="field" placeholder="質問を入力…"><button class="btn btn-aqua" onclick="askWake()">送信</button></div>
+    </div>`;
+    _lastReview=rv;
+  }
+  let _lastReview=null;
+  async function askWake(){
+    const st=currentStudent(); const inp=document.getElementById('chat-in'); const q=inp.value.trim(); if(!q||!st) return;
+    const log=document.getElementById('chat-log'); inp.value='';
+    log.innerHTML+=`<div style="text-align:right;margin:6px 0;"><span style="background:var(--navy);color:#fff;padding:8px 12px;border-radius:14px 14px 4px 14px;display:inline-block;font-size:14px;">${esc(q)}</span></div>`;
+    log.innerHTML+=`<div id="chat-wait" class="row"><span class="spin"></span></div>`;
+    try{
+      const sub=_currentSub?submissions[_currentSub]:null;
+      const tc=sub&&sub.teacherReview?sub.teacherReview.comment:'';
+      const r=await aiCall('chat',{student:st,aiReview:_lastReview,teacherComment:tc,imageBase64:_pendingImg,question:q});
+      document.getElementById('chat-wait')?.remove();
+      log.innerHTML+=`<div style="margin:6px 0;"><span style="background:#eef4f7;padding:8px 12px;border-radius:14px 14px 14px 4px;display:inline-block;font-size:14px;line-height:1.7;">${aiText(r.answer).replace(/\n/g,'<br>')}</span></div>`;
+      if(_currentSub) dbWriteSafe('aiChatAppend',{submissionId:_currentSub,q,a:r.answer});
+    }catch(e){ document.getElementById('chat-wait')?.remove(); log.innerHTML+=`<div class="muted">うまく答えられませんでした：${esc(e.message)}</div>`; }
+  }
+
+  // ===== これまで（Task 8）=====
+  function renderHistory(){
+    const st=currentStudent(); const el=document.getElementById('screen-history');
+    if(!st){ el.innerHTML=teacherBar()+'<div style="padding:16px" class="muted">'+(isTeacher()?'上で生徒を選ぶと、その子の成長の記録が見られます。':'生徒として入ると経過が見られます。')+'</div>'; return; }
+    const subs=studentSubmissions(st.name);
+    const reviewed=subs.filter(([,s])=>s.aiReview&&s.aiReview.scores).map(([,s])=>s.aiReview.scores).reverse();
+    const latest=reviewed.length?reviewed[reviewed.length-1]:null;
+    const avg = latest?(AXES.reduce((a,k)=>a+(latest[k]||0),0)/AXES.length):0;
+    const target = Math.min(5, Math.max(1, parseFloat(st.passLine)||4.0));
+    el.innerHTML=teacherBar()+`<div style="padding:16px">
+      <h2 style="margin-bottom:10px;">${esc(st.name)} さんの航跡</h2>
+      ${oceanAscent(subs, avg, target)}
+      ${latest?`<div class="card"><b>最新の9軸</b>${radarSVG(latest)}</div>`:''}
+      ${badgesHTML(st)}
+      <h2 style="margin:14px 0 8px;">提出の記録</h2>
+      ${subs.length?(()=>{ let out='',cur=''; for(const [id,s] of subs){ const d=new Date(s.ts); const mk=`${d.getFullYear()}年${d.getMonth()+1}月`;
+        if(mk!==cur){ cur=mk; out+=`<div class="month-head">${mk}</div>`; } out+=histCard(id,s); } return out; })():'<div class="card muted">まだ提出がありません。</div>'}
+    </div>`;
+  }
+  let _histEdit=false;
+  const WD=['日','月','火','水','木','金','土'];
+  function fmtDate(ts){ const d=new Date(ts); return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`; }
+  function fmtSpent(s){ if(!s||!s.spentSec) return null; const m=Math.round(s.spentSec/60); return m<1?'1分未満':`${m}分`; }
+  function histCard(id,s){
+    const t=s.aiReview&&s.aiReview.scores?(AXES.reduce((a,k)=>a+(s.aiReview.scores[k]||0),0)/AXES.length).toFixed(1):'-';
+    const d=new Date(s.ts); const ds=`${d.getDate()}日（${WD[d.getDay()]}）`;
+    const sp=fmtSpent(s); const spP=sp?`<span class="pill">⏱ ${sp}</span>`:'';
+    const tr=s.teacherReview?`<span class="pill" style="background:#fdf3e3;color:var(--gold);">✔ 先生添削</span>`:'';
+    const g=subGenre(s); const gP=g?`<span class="pill" style="background:#dde9f3;color:#1d6e98;">${esc(g)}</span> `:'';
+    return `<div class="card" style="cursor:pointer;" onclick="_histEdit=false;openHistDetail('${id}')"><div class="row" style="gap:12px;">
+      <img src="${s.imageBase64}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--rule)">
+      <div style="flex:1;min-width:0;"><div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px;"><b style="flex:1;min-width:0;">${gP}${esc(subMotif(s)||'デッサン')}</b><span class="muted" style="flex:none;white-space:nowrap;">${ds}</span></div>
+      <div class="muted" style="margin-top:2px;">総合 ${t} ${spP} ${tr}</div></div>
+    </div></div>`;
+  }
+  function openHistDetail(id){
+    const s=submissions[id]; if(!s) return;
+    const rv=s.aiReview||{}; const sc=rv.scores||null;
+    const sp=fmtSpent(s); const tl=s.assignment&&s.assignment.timeLimit;
+    const scoreHTML = sc ? `<div class="card"><div class="row" style="gap:10px;align-items:center;">${wakeAvatar(40)}<b>Wake先生の講評（総合 ${(AXES.reduce((a,k)=>a+(sc[k]||0),0)/AXES.length).toFixed(1)}）</b></div>
+        <div style="margin-top:8px;">${AXES.map(k=>scoreRow(k,sc[k]||0)).join('')}</div>
+        ${rv.comment?`<div style="margin-top:12px;font-size:14px;line-height:1.8;">${aiText(rv.comment)}</div>`:''}
+        ${rv.passGap?`<div class="card" style="background:#f0fbfc;border-color:var(--aqua);margin-top:12px;"><b>合格まであと</b><div style="margin-top:4px;font-size:14px;">${aiText(rv.passGap)}</div></div>`:''}
+        ${rv.nextAssignment?`<div class="muted" style="margin-top:10px;">次の課題のヒント：${aiText(rv.nextAssignment)}</div>`:''}
+      </div>` : '<div class="card muted">この提出にはまだ講評がありません。</div>';
+    const chat=s.aiChat?Object.values(s.aiChat).sort((a,b)=>(a.ts||0)-(b.ts||0)):[];
+    const chatHTML = chat.length ? `<div class="card"><b>Wake先生とのやりとり</b>${chat.map(c=>`
+        <div style="text-align:right;margin:6px 0;"><span style="background:var(--navy);color:#fff;padding:8px 12px;border-radius:14px 14px 4px 14px;display:inline-block;font-size:14px;">${esc(c.q)}</span></div>
+        <div style="margin:6px 0;"><span style="background:#eef4f7;padding:8px 12px;border-radius:14px 14px 14px 4px;display:inline-block;font-size:14px;line-height:1.7;">${aiText(c.a).replace(/\n/g,'<br>')}</span></div>`).join('')}</div>` : '';
+    const tReview = s.teacherReview ? (()=>{ const t=s.teacherReview; return `<div class="card" style="border-color:var(--gold);background:#fffaf0;"><b>✔ 先生の添削</b>
+        ${t.comment?`<div id="hd-tcomment" style="margin:8px 0;font-size:14px;line-height:1.8;">${esc(t.comment)}</div>
+        <button class="btn" style="padding:6px 12px;font-size:13px;" onclick="speak(document.getElementById('hd-tcomment').textContent,this)">🔊 読み上げ</button>`:''}
+        ${t.annotatedImage?`<img src="${t.annotatedImage}" style="width:100%;border-radius:10px;border:1px solid var(--rule);margin-top:6px;">`:''}
+        ${t.refUrl?`<div style="margin-top:10px;"><span class="lbl-tag" style="background:#fdf3e3;color:var(--gold);">参考</span> <a href="${esc(t.refUrl)}" target="_blank" rel="noopener" style="color:#c8862f;word-break:break-all;">${esc(t.refUrl)}</a></div>`:''}
+        ${t.refImage?`<div style="margin-top:10px;"><span class="lbl-tag" style="background:#fdf3e3;color:var(--gold);">参考画像</span><img src="${t.refImage}" style="width:100%;border-radius:10px;border:1px solid var(--rule);margin-top:6px;"></div>`:''}</div>`; })() : '';
+    const dval=(()=>{ const d=new Date(s.ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+    const ov=mkOverlay();
+    ov.querySelector('.modal').innerHTML=`
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <h2>${[esc(subGenre(s)),esc(subMotif(s))].filter(Boolean).join('　')||'デッサン'}</h2>
+        <button class="btn" onclick="closeOverlay()">閉じる</button>
+      </div>
+      <img src="${s.imageBase64}" style="width:100%;border-radius:12px;border:1px solid var(--rule);margin:10px 0;">
+      <div class="card">${ _histEdit ? `
+        <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="hd-genre" class="field" style="flex:0 0 38%;">
+            <option value="">ジャンル</option>
+            ${GENRES.map(g=>`<option value="${g}" ${subGenre(s)===g?'selected':''}>${g}</option>`).join('')}
+          </select>
+          <input id="hd-motif" class="field" placeholder="モチーフ（例：りんご）" value="${esc(subMotif(s))}" style="flex:1;">
+        </div>
+        <label class="lab" style="margin-top:12px;">提出日</label>
+        <input id="hd-date" class="field" type="date" value="${dval}">
+        <label class="lab" style="margin-top:8px;">制作時間（分）</label>
+        <input id="hd-min" class="field" type="number" min="0" placeholder="例：45" value="${s.spentSec?Math.round(s.spentSec/60):''}">
+        <div class="row" style="gap:8px;margin-top:12px;">
+          <button class="btn btn-aqua" style="flex:1;" onclick="saveHistAll('${id}')">保存</button>
+          <button class="btn" style="flex:1;" onclick="_histEdit=false;openHistDetail('${id}')">キャンセル</button>
+        </div>` : `
+        <div class="row" style="justify-content:space-between;"><span class="muted">提出日</span><b>${fmtDate(s.ts)}</b></div>
+        <div class="row" style="justify-content:space-between;margin-top:6px;"><span class="muted">制作時間</span><b>${sp?sp:'記録なし'}${tl?`（制限 ${tl}分）`:''}</b></div>
+        <button class="btn" style="width:100%;margin-top:12px;" onclick="_histEdit=true;openHistDetail('${id}')">✎ 情報を編集</button>`}
+      </div>
+      ${scoreHTML}
+      ${chatHTML}
+      ${tReview}
+      ${reflectionHTML(s,id)}
+      <button class="btn" style="width:100%;color:#e05a5a;border-color:#fccfcf;margin-top:4px;" onclick="deleteSubmission('${id}')">🗑 この提出を削除</button>`;
+  }
+  function reflectionHTML(s,id){
+    const list=s.reflections?Object.entries(s.reflections).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0)):[];
+    const items=list.map(([rid,r])=>`<div class="refl-item" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:9px 11px;margin-bottom:8px;">
+        <div class="refl-text" style="font-size:14px;line-height:1.7;color:#eaf6fb;">${esc(r.text).replace(/\n/g,'<br>')}</div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-top:6px;">
+          <span style="font-size:11px;color:rgba(234,246,251,.6);">${fmtDate(r.ts)}</span>
+          <button class="btn" style="padding:3px 8px;font-size:11px;background:transparent;color:#ff9b9b;border-color:rgba(255,155,155,.45);" onclick="deleteReflection('${id}','${rid}')">削除</button>
+        </div></div>`).join('');
+    return `<div class="card" style="border:none;background:linear-gradient(160deg,var(--navy),var(--deep));color:#fff;">
+      <b style="color:#fff;">📝 自分のふりかえり</b>
+      <div style="font-size:12px;margin:4px 0 10px;color:rgba(234,246,251,.65);">添削を受けて気づいたこと・次に気をつけることをメモ（音声入力OK）</div>
+      ${items}
+      <textarea id="hd-refl" class="field" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.28);" placeholder="例：透明感を出すなら、ハイライトをもっと絞る。コップのフチの回り込みに注意。"></textarea>
+      <div class="row" style="gap:8px;margin-top:6px;">
+        <button class="btn" style="flex:1;background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3);" onclick="micInput('hd-refl',this)">🎤 音声入力</button>
+        <button class="btn btn-aqua" style="flex:1;" onclick="addReflection('${id}')">追加する</button>
+      </div>
+    </div>`;
+  }
+  async function addReflection(id){
+    const ta=document.getElementById('hd-refl'); const text=ta.value.trim(); if(!text) return;
+    ta.value='';
+    try{ await dbWrite('addReflection',{submissionId:id,text});
+      // サーバー反映（Firebaseリスナーがsubmissionsを更新）を描き直しで反映。楽観追加はしない（二重防止）
+      openHistDetail(id);
+      setTimeout(()=>{ const t=document.getElementById('hd-refl');
+        if(t && !t.value.trim() && document.getElementById('gen-overlay')?.classList.contains('open')) openHistDetail(id); }, 500);
+    }catch(e){ ta.value=text; alert('保存できませんでした：'+e.message); }
+  }
+  async function deleteReflection(id,rid){
+    if(!confirm('このふりかえりを削除しますか？')) return;
+    try{ await dbWrite('deleteReflection',{submissionId:id,reflectionId:rid});
+      if(submissions[id].reflections) delete submissions[id].reflections[rid];
+      openHistDetail(id);
+    }catch(e){ alert('削除できませんでした：'+e.message); }
+  }
+  async function deleteSubmission(id){
+    if(!confirm('この提出を削除しますか？\n講評・先生の添削も一緒に消え、元に戻せません。')) return;
+    try{ await dbWrite('deleteSubmission',{submissionId:id});
+      delete submissions[id]; closeOverlay(); renderHistory(); renderTeacher();
+    }catch(e){ alert('削除できませんでした：'+e.message); }
+  }
+  async function saveHistAll(id){
+    const s=submissions[id]; if(!s) return;
+    const genre=document.getElementById('hd-genre').value;
+    const motif=document.getElementById('hd-motif').value.trim();
+    const dv=document.getElementById('hd-date').value;
+    const mv=document.getElementById('hd-min').value; const mins=parseInt(mv,10);
+    if(mv!==''&&(isNaN(mins)||mins<0)){ alert('制作時間は0以上の数で入力してください'); return; }
+    try{
+      await dbWrite('updateSubmissionMeta',{submissionId:id,genre,motif});
+      s.genre=genre; s.motif=motif;
+      if(dv){ const old=new Date(s.ts); const [y,m,d]=dv.split('-').map(Number);
+        const ts=new Date(y,m-1,d,old.getHours(),old.getMinutes(),old.getSeconds()).getTime();
+        await dbWrite('updateSubmissionDate',{submissionId:id,ts}); s.ts=ts; }
+      if(mv!==''){ const spentSec=mins*60; await dbWrite('updateSubmissionTime',{submissionId:id,spentSec}); s.spentSec=spentSec; }
+      _histEdit=false; openHistDetail(id); renderHistory();
+    }catch(e){ alert('保存できませんでした：'+e.message); }
+  }
+  // 海底（スタート）→ 水面（合格）へ登っていく軌跡
+  function oceanAscent(subs, curAvg, target){
+    const scored = subs.filter(([,s])=>s.aiReview&&s.aiReview.scores)
+      .map(([,s])=>({avg:AXES.reduce((a,k)=>a+(s.aiReview.scores[k]||0),0)/AXES.length, ts:s.ts}))
+      .reverse(); // 古い→新しい
+    if(!scored.length) return '<div class="card muted">採点された提出がまだありません。提出すると、海底から合格（水面）に向かう航跡が描かれます。</div>';
+    const TGT = Math.min(5, Math.max(1, target||4.0));
+    const W=360,H=460, surfaceY=70, botY=410, leftX=40, rightX=312;
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const sy=v=>clamp(surfaceY+(TGT-v)*((botY-surfaceY)/TGT), 16, botY);
+    const n=scored.length;
+    const sx=i=>n===1?(leftX+rightX)/2:leftX+i/(n-1)*(rightX-leftX);
+    const pts=scored.map((d,i)=>[sx(i),sy(d.avg)]);
+    const path=pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+    const grid=[1,2,3].map(v=>{const y=sy(v);return `<line x1="${leftX}" y1="${y}" x2="${rightX}" y2="${y}" stroke="rgba(255,255,255,.12)" stroke-dasharray="2 6"/><text x="${rightX+8}" y="${y+3}" font-size="9" fill="rgba(255,255,255,.55)">${v}.0</text>`;}).join('');
+    const nodes=pts.map((p,i)=>i===n-1?'':`<circle cx="${p[0]}" cy="${p[1]}" r="3.4" fill="rgba(255,255,255,.85)"/>`).join('');
+    const lp=pts[n-1], passed=curAvg>=TGT;
+    const sub=`<g transform="translate(${lp[0]},${lp[1]})"><g class="oa-sub">
+        <path d="M-9 9 L-9 21 M9 9 L9 21" stroke="rgba(255,255,255,.5)" stroke-width="1.3"/>
+        <ellipse cx="0" cy="0" rx="14" ry="8" fill="#ffd23f" stroke="#0a5a80" stroke-width="1.5"/>
+        <circle cx="5" cy="0" r="3.2" fill="#bfeefc" stroke="#0a5a80" stroke-width="1.2"/>
+        <rect x="-4" y="-13" width="4.5" height="6" rx="1.5" fill="#ffd23f" stroke="#0a5a80" stroke-width="1.2"/>
+        <path d="M-14 0 L-22 -6 L-22 6 Z" fill="#ffb703" stroke="#0a5a80" stroke-width="1"/>
+      </g></g>`;
+    // 合格地点の帆船と旗（水面）
+    const shipX=288;
+    const ship=`<g transform="translate(${shipX},${surfaceY})"><g class="oa-ship">
+        <rect x="-0.8" y="-30" width="1.8" height="26" fill="#0e3a52"/>
+        <path d="M1 -30 L16 -25.5 L1 -21 Z" fill="#e0a54a"/>
+        <path d="M-1 -27 Q-13 -16 -1 -6 Z" fill="#eaf6fb" stroke="#0e3a52" stroke-width="0.6"/>
+        <path d="M-1 -19 Q9 -14 -1 -7 Z" fill="#cfe6ef" stroke="#0e3a52" stroke-width="0.6"/>
+        <path d="M-17 -3 L17 -3 L12 7 L-12 7 Z" fill="#0e3a52"/>
+        <path d="M-17 -3 L17 -3 L15 0 L-15 0 Z" fill="#16527a"/>
+      </g></g>`;
+    // ゆらゆら海面
+    let wave='M-60 '+surfaceY; for(let x=-60;x<=W+60;x+=24){ wave+=' q12 -6 24 0'; }
+    const waveEl=`<path class="oa-wave" d="${wave}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"/>`+
+                 `<path class="oa-wave" style="animation-duration:9s;" d="${wave}" transform="translate(12,5)" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>`;
+    const seabed=`<path d="M0 ${botY} Q90 ${botY-26} 180 ${botY-8} T360 ${botY-18} L360 ${H} L0 ${H} Z" fill="#04161f"/>`;
+    const startY=sy(1)+18;
+    const bubs=[[12,7,7,0],[27,5,8,1.6],[43,9,6.5,0.7],[59,6,7.8,2.3],[75,8,6.2,1.1],[90,5,8.6,1.9]]
+      .map(([l,s,d,dl])=>`<span class="oa-bub" style="left:${l}%;bottom:13%;width:${s}px;height:${s}px;--d:${d}s;--dl:${dl}s"></span>`).join('');
+    return `<div class="card oa-card" style="padding:0;border:none;">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">
+        <defs><linearGradient id="ocg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#bfe9f5"/><stop offset="0.16" stop-color="#4fb3d4"/>
+          <stop offset="0.45" stop-color="#1d6e98"/><stop offset="0.78" stop-color="#0c3a57"/><stop offset="1" stop-color="#04161f"/>
+        </linearGradient></defs>
+        <rect x="0" y="${surfaceY}" width="${W}" height="${H-surfaceY}" fill="url(#ocg)"/>
+        <rect x="0" y="0" width="${W}" height="${surfaceY}" fill="#eaf6fb"/>
+        <text x="${leftX}" y="26" font-size="13" font-weight="700" fill="#0a5a80">🏁 合格ライン</text>
+        <text x="${leftX}" y="44" font-size="10" fill="#3a7e9e">総合 ${TGT.toFixed(1)} = 地上（合格）</text>
+        ${waveEl}${ship}
+        ${grid}${seabed}
+        <text x="${rightX}" y="${startY}" text-anchor="end" font-size="10" fill="rgba(255,255,255,.55)">海底（スタート）</text>
+        <path d="${path}" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="oa-wake-shimmer" d="${path}" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="22 260" opacity=".9"/>
+        ${nodes}${sub}
+      </svg>
+      ${bubs}
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:linear-gradient(0deg,rgba(4,22,31,.85),transparent);color:#fff;">
+        <b style="font-size:14px;">${passed?'🎉 合格ラインに到達！':`現在 総合 ${curAvg.toFixed(1)} / 合格 ${TGT.toFixed(1)}`}</b>
+        <div style="font-size:11px;opacity:.8;">${n}回の提出で、ここまで浮上しました</div>
+      </div>
+    </div>`;
+  }
+  function sparkline(vals){
+    const w=280,h=70,pad=6; const max=5,min=0; const n=vals.length;
+    const pts=vals.map((v,i)=>`${pad+i/(n-1)*(w-2*pad)},${h-pad-(v-min)/(max-min)*(h-2*pad)}`).join(' ');
+    return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;margin-top:8px;"><polyline points="${pts}" fill="none" stroke="var(--sea)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  function radarSVG(sc){
+    const cx=120,cy=110,R=88,n=AXES.length; const ang=i=>(-Math.PI/2)+i*2*Math.PI/n;
+    const grid=[1,2,3,4,5].map(r=>{const p=AXES.map((_,i)=>`${cx+Math.cos(ang(i))*R*r/5},${cy+Math.sin(ang(i))*R*r/5}`).join(' ');return `<polygon points="${p}" fill="none" stroke="#e3eaee"/>`;}).join('');
+    const poly=AXES.map((k,i)=>`${cx+Math.cos(ang(i))*R*(sc[k]||0)/5},${cy+Math.sin(ang(i))*R*(sc[k]||0)/5}`).join(' ');
+    const labels=AXES.map((k,i)=>{const c=Math.cos(ang(i)); const anchor=c>0.3?'end':c<-0.3?'start':'middle';
+      return `<text x="${cx+c*(R+12)}" y="${cy+Math.sin(ang(i))*(R+12)}" font-size="8" fill="#5a7180" text-anchor="${anchor}" dominant-baseline="middle">${AXIS_LABEL[k]}</text>`;}).join('');
+    return `<svg viewBox="-50 0 340 230" style="width:100%;max-width:340px;display:block;margin:8px auto;">${grid}<polygon points="${poly}" fill="rgba(52,200,214,.3)" stroke="var(--sea)" stroke-width="2"/>${labels}</svg>`;
+  }
+  // 10段階の航海バッジ：[達成枚数, 絵文字, 色, 称号]
+  const VOYAGE_BADGES=[
+    [10,'🍎','#5fb0d8','描きはじめ'],
+    [20,'🧊','#4aa3cf','形をつかむ'],
+    [30,'🔺','#3f96c4','表現が広がる'],
+    [40,'🗿','#3487b6','観察が深まる'],
+    [50,'✋','#2f7aa8','手応えを感じる'],
+    [60,'💡','#2a6c98','光と影を操る'],
+    [70,'🧵','#255f88','質感を描き分ける'],
+    [80,'🏮','#1f5176','自分らしさ'],
+    [90,'⛵','#173f5f','完成度が上がる'],
+    [100,'👑','#e0a54a','合格をその手に'],
+  ];
+  function badgeImgFail(img,emoji){ const d=document.createElement('div');
+    d.style.cssText='width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;background:#e7eef2;'; d.textContent=emoji; img.replaceWith(d); }
+  function medalHTML(n,emoji,color,title,earned){
+    const visual = earned
+      ? `<div class="bdg-wrap">
+           <img src="badge-${n}.png" alt="${n}枚達成" style="width:80px;height:80px;object-fit:contain;" onerror="badgeImgFail(this,'${emoji}')">
+           <span class="bdg-bub" style="left:18%;width:7px;height:7px;--bd:3.2s;--bdl:0s"></span>
+           <span class="bdg-bub" style="left:50%;width:5px;height:5px;--bd:2.6s;--bdl:.7s"></span>
+           <span class="bdg-bub" style="left:74%;width:6px;height:6px;--bd:3.7s;--bdl:1.5s"></span>
+         </div>`
+      : `<div style="position:relative;width:80px;height:80px;">
+           <img src="badge-${n}.png" alt="" style="width:80px;height:80px;object-fit:contain;filter:grayscale(1) blur(3px) brightness(1.08);opacity:.28;" onerror="this.style.display='none'">
+           <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;opacity:.7;">🔒</div>
+         </div>`;
+    const cap = earned ? esc(title) : `<b>${n}枚</b><br><span style="font-size:9px;">${esc(title)}</span>`;
+    return `<div style="width:92px;flex:none;text-align:center;">
+      <div style="width:80px;height:80px;margin:0 auto;display:flex;align-items:center;justify-content:center;">${visual}</div>
+      <div style="font-size:10px;margin-top:6px;line-height:1.3;color:${earned?'var(--sub)':'var(--muted)'};">${cap}</div>
+    </div>`;
+  }
+  function celebrateBadge(n,title){
+    const emoji=(VOYAGE_BADGES.find(b=>b[0]===n)||[])[1]||'🎖';
+    let ov=document.getElementById('bdg-celebrate'); if(ov) ov.remove();
+    ov=document.createElement('div'); ov.id='bdg-celebrate';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(7,42,63,.6);overflow:hidden;';
+    const bubs=Array.from({length:18},()=>`<span class="cel-bub" style="left:${(Math.random()*100).toFixed(1)}%;width:${(6+Math.random()*18).toFixed(0)}px;height:${(6+Math.random()*18).toFixed(0)}px;--cd:${(2+Math.random()*2.5).toFixed(2)}s;--cdl:${(Math.random()*1.6).toFixed(2)}s"></span>`).join('');
+    ov.innerHTML=`${bubs}<div style="text-align:center;color:#fff;position:relative;animation:celPop .5s ease;">
+      <div style="font-size:13px;letter-spacing:.12em;opacity:.92;">⚓ 新しい航海バッジ獲得！</div>
+      <img src="badge-${n}.png" alt="${n}枚達成" style="width:210px;height:210px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.45));margin:6px 0;" onerror="badgeImgFail(this,'${emoji}')">
+      <div style="font-size:18px;font-weight:700;">${esc(title)}</div>
+      <button class="btn" style="margin-top:18px;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.45);" onclick="document.getElementById('bdg-celebrate').remove()">とじる</button>
+    </div>`;
+    ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+    document.body.appendChild(ov);
+  }
+  function badgesHTML(st){
+    const owned=st.badges||{};
+    const ms=VOYAGE_BADGES.map(([n,e,c,title])=>medalHTML(n,e,c,title,!!owned['submit_'+n])).join('');
+    const got=VOYAGE_BADGES.filter(([n])=>owned['submit_'+n]).length;
+    return `<div class="card" style="overflow:hidden;">
+      <div class="row" style="justify-content:space-between;align-items:baseline;"><b>🏴‍☠️ 航海バッジ</b><span class="muted" style="font-size:12px;">${got} / 10</span></div>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding:14px 2px 16px;-webkit-overflow-scrolling:touch;">${ms}</div>
+      <svg viewBox="0 0 360 16" preserveAspectRatio="none" style="width:100%;height:14px;display:block;margin-top:-6px;"><path d="M0 8 Q30 0 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 V16 H0 Z" fill="#cfe6ef"/></svg>
+    </div>`;
+  }
+
+  // ===== 先生モード（Task 5 + Task 9）=====
+  function renderTeacher(){
+    const el=document.getElementById('screen-teacher');
+    if(!isTeacher()){ el.innerHTML='<div style="padding:16px" class="muted">先生PINで入るとこの画面が使えます。<br><button class="btn btn-primary" style="margin-top:10px;" onclick="changeViewer()">先生として入る</button></div>'; return; }
+    const unrev=Object.entries(submissions).filter(([,s])=>!s.teacherReview).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+    const rev=Object.entries(submissions).filter(([,s])=>s.teacherReview).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+    el.innerHTML=`<div style="padding:16px">
+      <h2 style="margin-bottom:10px;">先生モード</h2>
+      <div class="card"><div class="row" style="justify-content:space-between;"><b>生徒</b>
+        <button class="btn" onclick="openStudentForm()">＋ 追加</button></div>
+        <div id="t-student-list" style="margin-top:10px;">${Object.entries(students).map(([id,s])=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--rule);">
+          <span>👤 ${esc(s.name)}（${esc(s.grade||'')}）<span class="muted"> ${esc(s.targetSchool||'')}</span></span>
+          <span><button class="btn" style="padding:5px 9px;font-size:12px;" onclick="openStudentForm('${id}')">編集</button>
+          <button class="btn" style="padding:5px 9px;font-size:12px;" onclick="openAssignmentMaker('${id}')">課題</button>
+          <button class="btn" style="padding:5px 9px;font-size:12px;color:#e05a5a;border-color:#fccfcf;" onclick="removeStudent('${id}','${esc(s.name).replace(/'/g,"\\'")}')">削除</button></span>
+        </div>`).join('')||'<div class="muted">生徒を追加してください</div>'}</div>
+      </div>
+      <div class="card"><b>未添削の提出（${unrev.length}）</b>
+        <div style="margin-top:10px;">${unrev.map(([id,s])=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--rule);">
+          <span class="row" style="gap:8px;"><img src="${s.imageBase64}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"> ${esc(s.studentName)}</span>
+          <button class="btn btn-aqua" style="padding:5px 9px;font-size:12px;" onclick="openAnnotate('${id}')">添削</button>
+        </div>`).join('')||'<div class="muted">未添削はありません</div>'}</div>
+      </div>
+      <div class="card"><b>添削済み（${rev.length}）</b>
+        <div style="margin-top:10px;">${rev.map(([id,s])=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--rule);">
+          <span class="row" style="gap:8px;"><img src="${s.imageBase64}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;"> ${esc(s.studentName)}</span>
+          <button class="btn" style="padding:5px 9px;font-size:12px;" onclick="openAnnotate('${id}')">修正</button>
+        </div>`).join('')||'<div class="muted">まだありません</div>'}</div>
+      </div>
+    </div>`;
+  }
+  // 生徒フォーム
+  function openStudentForm(id){
+    const s=id?students[id]:{}; const ov=mkOverlay();
+    ov.querySelector('.modal').innerHTML=`<h2>${id?'生徒を編集':'生徒を追加'}</h2>
+      <label class="lab">名前</label><input id="f-name" class="field" value="${esc(s.name||'')}">
+      <label class="lab">学年</label><input id="f-grade" class="field" value="${esc(s.grade||'')}" placeholder="高2 など">
+      <label class="lab">志望校</label><input id="f-school" class="field" value="${esc(s.targetSchool||'')}">
+      <label class="lab">受験時期</label><input id="f-exam" class="field" value="${esc(s.examDate||'')}" placeholder="2027年2月 など">
+      <label class="lab">出題傾向・合格基準（AIの判断基準）</label><textarea id="f-info" class="field">${esc(s.examInfo||'')}</textarea>
+      <label class="lab">レベル</label><select id="f-level" class="field">${['初級','中級','受験直前'].map(l=>`<option ${s.level===l?'selected':''}>${l}</option>`).join('')}</select>
+      <label class="lab">合格ライン（総合・5点満点／志望校レベルに合わせて）</label>
+      <input id="f-passline" class="field" type="number" min="1" max="5" step="0.1" value="${s.passLine||4.0}" placeholder="例：難関校 4.5／一般合格 4.0／基礎合格 3.5">
+      <div class="row" style="margin-top:14px;gap:8px;"><button class="btn" style="flex:1;" onclick="closeOverlay()">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="saveStudentForm('${id||''}')">保存</button></div>`;
+  }
+  async function saveStudentForm(id){
+    const name=document.getElementById('f-name').value.trim(); if(!name){alert('名前を入力してください');return;}
+    await dbWriteSafe('saveStudent',{studentId:id||null,name,grade:document.getElementById('f-grade').value.trim(),
+      targetSchool:document.getElementById('f-school').value.trim(),examDate:document.getElementById('f-exam').value.trim(),
+      examInfo:document.getElementById('f-info').value.trim(),level:document.getElementById('f-level').value,
+      passLine:document.getElementById('f-passline').value});
+    closeOverlay();
+  }
+  async function removeStudent(id,name){
+    if(!confirm(`「${name}」を削除しますか？`)) return;
+    const purge = confirm(`提出記録も一緒に消しますか？\n\nOK＝記録ごと完全に削除（元に戻せません）\nキャンセル＝登録情報だけ削除（提出記録は残す）`);
+    await dbWriteSafe('deleteStudent',{studentId:id, studentName:name, purge});
+    renderTeacher();
+  }
+  // 課題づくり（AIと相談）
+  let _amStudent=null,_amId=null,_amCurrent=null,_amChat=[];
+  function openAssignmentMaker(id, assignmentId){
+    _amStudent={id,...students[id]}; _amChat=[];
+    if(assignmentId && assignments[assignmentId]){
+      const a=assignments[assignmentId]; _amId=assignmentId;
+      _amCurrent={title:a.title,motif:a.motif,focus:a.focus,caution:a.caution,stage:a.stage,timeLimit:a.timeLimit};
+    } else { _amId=null; _amCurrent=null; }
+    const ov=mkOverlay(); ov.querySelector('.modal').innerHTML=amHTML('');
+  }
+  function amHTML(extra){
+    const c=_amCurrent||{};
+    return `<h2>${_amId?'課題を修正':'課題づくり'}：${esc(_amStudent.name)}</h2>
+      <button class="btn btn-aqua" style="width:100%;margin:10px 0;" onclick="amDraft()">✨ AIに課題を提案してもらう</button>
+      <label class="lab">課題（タイトル）</label><input id="am-title" class="field" value="${esc(c.title||'')}" placeholder="例：静物デッサン（基礎）">
+      <label class="lab">モチーフ</label><input id="am-motif" class="field" value="${esc(c.motif||'')}" placeholder="例：ダンボール・テニスボール">
+      <label class="lab">ねらい</label><textarea id="am-focus" class="field">${esc(c.focus||'')}</textarea>
+      <label class="lab">気をつけてほしいところ</label><textarea id="am-caution" class="field">${esc(c.caution||'')}</textarea>
+      <label class="lab">段階</label><select id="am-stage" class="field">${['基礎','応用','実戦'].map(x=>`<option ${c.stage===x?'selected':''}>${x}</option>`).join('')}</select>
+      <label class="lab">制限時間（分・必須）</label>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+        ${[30,45,60,90].map(v=>`<button type="button" class="btn" style="flex:1;padding:8px 0;${(c.timeLimit||60)==v?'background:var(--aqua);color:#fff;border:none;':''}" onclick="setAmTime(${v})">${v}分</button>`).join('')}
+      </div>
+      <div class="row" style="gap:10px;align-items:center;">
+        <input id="am-time" type="range" min="10" max="180" step="5" value="${c.timeLimit||60}" oninput="document.getElementById('am-time-disp').textContent=this.value+'分'" style="flex:1;accent-color:var(--aqua);">
+        <b id="am-time-disp" style="min-width:50px;text-align:right;">${c.timeLimit||60}分</b>
+      </div>
+      <label class="lab">AIに相談（例：もっと質感重視で）</label>
+      <div class="row"><input id="am-msg" class="field" placeholder="要望を入力"><button class="btn" onclick="amChat()">相談</button></div>
+      <div id="am-chatlog" style="margin-top:8px;font-size:13px;">${extra||''}</div>
+      <div class="row" style="margin-top:14px;gap:8px;"><button class="btn" style="flex:1;" onclick="closeOverlay()">閉じる</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="amPublish()">${_amId?'更新して出す':'生徒に出す'}</button></div>`;
+  }
+  function setAmTime(v){ const r=document.getElementById('am-time'); r.value=v; document.getElementById('am-time-disp').textContent=v+'分';
+    r.parentElement.previousElementSibling.querySelectorAll('button').forEach(b=>{ const on=b.textContent===v+'分';
+      b.style.cssText='flex:1;padding:8px 0;'+(on?'background:var(--aqua);color:#fff;border:none;':''); }); }
+  function amReadForm(){ return {title:document.getElementById('am-title').value.trim(),motif:document.getElementById('am-motif').value.trim(),
+    focus:document.getElementById('am-focus').value.trim(),caution:document.getElementById('am-caution').value.trim(),
+    stage:document.getElementById('am-stage').value,timeLimit:document.getElementById('am-time').value}; }
+  async function amDraft(){
+    const btn=event.target; btn.textContent='提案中…'; btn.disabled=true;
+    try{ const r=await aiCall('assignmentDraft',{student:_amStudent,recentScores:recentScores(_amStudent.name)});
+      _amCurrent=r.draft; document.querySelector('.modal').innerHTML=amHTML(`<div class="muted">AIの提案理由：${esc(r.draft.reason||'')}</div>`);
+    }catch(e){ alert('提案に失敗：'+e.message); btn.textContent='✨ AIに課題を提案してもらう'; btn.disabled=false; }
+  }
+  async function amChat(){
+    const msg=document.getElementById('am-msg').value.trim(); if(!msg) return;
+    _amCurrent=amReadForm(); _amChat.push({role:'teacher',text:msg});
+    const log=document.getElementById('am-chatlog'); log.innerHTML+=`<div style="text-align:right;">先生：${esc(msg)}</div><div id="am-wait"><span class="spin"></span></div>`;
+    try{ const r=await aiCall('assignmentChat',{student:_amStudent,current:_amCurrent,teacherChat:_amChat,message:msg});
+      _amCurrent={title:r.result.title,motif:r.result.motif,focus:r.result.focus,caution:r.result.caution,stage:r.result.stage,timeLimit:r.result.timeLimit};
+      _amChat.push({role:'ai',text:r.result.message||''});
+      document.querySelector('.modal').innerHTML=amHTML(_amChat.map(m=>`<div style="${m.role==='teacher'?'text-align:right':''}">${m.role==='teacher'?'先生':'Wake先生'}：${esc(m.text)}</div>`).join(''));
+    }catch(e){ document.getElementById('am-wait')?.remove(); alert('相談に失敗：'+e.message); }
+  }
+  async function amPublish(){
+    const f=amReadForm(); if(!f.motif||!f.timeLimit){alert('モチーフと制限時間は必須です');return;}
+    try{
+      const saved=await dbWrite('assignmentDraftSave',{assignmentId:_amId,studentName:_amStudent.name,...f,origin:_amCurrent&&_amCurrent.reason?'ai':'teacher',aiDraft:_amCurrent});
+      _amId=saved.assignmentId;
+      await dbWrite('assignmentPublish',{assignmentId:_amId});
+      closeOverlay(); alert('課題を生徒に出しました');
+    }catch(e){ alert('公開に失敗：'+e.message); }
+  }
+  // ===== 音声入力・読み上げ（Web Speech API・標準機能）=====
+  let _rec=null;
+  function micInput(targetId, btn){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(SR){ dictate(targetId, btn); return; }
+    // iPhone/Safari等：アプリ内録音は不可 → OS標準キーボードの音声入力へ誘導
+    const ta=document.getElementById(targetId); ta.focus();
+    alert('iPhoneではキーボードの音声入力をお使いください。\n\nコメント欄をタップ → キーボード下の🎤（マイク）ボタンを押す → 話すと文字になります。');
+  }
+  function dictate(targetId, btn){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ alert('この端末・ブラウザは音声入力に対応していません'); return; }
+    if(_rec){ _rec.stop(); return; }
+    const ta=document.getElementById(targetId);
+    _rec=new SR(); _rec.lang='ja-JP'; _rec.interimResults=true; _rec.continuous=true;
+    let base=ta.value?ta.value.replace(/\s+$/,'')+' ':'';
+    btn.textContent='⏹ 停止'; btn.style.background='#e2574c'; btn.style.color='#fff';
+    _rec.onresult=e=>{ let fin='',intp='';
+      for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else intp+=t; }
+      if(fin) base+=fin; ta.value=base+intp; };
+    const reset=()=>{ _rec=null; btn.textContent='🎤 音声入力'; btn.style.background=''; btn.style.color=''; };
+    _rec.onend=reset;
+    _rec.onerror=ev=>{ reset(); if(ev.error!=='no-speech'&&ev.error!=='aborted') alert('音声入力エラー：'+ev.error); };
+    _rec.start();
+  }
+  function speak(text, btn){
+    if(!('speechSynthesis' in window)){ alert('この端末は読み上げに対応していません'); return; }
+    if(speechSynthesis.speaking||speechSynthesis.pending){ speechSynthesis.cancel(); if(btn){btn.textContent=btn.dataset.lbl||'🔊 読み上げ';} return; }
+    const t=(text||'').trim(); if(!t) return;
+    const u=new SpeechSynthesisUtterance(t); u.lang='ja-JP'; u.rate=1;
+    if(btn){ btn.dataset.lbl=btn.textContent; btn.textContent='⏹ 停止'; u.onend=()=>{btn.textContent=btn.dataset.lbl||'🔊 読み上げ';}; }
+    speechSynthesis.speak(u);
+  }
+  // 手描き添削（Task 9）
+  let _annId=null,_annStrokes=[],_annImg=null,_annCanvas=null,_annCtx=null,_annDrawing=false,_annRefImg=null;
+  function openAnnotate(id){
+    _annId=id; _annStrokes=[]; _annRefImg=null; const s=submissions[id];
+    const done=s.teacherReview; const tr=done||{};
+    const ov=mkOverlay(); ov.querySelector('.modal').innerHTML=`<h2>添削：${esc(s.studentName)}${done?'（修正）':''}</h2>
+      ${done?'<div class="muted" style="font-size:12px;margin-top:4px;">前回の手描き線は引き継げません。描き直すか、紙に添削した写真をアップしてください（コメント等は編集できます）。</div>':''}
+      <canvas id="ann-canvas" style="width:100%;border:1px solid var(--rule);border-radius:8px;touch-action:none;margin-top:8px;"></canvas>
+      <div class="row" style="gap:8px;margin-top:8px;"><button class="btn" onclick="annUndo()">取り消し</button><button class="btn" onclick="annClear()">全消し</button></div>
+      <input type="file" id="ann-photo" accept="image/*" style="display:none" onchange="annUploadPhoto(event)">
+      <button class="btn" style="width:100%;margin-top:8px;" onclick="document.getElementById('ann-photo').click()">📷 紙に描き込んだ写真をアップ（差し替え）</button>
+      <label class="lab">コメント</label><textarea id="ann-comment" class="field" placeholder="一言コメント（音声入力できます）">${esc(tr.comment||'')}</textarea>
+      <div class="row" style="gap:8px;margin-top:6px;">
+        <button class="btn" style="flex:1;" id="ann-mic" onclick="micInput('ann-comment',this)">🎤 音声入力</button>
+        <button class="btn" style="flex:1;" onclick="speak(document.getElementById('ann-comment').value,this)">🔊 読み上げ</button>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:4px;">iPhoneは🎤を押すと案内が出ます（キーボードのマイクで音声入力）。</div>
+      <label class="lab">参考URL（動画・サイト）</label>
+      <input id="ann-refurl" class="field" type="url" placeholder="https://..." value="${esc(tr.refUrl||'')}">
+      <label class="lab">参考画像（お手本など）</label>
+      <input type="file" id="ann-refimg" accept="image/*" style="display:none" onchange="annRefFile(event)">
+      <button class="btn" style="width:100%;" onclick="document.getElementById('ann-refimg').click()">🖼 参考画像を選ぶ</button>
+      <div id="ann-refprev" style="margin-top:8px;">${tr.refImage?`<img src="${tr.refImage}" style="width:100%;border-radius:8px;border:1px solid var(--rule);">`:''}</div>
+      <div class="row" style="margin-top:12px;gap:8px;"><button class="btn" style="flex:1;" onclick="closeOverlay()">閉じる</button>
+      <button class="btn btn-aqua" style="flex:1;" onclick="annSave()">${done?'修正して返す':'保存して返す'}</button></div>`;
+    if(done&&tr.refImage) _annRefImg=tr.refImage;
+    _annImg=new Image(); _annImg.onload=()=>{ const c=document.getElementById('ann-canvas');
+      _annCanvas=c; c.width=_annImg.width; c.height=_annImg.height; _annCtx=c.getContext('2d'); annRedraw();
+      c.addEventListener('pointerdown',annDown); c.addEventListener('pointermove',annMove); window.addEventListener('pointerup',annUp);
+    }; _annImg.src=s.imageBase64;
+  }
+  function annUploadPhoto(e){ const f=e.target.files[0]; if(!f) return;
+    compressImage(f,1400,b64=>{ _annStrokes=[]; const img=new Image();
+      img.onload=()=>{ _annImg=img; _annCanvas.width=img.width; _annCanvas.height=img.height; annRedraw(); };
+      img.src=b64; }); }
+  function annRefFile(e){ const f=e.target.files[0]; if(!f) return;
+    compressImage(f,1200,b64=>{ _annRefImg=b64;
+      document.getElementById('ann-refprev').innerHTML=`<img src="${b64}" style="width:100%;border-radius:8px;border:1px solid var(--rule);">`; }); }
+  function annPos(e){ const c=_annCanvas; const r=c.getBoundingClientRect(); return {x:(e.clientX-r.left)*c.width/r.width, y:(e.clientY-r.top)*c.height/r.height}; }
+  function annDown(e){ _annDrawing=true; _annStrokes.push([annPos(e)]); }
+  function annMove(e){ if(!_annDrawing) return; _annStrokes[_annStrokes.length-1].push(annPos(e)); annRedraw(); }
+  function annUp(){ _annDrawing=false; }
+  function annRedraw(){ _annCtx.drawImage(_annImg,0,0); _annCtx.strokeStyle='#e23b3b'; _annCtx.lineWidth=Math.max(3,_annImg.width/250); _annCtx.lineCap='round'; _annCtx.lineJoin='round';
+    _annStrokes.forEach(st=>{ _annCtx.beginPath(); st.forEach((p,i)=>i?_annCtx.lineTo(p.x,p.y):_annCtx.moveTo(p.x,p.y)); _annCtx.stroke(); }); }
+  function annUndo(){ _annStrokes.pop(); annRedraw(); }
+  function annClear(){ _annStrokes=[]; annRedraw(); }
+  async function annSave(){
+    const data=_annCanvas.toDataURL('image/jpeg',0.85);
+    const refUrl=document.getElementById('ann-refurl').value.trim();
+    if(refUrl && !/^https?:\/\//i.test(refUrl)){ alert('参考URLは http:// または https:// で始めてください'); return; }
+    try{ await dbWrite('teacherReview',{submissionId:_annId,annotatedImage:data,comment:document.getElementById('ann-comment').value.trim(),refUrl,refImage:_annRefImg||''});
+      closeOverlay(); alert('添削を返しました'); }catch(e){ alert('保存に失敗：'+e.message); }
+  }
+
+  // ===== オーバーレイ汎用 =====
+  function mkOverlay(){ let ov=document.getElementById('gen-overlay');
+    if(!ov){ ov=document.createElement('div'); ov.id='gen-overlay'; ov.className='overlay'; ov.innerHTML='<div class="modal"></div>'; document.body.appendChild(ov); }
+    ov.classList.add('open'); return ov; }
+  function closeOverlay(){ document.getElementById('gen-overlay')?.classList.remove('open'); }
+</script>
+</body>
+</html>
