@@ -21,7 +21,7 @@
     border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;animation:glowPulse 2s ease-in-out infinite;}
   #peek.show{display:inline-block;}
   /* 作品情報 */
-  #info{left:50%;bottom:24px;width:min(92%,520px);max-height:58vh;overflow-y:auto;background:rgba(8,14,26,.9);backdrop-filter:blur(12px);
+  #info{left:50%;bottom:24px;z-index:15;width:min(92%,520px);max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:rgba(8,14,26,.9);backdrop-filter:blur(12px);
     border:1px solid rgba(127,211,255,.22);border-radius:18px;padding:16px 16px 14px;opacity:0;transform:translate(-50%,16px);
     transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1);text-align:left;pointer-events:none;
     box-shadow:0 12px 44px rgba(0,0,0,.55), 0 0 34px rgba(45,212,230,.22);}
@@ -69,7 +69,7 @@
 
 <div id="start">
   <h1>rowke バーチャル展示室</h1>
-  <p id="start-desc">生徒の作品を、ひとつの展示空間で。<br>歩いて近づくと、Wake先生と先生の講評が現れます。</p>
+  <p id="start-desc">生徒の作品を、ひとつの展示空間で。<br>歩いて近づくと、先生と保護者のコメントが現れます。</p>
   <button id="enter">展示室に入る</button>
   <div id="loading">作品を読み込み中…</div>
 </div>
