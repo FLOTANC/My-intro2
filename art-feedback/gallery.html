@@ -343,22 +343,39 @@ function applauseFx(){
   if(navigator.vibrate) navigator.vibrate([20,30,20]);
   fxStart();
 }
-// 拍手音（WebAudioで合成：短いノイズのクラップを重ねて人の拍手風に）
+// 拍手音（WebAudioで合成：手のひらが当たる低め＋短い残響で人の拍手風に）
 let actx=null;
 function playApplause(){
   try{
     actx = actx || new (window.AudioContext||window.webkitAudioContext)();
     if(actx.state==='suspended') actx.resume();
-    const t0=actx.currentTime, N=Math.floor(actx.sampleRate*0.03);
+    const sr=actx.sampleRate, t0=actx.currentTime;
+    const master=actx.createGain(); master.gain.value=0.9; master.connect(actx.destination);
+    // 手のひら1回分。低め(300-900Hz)にピークを寄せ、素早く減衰＋わずかに尾を引く
     const clap=(t,vol)=>{
-      const buf=actx.createBuffer(1,N,actx.sampleRate), d=buf.getChannelData(0);
-      for(let i=0;i<N;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/N,2.2);
+      const N=Math.floor(sr*0.05);
+      const buf=actx.createBuffer(1,N,sr), d=buf.getChannelData(0);
+      for(let i=0;i<N;i++){ const x=i/N; d[i]=(Math.random()*2-1)*Math.pow(1-x,5); } // 立ち上がり鋭く、尾を短く
       const src=actx.createBufferSource(); src.buffer=buf;
-      const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1100+Math.random()*1400; bp.Q.value=0.7;
-      const g=actx.createGain(); g.gain.value=vol;
-      src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start(t);
+      const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1900; lp.Q.value=0.6;
+      const peak=actx.createBiquadFilter(); peak.type='peaking'; peak.frequency.value=500+Math.random()*350; peak.gain.value=9; peak.Q.value=1.1;
+      const g=actx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+0.09);
+      src.connect(peak); peak.connect(lp); lp.connect(g); g.connect(master); src.start(t);
     };
-    for(let i=0;i<28;i++) clap(t0+Math.random()*1.25, 0.10+Math.random()*0.10);
+    // 短い残響（会場のふくらみ）
+    const cN=Math.floor(sr*0.28), cbuf=actx.createBuffer(1,cN,sr), cd=cbuf.getChannelData(0);
+    for(let i=0;i<cN;i++) cd[i]=(Math.random()*2-1)*Math.pow(1-i/cN,2.5)*0.5;
+    const conv=actx.createConvolver(); conv.buffer=cbuf;
+    const wet=actx.createGain(); wet.gain.value=0.28; conv.connect(wet); wet.connect(master);
+    // ばらけたタイミングで多人数の拍手（各クラップをドライ＋残響へ）
+    for(let i=0;i<34;i++){ const t=t0+Math.random()*1.3, v=0.12+Math.random()*0.12;
+      clap(t,v);
+      // 残響にも薄く送る
+      const N=Math.floor(sr*0.05), buf=actx.createBuffer(1,N,sr), d=buf.getChannelData(0);
+      for(let k=0;k<N;k++){ const x=k/N; d[k]=(Math.random()*2-1)*Math.pow(1-x,5); }
+      const s2=actx.createBufferSource(); s2.buffer=buf; const g2=actx.createGain(); g2.gain.value=v*0.6;
+      s2.connect(g2); g2.connect(conv); s2.start(t);
+    }
   }catch(e){}
 }
 
