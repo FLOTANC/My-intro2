@@ -350,32 +350,32 @@ function playApplause(){
     actx = actx || new (window.AudioContext||window.webkitAudioContext)();
     if(actx.state==='suspended') actx.resume();
     const sr=actx.sampleRate, t0=actx.currentTime;
-    const master=actx.createGain(); master.gain.value=0.9; master.connect(actx.destination);
-    // 手のひら1回分。低め(300-900Hz)にピークを寄せ、素早く減衰＋わずかに尾を引く
-    const clap=(t,vol)=>{
-      const N=Math.floor(sr*0.05);
-      const buf=actx.createBuffer(1,N,sr), d=buf.getChannelData(0);
-      for(let i=0;i<N;i++){ const x=i/N; d[i]=(Math.random()*2-1)*Math.pow(1-x,5); } // 立ち上がり鋭く、尾を短く
-      const src=actx.createBufferSource(); src.buffer=buf;
-      const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1900; lp.Q.value=0.6;
-      const peak=actx.createBiquadFilter(); peak.type='peaking'; peak.frequency.value=500+Math.random()*350; peak.gain.value=9; peak.Q.value=1.1;
-      const g=actx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+0.09);
-      src.connect(peak); peak.connect(lp); lp.connect(g); g.connect(master); src.start(t);
-    };
-    // 短い残響（会場のふくらみ）
-    const cN=Math.floor(sr*0.28), cbuf=actx.createBuffer(1,cN,sr), cd=cbuf.getChannelData(0);
-    for(let i=0;i<cN;i++) cd[i]=(Math.random()*2-1)*Math.pow(1-i/cN,2.5)*0.5;
+    const master=actx.createGain(); master.gain.value=0.85; master.connect(actx.destination);
+    // 大ホールの残響（長め・柔らかい）
+    const cN=Math.floor(sr*1.4), cbuf=actx.createBuffer(2,cN,sr);
+    for(let ch=0;ch<2;ch++){ const cd=cbuf.getChannelData(ch);
+      for(let i=0;i<cN;i++) cd[i]=(Math.random()*2-1)*Math.pow(1-i/cN,2.2)*0.6; }
     const conv=actx.createConvolver(); conv.buffer=cbuf;
-    const wet=actx.createGain(); wet.gain.value=0.28; conv.connect(wet); wet.connect(master);
-    // ばらけたタイミングで多人数の拍手（各クラップをドライ＋残響へ）
-    for(let i=0;i<34;i++){ const t=t0+Math.random()*1.3, v=0.12+Math.random()*0.12;
-      clap(t,v);
-      // 残響にも薄く送る
-      const N=Math.floor(sr*0.05), buf=actx.createBuffer(1,N,sr), d=buf.getChannelData(0);
-      for(let k=0;k<N;k++){ const x=k/N; d[k]=(Math.random()*2-1)*Math.pow(1-x,5); }
-      const s2=actx.createBufferSource(); s2.buffer=buf; const g2=actx.createGain(); g2.gain.value=v*0.6;
-      s2.connect(g2); g2.connect(conv); s2.start(t);
-    }
+    const damp=actx.createBiquadFilter(); damp.type='lowpass'; damp.frequency.value=2600; // 残響のシャリつきを抑える
+    const wet=actx.createGain(); wet.gain.value=0.6; conv.connect(damp); damp.connect(wet); wet.connect(master);
+    // 手のひら1回分。低め＆柔らかく（火花っぽさを消す）
+    const clap=(t,vol)=>{
+      const N=Math.floor(sr*0.09);
+      const buf=actx.createBuffer(1,N,sr), d=buf.getChannelData(0);
+      // 立ち上がりを少しなめらかに、尾をやや長く＝「パチ」より「ポン」
+      for(let i=0;i<N;i++){ const x=i/N; const env=Math.min(1,x*12)*Math.pow(1-x,3.2); d[i]=(Math.random()*2-1)*env; }
+      const src=actx.createBufferSource(); src.buffer=buf;
+      const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1300; lp.Q.value=0.5; // 高域を大きく削る
+      const hp=actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=180;
+      const peak=actx.createBiquadFilter(); peak.type='peaking'; peak.frequency.value=380+Math.random()*260; peak.gain.value=8; peak.Q.value=1;
+      const g=actx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0006,t+0.14);
+      src.connect(hp); hp.connect(peak); peak.connect(lp); lp.connect(g);
+      g.connect(master); g.connect(conv); // ドライ＋残響へ
+      src.start(t);
+    };
+    // 多人数・長め（大人数の拍手が会場に広がる）
+    const dur=2.2;
+    for(let i=0;i<90;i++){ clap(t0+Math.random()*dur, 0.06+Math.random()*0.08); }
   }catch(e){}
 }
 
