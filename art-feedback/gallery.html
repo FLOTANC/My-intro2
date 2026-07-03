@@ -79,9 +79,10 @@
   /* 演出（紙吹雪・雪・拍手）*/
   #fx{position:fixed;inset:0;z-index:14;pointer-events:none;}
   #react{position:fixed;left:14px;bottom:20px;z-index:12;display:flex;flex-direction:column;gap:9px;}
-  #react button{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);
-    backdrop-filter:blur(6px);font-size:21px;cursor:pointer;pointer-events:auto;line-height:1;padding:0;}
+  #react button{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);
+    backdrop-filter:blur(6px);cursor:pointer;pointer-events:auto;line-height:0;padding:0;display:flex;align-items:center;justify-content:center;}
   #react button:active{transform:scale(.88);}
+  #react svg{width:23px;height:23px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -108,9 +109,9 @@
 </div>
 <div class="overlay" id="hint"></div>
 <div id="react">
-  <button title="紙吹雪" onclick="confettiFx()">🎉</button>
-  <button title="雪" onclick="snowFx()">❄️</button>
-  <button title="拍手" onclick="applauseFx()">👏</button>
+  <button title="紙吹雪" onclick="confettiFx()"><svg viewBox="0 0 24 24"><path d="M12 3l1.6 3.8L17.5 8.4 13.6 10 12 14l-1.6-4L6.5 8.4l3.9-1.6z"/><path d="M18 14.5l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z"/></svg></button>
+  <button title="雪" onclick="snowFx()"><svg viewBox="0 0 24 24"><path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10"/><path d="M12 6l-2.3-2.3M12 6l2.3-2.3M12 18l-2.3 2.3M12 18l2.3 2.3M4.7 8.4l.9-3.1M4.7 8.4l-3.1-.9M19.3 15.6l-.9 3.1M19.3 15.6l3.1.9M19.3 8.4l3.1-.9M19.3 8.4l-.9-3.1M4.7 15.6l-3.1.9M4.7 15.6l.9 3.1"/></svg></button>
+  <button title="拍手・光" onclick="applauseFx()"><svg viewBox="0 0 24 24"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M5.6 5.6l3.5 3.5M14.9 14.9l3.5 3.5M18.4 5.6l-3.5 3.5M9.1 14.9l-3.5 3.5"/></svg></button>
 </div>
 
 <div id="start">
@@ -303,14 +304,28 @@ const fx=document.getElementById('fx'), fxc=fx.getContext('2d'); let parts=[], f
 function fxResize(){ fx.width=innerWidth; fx.height=innerHeight; } fxResize(); addEventListener('resize',fxResize);
 function fxLoop(){
   fxc.clearRect(0,0,fx.width,fx.height);
-  for(const p of parts){ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
+  for(const p of parts){
+    if(p.beam){ // 光のビーム（立ち上がって消える）
+      p.life--; const t=1-p.life/p.max; const L=p.len*Math.min(1,t*1.6+.15);
+      fxc.save(); fxc.globalAlpha=(p.life<10?p.life/10:1)*0.85; fxc.translate(p.x,p.y); fxc.rotate(p.ang);
+      const g=fxc.createLinearGradient(0,0,0,-L);
+      g.addColorStop(0,'rgba(190,240,255,0)'); g.addColorStop(.5,'rgba(205,245,255,.9)'); g.addColorStop(1,'rgba(255,255,255,0)');
+      fxc.fillStyle=g; fxc.fillRect(-p.w/2,-L,p.w,L); fxc.restore(); continue;
+    }
+    if(p.flash){ // 中央フラッシュ
+      p.life--; const t=1-p.life/p.max; const R=p.r0+(p.r1-p.r0)*t;
+      const g=fxc.createRadialGradient(p.x,p.y,0,p.x,p.y,R);
+      g.addColorStop(0,`rgba(220,245,255,${.45*(1-t)})`); g.addColorStop(1,'rgba(220,245,255,0)');
+      fxc.fillStyle=g; fxc.beginPath(); fxc.arc(p.x,p.y,R,0,7); fxc.fill(); continue;
+    }
+    p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
     fxc.save(); fxc.globalAlpha=p.life<40?Math.max(0,p.life/40):1; fxc.translate(p.x,p.y); fxc.rotate(p.rot);
     if(p.emoji){ fxc.font=p.size+'px serif'; fxc.textAlign='center'; fxc.textBaseline='middle'; fxc.fillText(p.emoji,0,0); }
     else if(p.snow){ fxc.fillStyle='rgba(255,255,255,.92)'; fxc.beginPath(); fxc.arc(0,0,p.size/2,0,7); fxc.fill(); }
     else { fxc.fillStyle=p.color; fxc.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.55); }
     fxc.restore();
   }
-  parts=parts.filter(p=>p.life>0 && p.y<fx.height+50);
+  parts=parts.filter(p=>p.life>0 && (p.beam||p.flash||p.y<fx.height+50));
   if(parts.length) requestAnimationFrame(fxLoop); else { fxRunning=false; fxc.clearRect(0,0,fx.width,fx.height); }
 }
 function fxStart(){ if(!fxRunning){ fxRunning=true; requestAnimationFrame(fxLoop); } }
@@ -319,8 +334,33 @@ function confettiFx(){ const cols=['#f472b6','#34d399','#fbbf24','#60a5fa','#f87
   fxStart(); }
 function snowFx(){ for(let i=0;i<90;i++) parts.push({x:Math.random()*fx.width,y:-20-Math.random()*120,vx:(Math.random()-.5)*.7,vy:Math.random()*.9+.4,g:0.002,rot:0,vr:0,size:4+Math.random()*6,snow:true,life:520});
   fxStart(); }
-function applauseFx(){ for(let i=0;i<26;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*220,y:innerHeight-60,vx:(Math.random()-.5)*2.2,vy:-(Math.random()*4+3.5),g:0.09,rot:0,vr:(Math.random()-.5)*.2,size:24+Math.random()*12,emoji:'👏',life:78});
-  if(navigator.vibrate) navigator.vibrate(30); fxStart(); }
+function applauseFx(){
+  const cx=innerWidth/2, cy=innerHeight;
+  for(let i=0;i<12;i++){ const ang=(i-5.5)*0.14; // 下中央から扇状に立ち上がる光のビーム
+    parts.push({beam:true,x:cx,y:cy,ang,w:8+Math.random()*10,len:innerHeight*0.78,life:36,max:36}); }
+  parts.push({flash:true,x:cx,y:cy-innerHeight*0.30,r0:12,r1:200,life:26,max:26});
+  playApplause();
+  if(navigator.vibrate) navigator.vibrate([20,30,20]);
+  fxStart();
+}
+// 拍手音（WebAudioで合成：短いノイズのクラップを重ねて人の拍手風に）
+let actx=null;
+function playApplause(){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') actx.resume();
+    const t0=actx.currentTime, N=Math.floor(actx.sampleRate*0.03);
+    const clap=(t,vol)=>{
+      const buf=actx.createBuffer(1,N,actx.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<N;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/N,2.2);
+      const src=actx.createBufferSource(); src.buffer=buf;
+      const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1100+Math.random()*1400; bp.Q.value=0.7;
+      const g=actx.createGain(); g.gain.value=vol;
+      src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start(t);
+    };
+    for(let i=0;i<28;i++) clap(t0+Math.random()*1.25, 0.10+Math.random()*0.10);
+  }catch(e){}
+}
 
 // 読み込み
 firebase.database().ref('art/artworks').once('value').then(snap=>{
