@@ -111,7 +111,6 @@
 <div id="react">
   <button title="紙吹雪" onclick="confettiFx()"><svg viewBox="0 0 24 24"><path d="M12 3l1.6 3.8L17.5 8.4 13.6 10 12 14l-1.6-4L6.5 8.4l3.9-1.6z"/><path d="M18 14.5l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z"/></svg></button>
   <button title="雪" onclick="snowFx()"><svg viewBox="0 0 24 24"><path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10"/><path d="M12 6l-2.3-2.3M12 6l2.3-2.3M12 18l-2.3 2.3M12 18l2.3 2.3M4.7 8.4l.9-3.1M4.7 8.4l-3.1-.9M19.3 15.6l-.9 3.1M19.3 15.6l3.1.9M19.3 8.4l3.1-.9M19.3 8.4l-.9-3.1M4.7 15.6l-3.1.9M4.7 15.6l.9 3.1"/></svg></button>
-  <button title="煙と汽笛" onclick="shipFx()"><svg viewBox="0 0 24 24"><path d="M12 2.5v11"/><path d="M12 4.5l6.3 9H12z"/><path d="M4.5 16.5h15L17 21H7z"/></svg></button>
 </div>
 
 <div id="start">
@@ -305,26 +304,6 @@ function fxResize(){ fx.width=innerWidth; fx.height=innerHeight; } fxResize(); a
 function fxLoop(){
   fxc.clearRect(0,0,fx.width,fx.height);
   for(const p of parts){
-    if(p.beam){ // 光のビーム（立ち上がって消える）
-      p.life--; const t=1-p.life/p.max; const L=p.len*Math.min(1,t*1.6+.15);
-      fxc.save(); fxc.globalAlpha=(p.life<10?p.life/10:1)*0.85; fxc.translate(p.x,p.y); fxc.rotate(p.ang);
-      const g=fxc.createLinearGradient(0,0,0,-L);
-      g.addColorStop(0,'rgba(190,240,255,0)'); g.addColorStop(.5,'rgba(205,245,255,.9)'); g.addColorStop(1,'rgba(255,255,255,0)');
-      fxc.fillStyle=g; fxc.fillRect(-p.w/2,-L,p.w,L); fxc.restore(); continue;
-    }
-    if(p.flash){ // 中央フラッシュ
-      p.life--; const t=1-p.life/p.max; const R=p.r0+(p.r1-p.r0)*t;
-      const g=fxc.createRadialGradient(p.x,p.y,0,p.x,p.y,R);
-      g.addColorStop(0,`rgba(220,245,255,${.45*(1-t)})`); g.addColorStop(1,'rgba(220,245,255,0)');
-      fxc.fillStyle=g; fxc.beginPath(); fxc.arc(p.x,p.y,R,0,7); fxc.fill(); continue;
-    }
-    if(p.smoke){ // 煙（ふわっと上昇して広がり消える）
-      p.life--; p.x+=p.vx; p.y+=p.vy; p.r+=p.grow; p.vy*=0.996;
-      const a=Math.max(0,Math.min(0.32, p.life/60*0.32));
-      const g=fxc.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
-      g.addColorStop(0,`rgba(214,224,234,${a})`); g.addColorStop(1,'rgba(214,224,234,0)');
-      fxc.fillStyle=g; fxc.beginPath(); fxc.arc(p.x,p.y,p.r,0,7); fxc.fill(); continue;
-    }
     p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
     fxc.save(); fxc.globalAlpha=p.life<40?Math.max(0,p.life/40):1; fxc.translate(p.x,p.y); fxc.rotate(p.rot);
     if(p.emoji){ fxc.font=p.size+'px serif'; fxc.textAlign='center'; fxc.textBaseline='middle'; fxc.fillText(p.emoji,0,0); }
@@ -332,7 +311,7 @@ function fxLoop(){
     else { fxc.fillStyle=p.color; fxc.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.55); }
     fxc.restore();
   }
-  parts=parts.filter(p=>p.life>0 && (p.beam||p.flash||p.smoke||p.y<fx.height+50));
+  parts=parts.filter(p=>p.life>0 && (p.y<fx.height+50));
   if(parts.length) requestAnimationFrame(fxLoop); else { fxRunning=false; fxc.clearRect(0,0,fx.width,fx.height); }
 }
 function fxStart(){ if(!fxRunning){ fxRunning=true; requestAnimationFrame(fxLoop); } }
@@ -341,44 +320,6 @@ function confettiFx(){ const cols=['#f472b6','#34d399','#fbbf24','#60a5fa','#f87
   fxStart(); }
 function snowFx(){ for(let i=0;i<90;i++) parts.push({x:Math.random()*fx.width,y:-20-Math.random()*120,vx:(Math.random()-.5)*.7,vy:Math.random()*.9+.4,g:0.002,rot:0,vr:0,size:4+Math.random()*6,snow:true,life:520});
   fxStart(); }
-// 煙 ＋ 船の汽笛（ボーッ）
-function shipFx(){
-  const cx=innerWidth*0.5, cy=innerHeight;
-  for(let i=0;i<28;i++){
-    parts.push({smoke:true, x:cx+(Math.random()-.5)*140, y:cy-10-Math.random()*50,
-      vx:(Math.random()-.5)*0.5, vy:-(0.4+Math.random()*0.8), r:18+Math.random()*34,
-      grow:0.5+Math.random()*0.6, life:150+Math.random()*90, max:220});
-  }
-  playHorn();
-  if(navigator.vibrate) navigator.vibrate([200,80,200]);
-  fxStart();
-}
-// 汽笛音（WebAudio合成：濁った低音を長く鳴らして消す）
-let actx=null;
-function playHorn(){
-  try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==='suspended') actx.resume();
-    const t=actx.currentTime;
-    const out=actx.createGain(); out.gain.value=0.0001; out.connect(actx.destination);
-    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=520; lp.Q.value=0.2; lp.connect(out);
-    // 低めで柔らかい船の汽笛（尖った倍音を抑え、丸いsine中心に）
-    const freqs=[110,146.8,82.4,164.8];
-    const oscs=[];
-    freqs.forEach((f,i)=>{ const o=actx.createOscillator(); o.type=(i>=2)?'sine':'triangle'; o.frequency.value=f;
-      const og=actx.createGain(); og.gain.value=(i>=2)?0.5:0.34; o.connect(og); og.connect(lp); o.start(t); oscs.push(o); });
-    // ゆっくりした揺れ
-    const lfo=actx.createOscillator(); lfo.frequency.value=4.5; const lg=actx.createGain(); lg.gain.value=2.5;
-    lfo.connect(lg); oscs.forEach(o=>lg.connect(o.frequency)); lfo.start(t);
-    // エンベロープ：ボーッと立ち上がって長く伸び、ゆっくり消える
-    const A=0.35, H=1.5, R=1.2, peak=0.5;
-    out.gain.setValueAtTime(0.0001,t);
-    out.gain.exponentialRampToValueAtTime(peak,t+A);
-    out.gain.setValueAtTime(peak,t+A+H);
-    out.gain.exponentialRampToValueAtTime(0.0001,t+A+H+R);
-    const stop=t+A+H+R+0.1; oscs.forEach(o=>o.stop(stop)); lfo.stop(stop);
-  }catch(e){}
-}
 
 // 読み込み
 firebase.database().ref('art/artworks').once('value').then(snap=>{
