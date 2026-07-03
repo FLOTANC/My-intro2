@@ -80,6 +80,14 @@ module.exports = async (req, res) => {
         const ref = await db.ref('art/artworks').push(rec);
         return res.status(200).json({ ok: true, key: ref.key });
       }
+      case 'guestbook': { // 展示室の来場コメント（誰でも・名前任意）。作品配下に保存
+        const name = String(payload.name || '').replace(/[\r\n]+/g, ' ').slice(0, 20).trim() || 'ゲスト';
+        const text = String(payload.text || '').slice(0, 60).trim();
+        if (!text) return res.status(400).json({ error: 'empty' });
+        if (!payload.artworkId) return res.status(400).json({ error: 'artworkId required' });
+        await art(payload.artworkId).child('guestbook').push({ name, text, ts: now() });
+        return res.status(200).json({ ok: true, name });
+      }
       case 'postComment': { // 保護者コメント（roleは強制）
         const data = { role: 'parent', text: String(payload.text || ''), ts: now() };
         const imgs = Array.isArray(payload.images) ? payload.images : [];

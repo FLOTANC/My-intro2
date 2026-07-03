@@ -52,6 +52,36 @@
     background:rgba(45,212,230,.18);border:2px solid rgba(45,212,230,.5);color:#bfeefc;font-size:13px;font-weight:700;display:none;
     align-items:center;justify-content:center;font-family:inherit;}
   .mobile #touch{display:block;} .mobile #fwd{display:flex;}
+  /* みんなの声（来場者コメント）ボタン */
+  #guestbtn{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:9;pointer-events:auto;display:none;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#eaf2fb;font-weight:400;letter-spacing:.06em;font-size:13px;
+    padding:10px 20px;border-radius:999px;cursor:pointer;font-family:inherit;backdrop-filter:blur(6px);}
+  #guestbtn.show{display:inline-block;}
+  /* みんなの声パネル（先生/おうちの方とは別表示）*/
+  #guest{left:50%;bottom:24px;z-index:16;width:min(92%,520px);max-height:66vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    background:rgba(9,22,17,.93);backdrop-filter:blur(12px);border:1px solid rgba(120,230,180,.3);border-radius:18px;padding:16px 16px 14px;
+    opacity:0;transform:translate(-50%,16px);transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1);text-align:left;pointer-events:none;
+    box-shadow:0 12px 44px rgba(0,0,0,.55),0 0 34px rgba(52,211,153,.22);}
+  #guest.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+  #guest .close{position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  #guest h3{font-size:15px;padding-right:34px;color:#c9f5e0;}
+  #guest .gsub{font-size:11px;color:#8fd8b8;margin:3px 0 8px;}
+  #guest .glist{max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #guest .gitem{border-top:1px solid rgba(255,255,255,.1);padding:8px 0;font-size:13px;line-height:1.6;color:#e6f6ee;word-break:break-word;}
+  #guest .gitem b{color:#8fe8bf;font-weight:700;margin-right:6px;}
+  #guest .gempty{color:#8fd8b8;font-size:12px;padding:10px 0;}
+  #guest input,#guest textarea{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;
+    color:#eaf2fb;font-family:inherit;font-size:14px;padding:9px 11px;margin-top:8px;resize:none;}
+  #guest .gsend{margin-top:9px;background:linear-gradient(120deg,#34d399,#3b82f6);color:#fff;border:none;font-weight:700;font-size:14px;
+    padding:11px 18px;border-radius:999px;cursor:pointer;font-family:inherit;width:100%;}
+  #guest .gsend:disabled{opacity:.5;cursor:default;}
+  /* 演出（紙吹雪・雪・拍手）*/
+  #fx{position:fixed;inset:0;z-index:14;pointer-events:none;}
+  #react{position:fixed;left:14px;bottom:20px;z-index:12;display:flex;flex-direction:column;gap:9px;}
+  #react button{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);
+    backdrop-filter:blur(6px);font-size:21px;cursor:pointer;pointer-events:auto;line-height:1;padding:0;}
+  #react button:active{transform:scale(.88);}
 </style>
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -59,13 +89,29 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<canvas id="fx"></canvas>
 <div id="touch"></div>
 <button id="fwd">▲<br>進む</button>
 <button id="back" onclick="location.href='./'">← もどる</button>
 <button id="peek" onclick="openInfo()">コメントを見る</button>
+<button id="guestbtn" onclick="openGuest()">みんなの声 💬</button>
 <div class="overlay" id="brand">rowke 展示室<small>VIRTUAL GALLERY</small></div>
 <div class="overlay" id="info"><button class="close" onclick="closeInfo()">✕</button><div class="t"></div><div class="n"></div><div class="c"></div></div>
+<div class="overlay" id="guest">
+  <button class="close" onclick="closeGuest()">✕</button>
+  <h3>みんなの声 💬</h3>
+  <div class="gsub">この作品に、ひとことどうぞ（おじいちゃん・おばあちゃんも！）</div>
+  <div class="glist" id="glist"></div>
+  <input id="gname" maxlength="20" placeholder="お名前（任意）" autocomplete="off">
+  <textarea id="gtext" maxlength="60" rows="2" placeholder="ひとこと（60字まで）"></textarea>
+  <button class="gsend" id="gsend" onclick="sendGuest()">送信する</button>
+</div>
 <div class="overlay" id="hint"></div>
+<div id="react">
+  <button title="紙吹雪" onclick="confettiFx()">🎉</button>
+  <button title="雪" onclick="snowFx()">❄️</button>
+  <button title="拍手" onclick="applauseFx()">👏</button>
+</div>
 
 <div id="start">
   <h1>rowke バーチャル展示室</h1>
@@ -94,10 +140,12 @@ function buildArtList(data){
     const comments=a.comments?Object.values(a.comments):[];
     const parent=comments.find(c=>(c.role||'parent')!=='teacher');
     const tFromComments=comments.find(c=>c.role==='teacher');
+    const guest = a.guestbook ? Object.values(a.guestbook) : [];
     return {
       id, title:a.title||'無題', name:a.studentName||'', age:a.age||'', img:a.imageBase64||null,
       teacher: a.teacherComment || (tFromComments&&tFromComments.text) || '',
-      parent: (parent&&parent.text) || ''
+      parent: (parent&&parent.text) || '',
+      guest
     };
   }).filter(a=>a.img);
 }
@@ -179,7 +227,7 @@ function setupControls(){
   }
 }
 
-const fwd=new THREE.Vector3(), right=new THREE.Vector3(), info=document.getElementById('info');
+const fwd=new THREE.Vector3(), right=new THREE.Vector3(), info=document.getElementById('info'), guest=document.getElementById('guest');
 function animate(){
   requestAnimationFrame(animate);
   // 視線
@@ -200,23 +248,79 @@ function animate(){
   const na=near?near.art:null;
   if((na&&na.id)!==(nearArt&&nearArt.id)){
     nearArt=na;
-    closeInfo();                       // 別の作品に移ったらコメントは閉じる
-    document.getElementById('peek').classList.toggle('show', !!na); // 近づいたらボタンを出す
+    info.classList.remove('show'); guest.classList.remove('show'); // 別の作品に移ったら閉じる
+    refreshNearButtons();
   }
   renderer.render(scene,camera);
 }
-let nearArt=null, peek=null;
+let nearArt=null;
+const $=id=>document.getElementById(id);
+function panelsOpen(){ return info.classList.contains('show')||guest.classList.contains('show'); }
+function refreshNearButtons(){ const on=!!nearArt && !panelsOpen();
+  $('peek').classList.toggle('show',on); $('guestbtn').classList.toggle('show',on); }
+
 function fillInfo(a){
   info.querySelector('.t').textContent=a.title;
   info.querySelector('.n').textContent=(a.name?a.name+' さん':'')+(a.age?`（${a.age}さい）`:'');
   const block=(who,txt)=>`<div class="speaker"><b>${who}</b><span>${linkify(esc(txt))}</span></div>`;
   const parts=[]; if(a.teacher) parts.push(block('先生',a.teacher)); if(a.parent) parts.push(block('おうちの方',a.parent));
-  info.querySelector('.c').innerHTML=parts.join('')||'（コメントはまだありません）';
+  info.querySelector('.c').innerHTML=parts.join('')||'（先生とおうちの方のコメントはまだありません）';
 }
-function openInfo(){ if(!nearArt) return; fillInfo(nearArt); info.classList.add('show'); document.getElementById('peek').classList.remove('show'); }
-function closeInfo(){ info.classList.remove('show'); if(nearArt) document.getElementById('peek').classList.add('show'); }
+function openInfo(){ if(!nearArt) return; fillInfo(nearArt); guest.classList.remove('show'); info.classList.add('show'); refreshNearButtons(); }
+function closeInfo(){ info.classList.remove('show'); refreshNearButtons(); }
+
+// ===== みんなの声（来場者コメント・別表示）=====
+function renderGuest(){
+  const list=(nearArt&&nearArt.guest||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  $('glist').innerHTML = list.length
+    ? list.map(g=>`<div class="gitem"><b>${esc(g.name||'ゲスト')}</b>${esc(g.text||'')}</div>`).join('')
+    : '<div class="gempty">まだコメントがありません。最初のひとことをどうぞ！</div>';
+}
+function openGuest(){ if(!nearArt) return; renderGuest(); info.classList.remove('show'); guest.classList.add('show'); refreshNearButtons();
+  $('glist').scrollTop=$('glist').scrollHeight; }
+function closeGuest(){ guest.classList.remove('show'); refreshNearButtons(); }
+async function sendGuest(){
+  if(!nearArt) return;
+  const name=$('gname').value.trim(), text=$('gtext').value.trim();
+  if(!text){ $('gtext').focus(); return; }
+  const btn=$('gsend'); btn.disabled=true; btn.textContent='送信中…';
+  try{
+    const r=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'guestbook',payload:{artworkId:nearArt.id,name,text}})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.error||'failed');
+    nearArt.guest=(nearArt.guest||[]).concat([{name:j.name||name||'ゲスト',text,ts:Date.now()}]);
+    $('gtext').value=''; renderGuest(); $('glist').scrollTop=$('glist').scrollHeight;
+    confettiFx();
+  }catch(e){ alert('送信に失敗しました。時間をおいて試してください。'); }
+  finally{ btn.disabled=false; btn.textContent='送信する'; }
+}
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function linkify(s){ return s.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#9fd8ff;word-break:break-all;">$1</a>'); }
+
+// ===== 演出（紙吹雪・雪・拍手）=====
+const fx=document.getElementById('fx'), fxc=fx.getContext('2d'); let parts=[], fxRunning=false;
+function fxResize(){ fx.width=innerWidth; fx.height=innerHeight; } fxResize(); addEventListener('resize',fxResize);
+function fxLoop(){
+  fxc.clearRect(0,0,fx.width,fx.height);
+  for(const p of parts){ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
+    fxc.save(); fxc.globalAlpha=p.life<40?Math.max(0,p.life/40):1; fxc.translate(p.x,p.y); fxc.rotate(p.rot);
+    if(p.emoji){ fxc.font=p.size+'px serif'; fxc.textAlign='center'; fxc.textBaseline='middle'; fxc.fillText(p.emoji,0,0); }
+    else if(p.snow){ fxc.fillStyle='rgba(255,255,255,.92)'; fxc.beginPath(); fxc.arc(0,0,p.size/2,0,7); fxc.fill(); }
+    else { fxc.fillStyle=p.color; fxc.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.55); }
+    fxc.restore();
+  }
+  parts=parts.filter(p=>p.life>0 && p.y<fx.height+50);
+  if(parts.length) requestAnimationFrame(fxLoop); else { fxRunning=false; fxc.clearRect(0,0,fx.width,fx.height); }
+}
+function fxStart(){ if(!fxRunning){ fxRunning=true; requestAnimationFrame(fxLoop); } }
+function confettiFx(){ const cols=['#f472b6','#34d399','#fbbf24','#60a5fa','#f87171','#a78bfa'];
+  for(let i=0;i<90;i++) parts.push({x:Math.random()*fx.width,y:-20-Math.random()*80,vx:(Math.random()-.5)*3.2,vy:Math.random()*2+1,g:0.05,rot:Math.random()*6,vr:(Math.random()-.5)*.3,size:8+Math.random()*8,color:cols[i%cols.length],life:280});
+  fxStart(); }
+function snowFx(){ for(let i=0;i<90;i++) parts.push({x:Math.random()*fx.width,y:-20-Math.random()*120,vx:(Math.random()-.5)*.7,vy:Math.random()*.9+.4,g:0.002,rot:0,vr:0,size:4+Math.random()*6,snow:true,life:520});
+  fxStart(); }
+function applauseFx(){ for(let i=0;i<26;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*220,y:innerHeight-60,vx:(Math.random()-.5)*2.2,vy:-(Math.random()*4+3.5),g:0.09,rot:0,vr:(Math.random()-.5)*.2,size:24+Math.random()*12,emoji:'👏',life:78});
+  if(navigator.vibrate) navigator.vibrate(30); fxStart(); }
 
 // 読み込み
 firebase.database().ref('art/artworks').once('value').then(snap=>{
