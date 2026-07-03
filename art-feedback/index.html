@@ -2115,14 +2115,14 @@
     const all = snap.val() || {};
     const mine = Object.values(all).filter(c => c.studentName === viewer.name);
     if (!mine.length) { box.style.display = 'none'; return; }
+    // 最新の1枚だけ表示（発行日時が新しいもの）
+    const c = mine.sort((a, b) => (b.issuedAt || 0) - (a.issuedAt || 0))[0];
     box.style.display = 'block';
-    box.innerHTML = mine.map(c => {
-      const url = certificateUrl(c.token_id);
-      return `<a href="${url}" target="_blank" rel="noopener"
-        style="display:block; padding:12px 14px; margin-bottom:8px; border:1px solid var(--rule); border-radius:12px;
-        background:var(--card); color:var(--text); text-decoration:none; font-size:14px;">
-        🏅 わたしの修了証（${c.periodText || ''}）を見る →</a>`;
-    }).join('');
+    const url = certificateUrl(c.token_id);
+    box.innerHTML = `<a href="${url}" target="_blank" rel="noopener"
+      style="display:block; padding:12px 14px; margin-bottom:8px; border:1px solid var(--rule); border-radius:12px;
+      background:var(--card); color:var(--text); text-decoration:none; font-size:14px;">
+      🏅 わたしの修了証（${c.periodText || ''}）を見る →</a>`;
   }
 
   // ===== ARTWORKS (Firebase) =====
