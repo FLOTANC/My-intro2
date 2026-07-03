@@ -23,7 +23,7 @@ const TEACHER_ACTIONS = new Set([
   'critiqueWorkAdd', 'critiqueWorkUpdate', 'critiqueWorkDelete',
   'critiqueSessionUpdate', 'critiqueSessionDelete',
   'contactRead', 'contactDelete', 'setStudentAvatar',
-  'issueCertificate'
+  'issueCertificate', 'dedupeCertificates', 'deleteCertificate'
 ]);
 
 function pinOk(req) {
@@ -282,6 +282,31 @@ module.exports = async (req, res) => {
         // ※将来の本物SBT mintはここに追加する
         await db.ref('art/certificates/' + tokenId).set(record);
         return res.status(200).json({ ok: true, tokenId });
+      }
+
+      case 'deleteCertificate': {
+        if (!payload.tokenId) return res.status(400).json({ error: 'tokenId required' });
+        await db.ref('art/certificates/' + sanitize(payload.tokenId)).remove();
+        return res.status(200).json({ ok: true });
+      }
+      case 'dedupeCertificates': { // 生徒ごとに最新1枚だけ残し、古い重複を削除
+        const snap = await db.ref('art/certificates').once('value');
+        const all = snap.val() || {};
+        const latestByStudent = {};
+        for (const [key, c] of Object.entries(all)) {
+          const name = c && c.studentName;
+          if (!name) continue;
+          const cur = latestByStudent[name];
+          if (!cur || (c.issuedAt || 0) > (all[cur].issuedAt || 0)) latestByStudent[name] = key;
+        }
+        const keep = new Set(Object.values(latestByStudent));
+        const updates = {};
+        let removed = 0;
+        for (const key of Object.keys(all)) {
+          if (!keep.has(key)) { updates[key] = null; removed++; }
+        }
+        if (removed) await db.ref('art/certificates').update(updates);
+        return res.status(200).json({ ok: true, removed, kept: keep.size });
       }
 
       default:
