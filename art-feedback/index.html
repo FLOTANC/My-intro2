@@ -1468,6 +1468,9 @@
       <div style="padding:0 20px 12px;">
         <button class="btn-primary" style="width:100%;padding:12px;font-size:14px;"
           onclick="openCertIssue()">🏅 修了証を発行する</button>
+        <button id="cert-dedupe-btn" style="width:100%;padding:10px;font-size:13px;margin-top:8px;
+          background:var(--card);color:var(--muted);border:1px solid var(--rule);border-radius:12px;cursor:pointer;"
+          onclick="dedupeCertsUI()">🧹 修了証の重複を整理（生徒ごとに最新1枚を残す）</button>
       </div>
     <div id="wake-teacher-list" class="wake-teacher-list"></div>
     <!-- 個別会話ビュー -->
@@ -2104,6 +2107,21 @@
         `onclick="navigator.clipboard.writeText('${url}').then(()=>alert('URLをコピーしました'))">URLをコピー</button>`;
     } catch (e) {
       alert('発行に失敗しました：' + e.message);
+    }
+  }
+
+  async function dedupeCertsUI() {
+    if (!isTeacherViewer()) { alert('先生のみ実行できます'); return; }
+    if (!confirm('修了証の重複を整理します。\n生徒ごとに最新の1枚だけを残し、古い重複を削除します。よろしいですか？')) return;
+    const btn = document.getElementById('cert-dedupe-btn');
+    const orig = btn.textContent; btn.disabled = true; btn.textContent = '整理中…';
+    try {
+      const r = await dbWrite('dedupeCertificates', {});
+      alert(`整理しました。\n削除: ${r.removed} 件 ／ 残した修了証: ${r.kept} 件`);
+    } catch (e) {
+      alert('整理に失敗しました：' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
     }
   }
 
