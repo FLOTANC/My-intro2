@@ -85,8 +85,13 @@ module.exports = async (req, res) => {
         const text = String(payload.text || '').slice(0, 60).trim();
         if (!text) return res.status(400).json({ error: 'empty' });
         if (!payload.artworkId) return res.status(400).json({ error: 'artworkId required' });
-        await art(payload.artworkId).child('guestbook').push({ name, text, ts: now() });
-        return res.status(200).json({ ok: true, name });
+        const gref = await art(payload.artworkId).child('guestbook').push({ name, text, ts: now() });
+        return res.status(200).json({ ok: true, name, key: gref.key });
+      }
+      case 'guestbookDelete': { // 展示室の来場コメント削除（誰でも・間違い消し用）
+        if (!payload.artworkId || !payload.key) return res.status(400).json({ error: 'artworkId/key required' });
+        await art(payload.artworkId).child('guestbook/' + sanitize(payload.key)).remove();
+        return res.status(200).json({ ok: true });
       }
       case 'postComment': { // 保護者コメント（roleは強制）
         const data = { role: 'parent', text: String(payload.text || ''), ts: now() };

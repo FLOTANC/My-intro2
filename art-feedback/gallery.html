@@ -68,7 +68,10 @@
   #guest h3{font-size:15px;padding-right:34px;color:#c9f5e0;}
   #guest .gsub{font-size:11px;color:#8fd8b8;margin:3px 0 8px;}
   #guest .glist{max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  #guest .gitem{border-top:1px solid rgba(255,255,255,.1);padding:8px 0;font-size:13px;line-height:1.6;color:#e6f6ee;word-break:break-word;}
+  #guest .gitem{position:relative;border-top:1px solid rgba(255,255,255,.1);padding:8px 24px 8px 0;font-size:13px;line-height:1.6;color:#e6f6ee;word-break:break-word;}
+  #guest .gdel{position:absolute;right:0;top:7px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.28);color:#cfe9dd;font-size:10px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;}
+  #guest .gdel:active{transform:scale(.88);}
   #guest .gitem b{color:#8fe8bf;font-weight:700;margin-right:6px;}
   #guest .gempty{color:#8fd8b8;font-size:12px;padding:10px 0;}
   #guest input,#guest textarea{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;
@@ -140,7 +143,7 @@ function buildArtList(data){
     const comments=a.comments?Object.values(a.comments):[];
     const parent=comments.find(c=>(c.role||'parent')!=='teacher');
     const tFromComments=comments.find(c=>c.role==='teacher');
-    const guest = a.guestbook ? Object.values(a.guestbook) : [];
+    const guest = a.guestbook ? Object.entries(a.guestbook).map(([key,g])=>({key,name:g.name,text:g.text,ts:g.ts})) : [];
     return {
       id, title:a.title||'無題', name:a.studentName||'', age:a.age||'', img:a.imageBase64||null,
       teacher: a.teacherComment || (tFromComments&&tFromComments.text) || '',
@@ -273,7 +276,7 @@ function closeInfo(){ info.classList.remove('show'); refreshNearButtons(); }
 function renderGuest(){
   const list=(nearArt&&nearArt.guest||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
   $('glist').innerHTML = list.length
-    ? list.map(g=>`<div class="gitem"><b>${esc(g.name||'ゲスト')}</b>${esc(g.text||'')}</div>`).join('')
+    ? list.map(g=>`<div class="gitem"><button class="gdel" title="削除" onclick="delGuest('${g.key}')">✕</button><b>${esc(g.name||'ゲスト')}</b>${esc(g.text||'')}</div>`).join('')
     : '<div class="gempty">まだコメントがありません。最初のひとことをどうぞ！</div>';
 }
 function openGuest(){ if(!nearArt) return; renderGuest(); info.classList.remove('show'); guest.classList.add('show'); refreshNearButtons();
@@ -289,11 +292,22 @@ async function sendGuest(){
       body:JSON.stringify({action:'guestbook',payload:{artworkId:nearArt.id,name,text}})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.ok) throw new Error(j.error||'failed');
-    nearArt.guest=(nearArt.guest||[]).concat([{name:j.name||name||'ゲスト',text,ts:Date.now()}]);
+    nearArt.guest=(nearArt.guest||[]).concat([{key:j.key,name:j.name||name||'ゲスト',text,ts:Date.now()}]);
     $('gtext').value=''; renderGuest(); $('glist').scrollTop=$('glist').scrollHeight;
     confettiFx();
   }catch(e){ alert('送信に失敗しました。時間をおいて試してください。'); }
   finally{ btn.disabled=false; btn.textContent='送信する'; }
+}
+async function delGuest(key){
+  if(!nearArt||!key) return;
+  if(!confirm('このコメントを削除しますか？')) return;
+  try{
+    const r=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'guestbookDelete',payload:{artworkId:nearArt.id,key}})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.error||'failed');
+    nearArt.guest=(nearArt.guest||[]).filter(g=>g.key!==key); renderGuest();
+  }catch(e){ alert('削除に失敗しました。時間をおいて試してください。'); }
 }
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function linkify(s){ return s.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#9fd8ff;word-break:break-all;">$1</a>'); }
