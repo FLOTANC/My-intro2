@@ -26,7 +26,8 @@ const TEACHER_ACTIONS = new Set([
   'critiqueWorkAdd', 'critiqueWorkUpdate', 'critiqueWorkDelete',
   'critiqueSessionUpdate', 'critiqueSessionDelete',
   'contactRead', 'contactDelete', 'setStudentAvatar',
-  'issueCertificate', 'dedupeCertificates', 'deleteCertificate'
+  'issueCertificate', 'dedupeCertificates', 'deleteCertificate',
+  'getWakeNotifications'
 ]);
 
 function pinOk(req) {
@@ -85,6 +86,20 @@ module.exports = async (req, res) => {
         if (!rec.studentName || !rec.title) return res.status(400).json({ error: 'studentName/title required' });
         const ref = await db.ref('art/artworks').push(rec);
         return res.status(200).json({ ok: true, key: ref.key });
+      }
+      // ===== 読み取り（公開ルールを閉じた機微データをサーバー経由で返す）=====
+      case 'getMessages': { // 先生=全件 / 本人=自分の名前分のみ
+        const snap = await db.ref('art/messages').once('value');
+        const all = []; snap.forEach(c => { all.push({ _key: c.key, ...c.val() }); });
+        const list = teacher ? all : (payload.name ? all.filter(m => m.name === payload.name) : []);
+        return res.status(200).json({ ok: true, messages: list });
+      }
+      case 'getMyCertificates': { // その生徒の修了証だけ返す
+        if (!payload.studentName) return res.status(400).json({ error: 'studentName required' });
+        const snap = await db.ref('art/certificates').once('value');
+        const all = snap.val() || {};
+        const mine = Object.values(all).filter(c => c.studentName === payload.studentName);
+        return res.status(200).json({ ok: true, certificates: mine });
       }
       case 'guestbook': { // 展示室の来場コメント（誰でも・名前任意）。作品配下に保存
         const name = String(payload.name || '').replace(/[\r\n]+/g, ' ').slice(0, 20).trim() || 'ゲスト';
@@ -253,6 +268,11 @@ module.exports = async (req, res) => {
       case 'critiqueSessionDelete': {
         await db.ref('art/critique').remove();
         return res.status(200).json({ ok: true });
+      }
+      case 'getWakeNotifications': { // 先生のみ・全件
+        const snap = await db.ref('art/wake_notifications').once('value');
+        const all = []; snap.forEach(c => { all.push({ _key: c.key, ...c.val() }); });
+        return res.status(200).json({ ok: true, notifications: all });
       }
       case 'contactRead': {
         await db.ref('art/messages/' + sanitize(payload.key)).update({ read: true });

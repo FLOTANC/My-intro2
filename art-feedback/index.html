@@ -2129,9 +2129,11 @@
     const viewer = getViewer();
     const box = document.getElementById('my-certificates');
     if (!viewer || viewer.role === 'teacher' || !viewer.name) { box.style.display = 'none'; return; }
-    const snap = await db.ref('art/certificates').once('value');
-    const all = snap.val() || {};
-    const mine = Object.values(all).filter(c => c.studentName === viewer.name);
+    let mine = [];
+    try {
+      const r = await dbWrite('getMyCertificates', { studentName: viewer.name });
+      mine = r.certificates || [];
+    } catch (e) { box.style.display = 'none'; return; }
     if (!mine.length) { box.style.display = 'none'; return; }
     // 最新の1枚だけ表示（発行日時が新しいもの）
     const c = mine.sort((a, b) => (b.issuedAt || 0) - (a.issuedAt || 0))[0];
@@ -3756,18 +3758,18 @@
       loginPrompt.style.display = 'none';
     }
 
-    // 先生はすべて、他は自分のメッセージのみ購読
-    if (_contactRef) _contactRef.off();
-    _contactRef = db.ref('art/messages');
-    _contactRef.on('value', snap => {
-      const all = [];
-      snap.forEach(c => { all.push({ _key: c.key, ...c.val() }); });
-      all.sort((a,b) => (b.ts||0) - (a.ts||0));
-      const visible = viewer && viewer.role === 'teacher'
-        ? all
-        : all.filter(m => m.name === (viewer && viewer.name));
-      renderContactMessages(visible, viewer);
-    });
+    // 先生=全件 / 本人=自分の分。サーバー経由で取得（DB直読みは閉じている）
+    loadContactMessages();
+  }
+
+  async function loadContactMessages() {
+    const viewer = getViewer();
+    if (!viewer) return;
+    try {
+      const r = await dbWrite('getMessages', { name: viewer.name });
+      const list = (r.messages || []).sort((a,b) => (b.ts||0) - (a.ts||0));
+      renderContactMessages(list, viewer);
+    } catch (e) { /* 未ログイン等は無視 */ }
   }
 
   function renderContactMessages(msgs, viewer) {
@@ -3833,7 +3835,7 @@
       ? (_quickMsgPrefix + (extra ? `\n${extra}` : ''))
       : extra;
     const name = viewer.name || (viewer.role === 'teacher' ? '先生' : '不明');
-    dbWriteSafe('contactSend', { name, text });
+    dbWriteSafe('contactSend', { name, text }).then(() => loadContactMessages());
     input.value = '';
     input.placeholder = '先生へのメッセージを入力...';
     // ボタンの選択状態リセット
@@ -3848,7 +3850,7 @@
   }
 
   function deleteContactMsg(key) {
-    dbWriteSafe('contactDelete', { key });
+    dbWriteSafe('contactDelete', { key }).then(() => loadContactMessages());
   }
 
   // ===== VIEWER IDENTITY =====
@@ -4379,14 +4381,18 @@
     }
   }
 
-  // Firebase リスナー：未読通知をリアルタイム監視
-  db.ref('art/wake_notifications').on('value', snap => {
+  // 未読通知（先生のみ・サーバー経由でポーリング。DB直読みは閉じている）
+  async function pollWakeNotifications() {
     const viewer = getViewer();
     if (viewer?.role !== 'teacher') return;
-    let unread = 0;
-    snap.forEach(child => { if (!child.val().read) unread++; });
-    updateWakeBadge(unread);
-  });
+    try {
+      const r = await dbWrite('getWakeNotifications', {});
+      const unread = (r.notifications || []).filter(n => !n.read).length;
+      updateWakeBadge(unread);
+    } catch (e) { /* PIN未設定などは無視 */ }
+  }
+  pollWakeNotifications();
+  setInterval(pollWakeNotifications, 30000);
 
 </script>
 </body>
