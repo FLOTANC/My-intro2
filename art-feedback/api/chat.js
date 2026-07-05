@@ -59,6 +59,18 @@ async function generateWithFallback(body) {
   throw new Error(lastErr || 'generation failed');
 }
 
+// ── 簡易IPレート制限（Gemini課金の悪用/DoS対策）──
+const HITS = new Map();
+function rateLimited(req, max, windowMs) {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const arr = (HITS.get(ip) || []).filter(t => now - t < windowMs);
+  arr.push(now);
+  HITS.set(ip, arr);
+  if (HITS.size > 5000) HITS.clear();
+  return arr.length > max;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -66,8 +78,14 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // 1分に12回まで（子どもの自然な対話には十分、機械的な連打は遮断）
+  if (rateLimited(req, 12, 60000)) {
+    return res.status(429).json({ error: '少し待ってからもう一度話しかけてね' });
+  }
+
   const { question, studentName, history = [] } = req.body || {};
   if (!question?.trim()) return res.status(400).json({ error: 'question is required' });
+  if (question.length > 1000) return res.status(400).json({ error: 'question too long' });
 
   const systemPromptWithName = SYSTEM_PROMPT +
     (studentName ? `\n\n今話している生徒の名前は「${studentName}」です。名前で呼んであげてください。` : '');

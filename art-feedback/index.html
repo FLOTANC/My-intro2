@@ -4148,7 +4148,7 @@
     if (isTeacher) {
       fetch('/api/history', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-teacher-pin': teacherPin() },
         body: JSON.stringify({})
       }).catch(() => {});
       updateWakeBadge(0);
@@ -4267,7 +4267,7 @@
     document.getElementById('wake-convo-view').style.display = 'none';
 
     try {
-      const res = await fetch('/api/history?isTeacher=true&limit=200');
+      const res = await fetch('/api/history?isTeacher=true&limit=200', { headers: { 'x-teacher-pin': teacherPin() } });
       const { conversations, unreadByStudent } = await res.json();
 
       if (!conversations?.length) {
@@ -4335,7 +4335,7 @@
     // 既読にする
     fetch('/api/history', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-teacher-pin': teacherPin() },
       body: JSON.stringify({ studentName })
     }).catch(() => {});
   }
@@ -4353,7 +4353,7 @@
     try {
       const res = await fetch('/api/history', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-teacher-pin': teacherPin() },
         body: JSON.stringify({ id })
       });
       const data = await res.json().catch(() => ({}));

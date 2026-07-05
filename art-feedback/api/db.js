@@ -14,6 +14,9 @@ function getDb() {
 
 const sanitize = s => String(s || '').replace(/[.#$\[\]/]/g, '_');
 const now = () => Date.now();
+const MAX_IMG = 4_000_000; // base64文字数 ≈ 画像3MB
+const cap = (s, n) => String(s || '').slice(0, n);
+const imgTooBig = s => typeof s === 'string' && s.length > MAX_IMG;
 
 // PIN必須アクション
 const TEACHER_ACTIONS = new Set([
@@ -70,12 +73,15 @@ module.exports = async (req, res) => {
       case 'uploadArtwork': {
         const d = payload.data || {};
         const rec = {
-          studentName: String(d.studentName || ''), age: String(d.age || ''),
-          title: String(d.title || ''), artworkType: String(d.artworkType || 'drawing'),
+          studentName: cap(d.studentName, 50), age: cap(d.age, 20),
+          title: cap(d.title, 100), artworkType: cap(d.artworkType || 'drawing', 30),
           ts: now(), likes: 0
         };
-        if (d.imageBase64) rec.imageBase64 = d.imageBase64;
-        if (d.studentComment) rec.studentComment = d.studentComment;
+        if (d.imageBase64) {
+          if (imgTooBig(d.imageBase64)) return res.status(413).json({ error: '画像が大きすぎます（3MBまで）' });
+          rec.imageBase64 = d.imageBase64;
+        }
+        if (d.studentComment) rec.studentComment = cap(d.studentComment, 1000);
         if (!rec.studentName || !rec.title) return res.status(400).json({ error: 'studentName/title required' });
         const ref = await db.ref('art/artworks').push(rec);
         return res.status(200).json({ ok: true, key: ref.key });
@@ -94,8 +100,9 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       }
       case 'postComment': { // 保護者コメント（roleは強制）
-        const data = { role: 'parent', text: String(payload.text || ''), ts: now() };
-        const imgs = Array.isArray(payload.images) ? payload.images : [];
+        const data = { role: 'parent', text: cap(payload.text, 2000), ts: now() };
+        const imgs = (Array.isArray(payload.images) ? payload.images : []).slice(0, 6);
+        if (imgs.some(imgTooBig)) return res.status(413).json({ error: '画像が大きすぎます（3MBまで）' });
         if (imgs.length === 1) data.imageBase64 = imgs[0];
         else if (imgs.length > 1) data.imageBase64s = imgs;
         if (!data.text && !imgs.length) return res.status(400).json({ error: 'empty' });
@@ -103,7 +110,7 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       }
       case 'postReply': { // 返信。roleはPINの有無でサーバーが決定
-        const data = { role: teacher ? 'teacher' : 'parent', text: String(payload.text || ''), ts: now() };
+        const data = { role: teacher ? 'teacher' : 'parent', text: cap(payload.text, 2000), ts: now() };
         if (!data.text) return res.status(400).json({ error: 'empty' });
         await db.ref(replyPath(payload.artworkId, payload.parent)).push(data);
         return res.status(200).json({ ok: true });
@@ -119,16 +126,18 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       }
       case 'contactSend': {
+        const text = cap(payload.text, 2000);
+        if (!text.trim()) return res.status(400).json({ error: 'empty' });
         await db.ref('art/messages').push({
           role: teacher ? 'teacher' : 'student',
-          name: String(payload.name || ''), text: String(payload.text || ''),
+          name: cap(payload.name, 50), text,
           ts: now(), read: false
         });
         return res.status(200).json({ ok: true });
       }
       case 'wakeNotification': {
         await db.ref('art/wake_notifications').push({
-          studentName: String(payload.studentName || ''), question: String(payload.question || ''),
+          studentName: cap(payload.studentName, 50), question: cap(payload.question, 1000),
           ts: now(), read: false
         });
         return res.status(200).json({ ok: true });
