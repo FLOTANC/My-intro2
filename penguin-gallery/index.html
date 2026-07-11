@@ -23,6 +23,7 @@
 <canvas id="c"></canvas>
 <div id="touch" style="position:fixed;inset:0;display:none;"></div>
 <button id="fwd" style="position:fixed;right:20px;bottom:40px;width:78px;height:78px;border-radius:50%;background:rgba(120,200,255,.2);border:2px solid rgba(160,220,255,.6);color:#dff2ff;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▲<br>進む</button>
+<button id="berry" onclick="throwBerry()" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:9;background:rgba(255,90,120,.25);border:1px solid rgba(255,140,160,.6);color:#ffd8e0;padding:10px 18px;border-radius:999px;cursor:pointer;font-family:inherit;">🍓 いちごを投げる</button>
 <button id="peek" onclick="openInfo()" style="position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9;display:none;background:linear-gradient(120deg,#7fd6ff,#4b9fe0);color:#06283d;font-weight:700;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;">キャプションを見る</button>
 <button id="openSubmit" onclick="showSubmit()" style="position:fixed;left:16px;top:16px;z-index:12;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:10px 16px;border-radius:999px;cursor:pointer;font-family:inherit;">＋ ポスターを出す</button>
 <button id="lite" onclick="toggleLite()" style="position:fixed;right:16px;top:16px;z-index:12;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#dff2ff;padding:8px 12px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:12px;">軽量モード</button>
@@ -256,10 +257,30 @@ function toggleLite(){ LITE=!LITE;
   document.getElementById('lite').textContent=LITE?'標準モード':'軽量モード';
 }
 
+const berries=[]; const berryGeo=new THREE.SphereGeometry(0.16,10,8); const berryMat=new THREE.MeshStandardMaterial({color:0xff375f,roughness:0.5});
+function throwBerry(){
+  const m=new THREE.Mesh(berryGeo,berryMat);
+  m.position.copy(camera.position);
+  const dir=_fwd.clone().normalize();
+  const v=dir.multiplyScalar(9); v.y=4.5;
+  berries.push({m,v,life:6}); scene.add(m);
+  if(berries.length>120){ const old=berries.shift(); scene.remove(old.m); }
+}
+let _lt=performance.now();
+function updateBerries(){
+  const now=performance.now(), dt=Math.min(0.05,(now-_lt)/1000); _lt=now;
+  for(let i=berries.length-1;i>=0;i--){ const b=berries[i];
+    b.v.y-=14*dt; b.m.position.addScaledVector(b.v,dt);
+    if(b.m.position.y<0.16){ b.m.position.y=0.16; b.v.y=-b.v.y*0.4; b.v.x*=0.7; b.v.z*=0.7; }
+    b.life-=dt; if(b.life<=0){ scene.remove(b.m); berries.splice(i,1); }
+  }
+}
+
 const _fwd=new THREE.Vector3(), _right=new THREE.Vector3();
 function animate(){
   requestAnimationFrame(animate);
   updateDecor(performance.now()*0.001);
+  updateBerries();
   camera.rotation.order='YXZ'; camera.rotation.y=yaw; camera.rotation.x=pitch;
   _fwd.set(-Math.sin(yaw),0,-Math.cos(yaw)); _right.set(Math.cos(yaw),0,-Math.sin(yaw));
   const sp=0.14;
