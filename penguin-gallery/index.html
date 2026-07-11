@@ -51,9 +51,13 @@ function initScene(){
     new THREE.MeshStandardMaterial({color:0xbfe6ff,roughness:0.5,flatShading:true}));
   berg.position.set(0,4.5,0); scene.add(berg);
   addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
-  // 動作確認用モック（Task3で実データに差し替え）
+  // 動作確認用モック / 実データ購読
   if(new URLSearchParams(location.search).get('mock')){
-    layoutExhibits(Array.from({length:8},(_,i)=>({id:'m'+i,productName:'Product'+i,author:'Name'+i,link:'',highlight:'',imageUrl:''})));
+    const url='https://art-feedback.vercel.app/wake-sensei.png';
+    layoutExhibits(Array.from({length:8},(_,i)=>({id:'m'+i,productName:'Product'+i,author:'Name'+i,link:'',highlight:'',imageUrl:url})));
+    frames.forEach(loadFrameImage);
+  } else {
+    subscribeExhibits();
   }
   animate();
 }
@@ -74,6 +78,28 @@ function layoutExhibits(list){
     frame.lookAt(0,FH/2+0.6,0); // 中央（内向き）
     scene.add(frame);
     frames.push({mesh:frame,data:d,pos:frame.position.clone(),picMesh:null,ang});
+  });
+}
+
+const texLoader=new THREE.TextureLoader();
+function loadFrameImage(f){
+  if(!f.data.imageUrl || f.picMesh) return;
+  texLoader.load(f.data.imageUrl,(tex)=>{
+    tex.colorSpace=THREE.SRGBColorSpace;
+    const FW=2.2, FH=FW*1.414;
+    const pic=new THREE.Mesh(new THREE.PlaneGeometry(FW,FH), new THREE.MeshBasicMaterial({map:tex}));
+    pic.position.copy(f.mesh.position); pic.quaternion.copy(f.mesh.quaternion);
+    pic.translateZ(0.09); // 額の前面へ
+    scene.add(pic); f.picMesh=pic;
+  });
+}
+function subscribeExhibits(){
+  if(!fbReady) return;
+  db.ref('penguin/exhibits').on('value',snap=>{
+    const val=snap.val()||{};
+    const list=Object.entries(val).map(([id,d])=>({id,...d})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    layoutExhibits(list);
+    frames.forEach(loadFrameImage);
   });
 }
 function animate(){ requestAnimationFrame(animate); renderer.render(scene,camera); }
