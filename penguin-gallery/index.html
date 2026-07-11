@@ -18,6 +18,14 @@
 <canvas id="c"></canvas>
 <div id="touch" style="position:fixed;inset:0;display:none;"></div>
 <button id="fwd" style="position:fixed;right:20px;bottom:40px;width:78px;height:78px;border-radius:50%;background:rgba(120,200,255,.2);border:2px solid rgba(160,220,255,.6);color:#dff2ff;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▲<br>進む</button>
+<button id="peek" onclick="openInfo()" style="position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9;display:none;background:linear-gradient(120deg,#7fd6ff,#4b9fe0);color:#06283d;font-weight:700;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;">キャプションを見る</button>
+<div id="info" style="position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);z-index:15;width:min(92%,520px);max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(8,26,42,.92);backdrop-filter:blur(12px);border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:16px;opacity:0;pointer-events:none;transition:opacity .3s,transform .35s;text-align:left;">
+  <button onclick="closeInfo()" style="position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;">✕</button>
+  <div class="pt" style="font-size:17px;font-weight:800;padding-right:34px;"></div>
+  <div class="pa" style="font-size:13px;color:#9fd0ee;margin-top:2px;"></div>
+  <div class="ph" style="font-size:13px;line-height:1.7;margin-top:10px;color:#dcefff;"></div>
+  <div class="pl" style="margin-top:12px;"></div>
+</div>
 <script>
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth<900);
 let fbReady=false, db=null, storage=null;
@@ -123,6 +131,21 @@ function setupControls(){
     f.addEventListener('touchstart',e=>{e.preventDefault();on();}); f.addEventListener('touchend',off); f.addEventListener('touchcancel',off);
   }
 }
+const info=document.getElementById('info');
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function safeLink(u){ return /^https:\/\//i.test(u||'') ? u : ''; }
+let nearFrame=null;
+function fillInfo(d){
+  info.querySelector('.pt').textContent=d.productName||'無題';
+  info.querySelector('.pa').textContent=d.author?('— '+d.author):'';
+  info.querySelector('.ph').textContent=d.highlight||'';
+  const url=safeLink(d.link);
+  info.querySelector('.pl').innerHTML = url
+    ? `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:8px 16px;border-radius:999px;text-decoration:none;">リンクを開く 🔗</a>` : '';
+}
+function openInfo(){ if(!nearFrame) return; fillInfo(nearFrame.data); info.style.opacity='1'; info.style.transform='translate(-50%,0)'; info.style.pointerEvents='auto'; document.getElementById('peek').style.display='none'; }
+function closeInfo(){ info.style.opacity='0'; info.style.transform='translate(-50%,16px)'; info.style.pointerEvents='none'; if(nearFrame) document.getElementById('peek').style.display='inline-block'; }
+
 const _fwd=new THREE.Vector3(), _right=new THREE.Vector3();
 function animate(){
   requestAnimationFrame(animate);
@@ -136,6 +159,12 @@ function animate(){
   const lim=radiusFor(frames.length)+3; const dd=Math.hypot(camera.position.x,camera.position.z);
   if(dd>lim){ camera.position.x*=lim/dd; camera.position.z*=lim/dd; }
   camera.position.y=1.6;
+  // 近接判定
+  let nf=null,nd=5.5;
+  frames.forEach(f=>{ const d2=camera.position.distanceTo(f.pos); if(d2<nd){nd=d2;nf=f;} });
+  if((nf&&nf.data.id)!==(nearFrame&&nearFrame.data.id)){
+    nearFrame=nf; closeInfo(); document.getElementById('peek').style.display= nf?'inline-block':'none';
+  }
   renderer.render(scene,camera);
 }
 initScene();
