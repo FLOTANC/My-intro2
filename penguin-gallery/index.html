@@ -16,6 +16,8 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="touch" style="position:fixed;inset:0;display:none;"></div>
+<button id="fwd" style="position:fixed;right:20px;bottom:40px;width:78px;height:78px;border-radius:50%;background:rgba(120,200,255,.2);border:2px solid rgba(160,220,255,.6);color:#dff2ff;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▲<br>進む</button>
 <script>
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth<900);
 let fbReady=false, db=null, storage=null;
@@ -102,8 +104,42 @@ function subscribeExhibits(){
     frames.forEach(loadFrameImage);
   });
 }
-function animate(){ requestAnimationFrame(animate); renderer.render(scene,camera); }
+let yaw=0,pitch=0,move=false; const keys={};
+if(isMobile){ document.body.classList.add('mobile'); document.getElementById('touch').style.display='block'; document.getElementById('fwd').style.display='flex'; }
+function setupControls(){
+  if(!isMobile){
+    addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
+    addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+    const cv=document.getElementById('c'); let down=false,lx=0,ly=0; cv.style.cursor='grab';
+    cv.addEventListener('mousedown',e=>{down=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
+    addEventListener('mouseup',()=>{down=false;cv.style.cursor='grab';});
+    addEventListener('mousemove',e=>{ if(!down)return; yaw-=(e.clientX-lx)*0.004; pitch-=(e.clientY-ly)*0.004; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=e.clientX; ly=e.clientY; });
+  } else {
+    const t=document.getElementById('touch'); let lx=0,ly=0,drag=false;
+    t.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+    t.addEventListener('touchmove',e=>{ if(!drag)return; const x=e.touches[0].clientX,y=e.touches[0].clientY; yaw-=(x-lx)*0.005; pitch-=(y-ly)*0.005; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=x;ly=y; },{passive:true});
+    t.addEventListener('touchend',()=>drag=false);
+    const f=document.getElementById('fwd'); const on=()=>move=true,off=()=>move=false;
+    f.addEventListener('touchstart',e=>{e.preventDefault();on();}); f.addEventListener('touchend',off); f.addEventListener('touchcancel',off);
+  }
+}
+const _fwd=new THREE.Vector3(), _right=new THREE.Vector3();
+function animate(){
+  requestAnimationFrame(animate);
+  camera.rotation.order='YXZ'; camera.rotation.y=yaw; camera.rotation.x=pitch;
+  _fwd.set(-Math.sin(yaw),0,-Math.cos(yaw)); _right.set(Math.cos(yaw),0,-Math.sin(yaw));
+  const sp=0.14;
+  if(keys['w']||keys['arrowup']||move) camera.position.addScaledVector(_fwd,sp);
+  if(keys['s']||keys['arrowdown']) camera.position.addScaledVector(_fwd,-sp);
+  if(keys['a']||keys['arrowleft']) camera.position.addScaledVector(_right,-sp);
+  if(keys['d']||keys['arrowright']) camera.position.addScaledVector(_right,sp);
+  const lim=radiusFor(frames.length)+3; const dd=Math.hypot(camera.position.x,camera.position.z);
+  if(dd>lim){ camera.position.x*=lim/dd; camera.position.z*=lim/dd; }
+  camera.position.y=1.6;
+  renderer.render(scene,camera);
+}
 initScene();
+setupControls();
 </script>
 </body>
 </html>
