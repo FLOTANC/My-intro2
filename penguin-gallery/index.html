@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ぺんぎん展示室 — 氷の国</title>
+<style>
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:#0a1826;font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:#eaf6ff;}
+  #c{display:block;width:100%;height:100%;}
+</style>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth<900);
+let fbReady=false, db=null, storage=null;
+try{
+  firebase.initializeApp({
+    apiKey:"AIzaSyBaHdrESJGmNEPCBOh_XlOjgy_4lhFg5LE", authDomain:"rowke-app.firebaseapp.com",
+    databaseURL:"https://rowke-app-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"rowke-app",
+    storageBucket:"rowke-app.firebasestorage.app", messagingSenderId:"950459153761", appId:"1:950459153761:web:ea18c5d7cb55ed589a9920"
+  });
+  db=firebase.database(); storage=firebase.storage(); fbReady=true;
+}catch(e){ console.error('firebase init failed', e); }
+
+let scene,camera,renderer;
+const RADIUS_BASE=14, FRAME_ARC=4.2; // 額1枚あたりの円周上の間隔(m)
+function initScene(){
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0a1826);
+  scene.fog=new THREE.Fog(0x0a1826, 26, 90);
+  camera=new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 400);
+  camera.position.set(0,1.6,RADIUS_BASE-4);
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  // 照明（寒色）
+  scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x1a3350, 0.9));
+  const dir=new THREE.DirectionalLight(0xffffff,0.6); dir.position.set(8,20,6); scene.add(dir);
+  // 凍った床（薄く反射する寒色）
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(120,64),
+    new THREE.MeshStandardMaterial({color:0x16324a,roughness:0.35,metalness:0.1}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
+  // 中央の氷山（目印）
+  const berg=new THREE.Mesh(new THREE.ConeGeometry(4.5,9,6),
+    new THREE.MeshStandardMaterial({color:0xbfe6ff,roughness:0.5,flatShading:true}));
+  berg.position.set(0,4.5,0); scene.add(berg);
+  addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  animate();
+}
+function animate(){ requestAnimationFrame(animate); renderer.render(scene,camera); }
+initScene();
+</script>
+</body>
+</html>
