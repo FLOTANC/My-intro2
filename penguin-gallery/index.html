@@ -127,9 +127,9 @@ function layoutExhibits(list){
 }
 
 const texLoader=new THREE.TextureLoader();
-function loadFrameImage(f){
-  if(!f.data.imageUrl || f.picMesh) return;
-  texLoader.load(f.data.imageUrl,(tex)=>{
+function applyFrameTexture(f,url){
+  if(!url || f.picMesh) return;
+  texLoader.load(url,(tex)=>{
     tex.colorSpace=THREE.SRGBColorSpace;
     const FW=2.2, FH=FW*1.414;
     const pic=new THREE.Mesh(new THREE.PlaneGeometry(FW,FH), new THREE.MeshBasicMaterial({map:tex}));
@@ -137,6 +137,11 @@ function loadFrameImage(f){
     pic.translateZ(0.09); // 額の前面へ
     scene.add(pic); f.picMesh=pic;
   });
+}
+function loadFrameImage(f){
+  if(f.picMesh) return;
+  if(f.data.imageUrl){ applyFrameTexture(f,f.data.imageUrl); return; } // モック等の直接URL
+  if(fbReady && f.data.id){ db.ref('penguin/images/'+f.data.id).once('value').then(s=>applyFrameTexture(f,s.val())); } // 画像はDBから遅延読み込み
 }
 function subscribeExhibits(){
   if(!fbReady) return;
@@ -186,7 +191,7 @@ function renderAdminList(){
 }
 async function deleteExhibit(id){
   if(!confirm('この展示を削除しますか？')) return;
-  try{ await db.ref('penguin/exhibits/'+id).remove(); await storage.ref('penguin/'+id+'.jpg').delete().catch(()=>{}); renderAdminList(); }
+  try{ await db.ref('penguin/exhibits/'+id).remove(); await db.ref('penguin/images/'+id).remove().catch(()=>{}); renderAdminList(); }
   catch(e){ alert('削除に失敗：'+(e.message||e)); }
 }
 function showSubmit(){
@@ -227,13 +232,11 @@ async function doSubmit(){
   if(!productName||!author){ alert('プロダクト名と名前は必須です'); return; }
   const go=document.getElementById('f-go'); go.disabled=true; go.textContent='展示中…';
   try{
-    const canvas=resizeCanvas(await fileToCanvas(file),2000);
-    const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.9));
+    const canvas=resizeCanvas(await fileToCanvas(file),1400);
+    const dataUrl=canvas.toDataURL('image/jpeg',0.8);
     const key=db.ref('penguin/exhibits').push().key;
-    const ref=storage.ref('penguin/'+key+'.jpg');
-    await ref.put(blob);
-    const imageUrl=await ref.getDownloadURL();
-    await db.ref('penguin/exhibits/'+key).set({ productName, author, link, highlight, imageUrl, ts:Date.now() });
+    await db.ref('penguin/images/'+key).set(dataUrl);                                  // 画像は別パスに
+    await db.ref('penguin/exhibits/'+key).set({ productName, author, link, highlight, ts:Date.now() }); // メタは軽く
     document.getElementById('submit').style.display='none';
     document.getElementById('f-file').value=''; document.getElementById('f-product').value=''; document.getElementById('f-author').value=''; document.getElementById('f-link').value=''; document.getElementById('f-highlight').value='';
   }catch(e){ console.error(e); alert('展示に失敗しました：'+(e.message||e)); }
