@@ -40,6 +40,20 @@
     <button onclick="document.getElementById('submit').style.display='none'" style="width:100%;padding:9px;margin-top:8px;background:none;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#cfe6f7;cursor:pointer;">閉じる</button>
   </div>
 </div>
+<div id="admin" style="position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(4,16,28,.8);padding:16px;">
+  <div style="width:min(94%,480px);max-height:80vh;overflow:auto;background:#0c2438;border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:18px;">
+    <div style="font-size:17px;font-weight:800;">管理</div>
+    <div id="admin-gate">
+      <input id="a-code" type="password" placeholder="合言葉" style="width:100%;padding:9px;margin:10px 0;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+      <button onclick="adminUnlock()" style="width:100%;padding:10px;border:none;border-radius:999px;background:#7fd6ff;color:#06283d;font-weight:800;cursor:pointer;">開く</button>
+    </div>
+    <div id="admin-body" style="display:none;">
+      <label style="display:flex;align-items:center;gap:8px;margin:12px 0;"><input id="a-open" type="checkbox" onchange="toggleSubmissions(this.checked)"> 提出を受け付ける</label>
+      <div id="a-list"></div>
+    </div>
+    <button onclick="document.getElementById('admin').style.display='none'" style="width:100%;padding:9px;margin-top:10px;background:none;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#cfe6f7;cursor:pointer;">閉じる</button>
+  </div>
+</div>
 <div id="info" style="position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);z-index:15;width:min(92%,520px);max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(8,26,42,.92);backdrop-filter:blur(12px);border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:16px;opacity:0;pointer-events:none;transition:opacity .3s,transform .35s;text-align:left;">
   <button onclick="closeInfo()" style="position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;">✕</button>
   <div class="pt" style="font-size:17px;font-weight:800;padding-right:34px;"></div>
@@ -154,6 +168,27 @@ function setupControls(){
 }
 let submissionsOpen=true;
 if(fbReady) db.ref('penguin/config/submissionsOpen').on('value',s=>{ submissionsOpen = s.val()!==false; });
+const ADMIN_CODE='penguin2026'; // 誤操作防止レベル（本物の認証ではない）
+if(new URLSearchParams(location.search).get('admin')) document.getElementById('admin').style.display='flex';
+function adminUnlock(){
+  if(document.getElementById('a-code').value!==ADMIN_CODE){ alert('合言葉が違います'); return; }
+  document.getElementById('admin-gate').style.display='none';
+  document.getElementById('admin-body').style.display='block';
+  db.ref('penguin/config/submissionsOpen').once('value').then(s=>{ document.getElementById('a-open').checked = s.val()!==false; });
+  renderAdminList();
+}
+function toggleSubmissions(v){ db.ref('penguin/config/submissionsOpen').set(!!v); }
+function renderAdminList(){
+  db.ref('penguin/exhibits').once('value').then(snap=>{
+    const val=snap.val()||{}; const el=document.getElementById('a-list');
+    el.innerHTML=Object.entries(val).map(([id,d])=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,.1);padding:8px 0;"><span style="font-size:13px;">${esc(d.productName||'無題')} <span style="color:#9fd0ee;">/ ${esc(d.author||'')}</span></span><button onclick="deleteExhibit('${id}')" style="background:rgba(255,120,120,.2);border:1px solid rgba(255,150,150,.5);color:#ffd0d0;border-radius:8px;padding:4px 10px;cursor:pointer;">削除</button></div>`).join('')||'<div style="color:#9fd0ee;padding:8px 0;">まだ展示がありません</div>';
+  });
+}
+async function deleteExhibit(id){
+  if(!confirm('この展示を削除しますか？')) return;
+  try{ await db.ref('penguin/exhibits/'+id).remove(); await storage.ref('penguin/'+id+'.jpg').delete().catch(()=>{}); renderAdminList(); }
+  catch(e){ alert('削除に失敗：'+(e.message||e)); }
+}
 function showSubmit(){
   const n=document.getElementById('sub-note'), go=document.getElementById('f-go');
   if(!submissionsOpen){ n.textContent='受付は終了しました（鑑賞はできます）'; go.disabled=true; go.style.opacity=.5; }
