@@ -51,7 +51,30 @@ function initScene(){
     new THREE.MeshStandardMaterial({color:0xbfe6ff,roughness:0.5,flatShading:true}));
   berg.position.set(0,4.5,0); scene.add(berg);
   addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  // 動作確認用モック（Task3で実データに差し替え）
+  if(new URLSearchParams(location.search).get('mock')){
+    layoutExhibits(Array.from({length:8},(_,i)=>({id:'m'+i,productName:'Product'+i,author:'Name'+i,link:'',highlight:'',imageUrl:''})));
+  }
   animate();
+}
+
+let frames=[];
+function radiusFor(n){ return Math.max(RADIUS_BASE, (Math.max(n,1)*FRAME_ARC)/(2*Math.PI)); }
+function clearFrames(){ frames.forEach(f=>{ scene.remove(f.mesh); if(f.picMesh) scene.remove(f.picMesh); }); frames=[]; }
+function layoutExhibits(list){
+  clearFrames();
+  const n=list.length, R=radiusFor(n);
+  const FW=2.2, FH=FW*1.414; // A4縦の額サイズ(m)
+  list.forEach((d,i)=>{
+    const ang=(i/Math.max(n,1))*Math.PI*2;
+    const x=Math.sin(ang)*R, z=Math.cos(ang)*R;
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(FW+0.22,FH+0.22,0.14),
+      new THREE.MeshStandardMaterial({color:0xdff2ff,roughness:0.4}));
+    frame.position.set(x,FH/2+0.6,z);
+    frame.lookAt(0,FH/2+0.6,0); // 中央（内向き）
+    scene.add(frame);
+    frames.push({mesh:frame,data:d,pos:frame.position.clone(),picMesh:null,ang});
+  });
 }
 function animate(){ requestAnimationFrame(animate); renderer.render(scene,camera); }
 initScene();
