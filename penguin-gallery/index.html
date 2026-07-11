@@ -13,12 +13,31 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script type="module">
+  import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+  window.pdfjsLib=pdfjsLib;
+</script>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="touch" style="position:fixed;inset:0;display:none;"></div>
 <button id="fwd" style="position:fixed;right:20px;bottom:40px;width:78px;height:78px;border-radius:50%;background:rgba(120,200,255,.2);border:2px solid rgba(160,220,255,.6);color:#dff2ff;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▲<br>進む</button>
 <button id="peek" onclick="openInfo()" style="position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9;display:none;background:linear-gradient(120deg,#7fd6ff,#4b9fe0);color:#06283d;font-weight:700;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;">キャプションを見る</button>
+<button id="openSubmit" onclick="showSubmit()" style="position:fixed;left:16px;top:16px;z-index:12;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:10px 16px;border-radius:999px;cursor:pointer;font-family:inherit;">＋ ポスターを出す</button>
+<div id="submit" style="position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(4,16,28,.7);padding:16px;">
+  <div style="width:min(94%,460px);background:#0c2438;border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:18px;">
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px;">ポスターを展示する</div>
+    <div id="sub-note" style="font-size:12px;color:#9fd0ee;margin-bottom:10px;">PDF または 画像（PNG/JPG）・15MBまで</div>
+    <input id="f-file" type="file" accept="application/pdf,image/png,image/jpeg" style="width:100%;color:#dff2ff;margin-bottom:8px;">
+    <input id="f-product" maxlength="40" placeholder="プロダクト名" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <input id="f-author" maxlength="30" placeholder="名前" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <input id="f-link" maxlength="200" placeholder="リンク（https://… 任意）" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <input id="f-highlight" maxlength="60" placeholder="見てほしいポイント（任意）" style="width:100%;padding:9px;margin-bottom:10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <button id="f-go" onclick="doSubmit()" style="width:100%;padding:11px;border:none;border-radius:999px;background:linear-gradient(120deg,#7fd6ff,#4b9fe0);color:#06283d;font-weight:800;cursor:pointer;">展示する</button>
+    <button onclick="document.getElementById('submit').style.display='none'" style="width:100%;padding:9px;margin-top:8px;background:none;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#cfe6f7;cursor:pointer;">閉じる</button>
+  </div>
+</div>
 <div id="info" style="position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);z-index:15;width:min(92%,520px);max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(8,26,42,.92);backdrop-filter:blur(12px);border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:16px;opacity:0;pointer-events:none;transition:opacity .3s,transform .35s;text-align:left;">
   <button onclick="closeInfo()" style="position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;">✕</button>
   <div class="pt" style="font-size:17px;font-weight:800;padding-right:34px;"></div>
@@ -131,6 +150,59 @@ function setupControls(){
     f.addEventListener('touchstart',e=>{e.preventDefault();on();}); f.addEventListener('touchend',off); f.addEventListener('touchcancel',off);
   }
 }
+let submissionsOpen=true;
+if(fbReady) db.ref('penguin/config/submissionsOpen').on('value',s=>{ submissionsOpen = s.val()!==false; });
+function showSubmit(){
+  const n=document.getElementById('sub-note'), go=document.getElementById('f-go');
+  if(!submissionsOpen){ n.textContent='受付は終了しました（鑑賞はできます）'; go.disabled=true; go.style.opacity=.5; }
+  document.getElementById('submit').style.display='flex';
+}
+function resizeCanvas(cv,max=2000){
+  const w=cv.width,h=cv.height,s=Math.min(1,max/Math.max(w,h)); if(s>=1) return cv;
+  const o=document.createElement('canvas'); o.width=Math.round(w*s); o.height=Math.round(h*s);
+  o.getContext('2d').drawImage(cv,0,0,o.width,o.height); return o;
+}
+async function fileToCanvas(file){
+  if(file.type==='application/pdf'){
+    const buf=await file.arrayBuffer();
+    const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    const page=await pdf.getPage(1);
+    const vp=page.getViewport({scale:2});
+    const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    return cv;
+  } else {
+    const img=await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=URL.createObjectURL(file); });
+    const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+    cv.getContext('2d').drawImage(img,0,0); return cv;
+  }
+}
+async function doSubmit(){
+  const file=document.getElementById('f-file').files[0];
+  const productName=document.getElementById('f-product').value.trim();
+  const author=document.getElementById('f-author').value.trim();
+  const link=document.getElementById('f-link').value.trim();
+  const highlight=document.getElementById('f-highlight').value.trim();
+  if(!submissionsOpen){ alert('受付は終了しました'); return; }
+  if(!file){ alert('ファイルを選んでください'); return; }
+  if(file.size>15*1024*1024){ alert('15MBまでにしてください'); return; }
+  if(!/^(application\/pdf|image\/png|image\/jpeg)$/.test(file.type)){ alert('PDF/PNG/JPGのみ'); return; }
+  if(!productName||!author){ alert('プロダクト名と名前は必須です'); return; }
+  const go=document.getElementById('f-go'); go.disabled=true; go.textContent='展示中…';
+  try{
+    const canvas=resizeCanvas(await fileToCanvas(file),2000);
+    const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.9));
+    const key=db.ref('penguin/exhibits').push().key;
+    const ref=storage.ref('penguin/'+key+'.jpg');
+    await ref.put(blob);
+    const imageUrl=await ref.getDownloadURL();
+    await db.ref('penguin/exhibits/'+key).set({ productName, author, link, highlight, imageUrl, ts:Date.now() });
+    document.getElementById('submit').style.display='none';
+    document.getElementById('f-file').value=''; document.getElementById('f-product').value=''; document.getElementById('f-author').value=''; document.getElementById('f-link').value=''; document.getElementById('f-highlight').value='';
+  }catch(e){ console.error(e); alert('展示に失敗しました：'+(e.message||e)); }
+  finally{ go.disabled=false; go.textContent='展示する'; }
+}
+
 const info=document.getElementById('info');
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function safeLink(u){ return /^https:\/\//i.test(u||'') ? u : ''; }
