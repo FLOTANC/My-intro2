@@ -23,13 +23,37 @@
 <canvas id="c"></canvas>
 <div id="touch" style="position:fixed;inset:0;display:none;"></div>
 <button id="fwd" style="position:fixed;right:20px;bottom:40px;width:78px;height:78px;border-radius:50%;background:rgba(120,200,255,.2);border:2px solid rgba(160,220,255,.6);color:#dff2ff;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▲<br>進む</button>
+<button id="mvL" style="position:fixed;left:20px;bottom:40px;width:64px;height:64px;border-radius:50%;background:rgba(120,200,255,.16);border:2px solid rgba(160,220,255,.5);color:#dff2ff;font-size:22px;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">◀</button>
+<button id="mvR" style="position:fixed;left:96px;bottom:40px;width:64px;height:64px;border-radius:50%;background:rgba(120,200,255,.16);border:2px solid rgba(160,220,255,.5);color:#dff2ff;font-size:22px;font-weight:700;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:9;">▶</button>
 <button id="berry" onclick="throwBerry()" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:9;background:rgba(255,90,120,.25);border:1px solid rgba(255,140,160,.6);color:#ffd8e0;padding:10px 18px;border-radius:999px;cursor:pointer;font-family:inherit;">🍓 いちごを投げる</button>
 <button id="peek" onclick="openInfo()" style="position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9;display:none;background:linear-gradient(120deg,#7fd6ff,#4b9fe0);color:#06283d;font-weight:700;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;">キャプションを見る</button>
 <button id="openSubmit" onclick="showSubmit()" style="position:fixed;left:16px;top:16px;z-index:12;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:10px 16px;border-radius:999px;cursor:pointer;font-family:inherit;">＋ ポスターを出す</button>
 <button id="lite" onclick="toggleLite()" style="position:fixed;right:16px;top:16px;z-index:12;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#dff2ff;padding:8px 12px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:12px;">軽量モード</button>
+<button id="openAd" onclick="showAd()" style="position:fixed;left:16px;top:60px;z-index:12;background:rgba(255,190,90,.22);border:1px solid rgba(255,200,120,.6);color:#ffe6bf;padding:9px 14px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:13px;">🎪 広告・お知らせ</button>
+<button id="adPeek" onclick="openAdView()" style="position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:9;display:none;background:linear-gradient(120deg,#ffcf6b,#ff8f4b);color:#3a2200;font-weight:700;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:inherit;">🎪 この広告を見る</button>
+<div id="adform" style="position:fixed;inset:0;z-index:32;display:none;align-items:center;justify-content:center;background:rgba(4,16,28,.7);padding:16px;">
+  <div style="width:min(94%,460px);background:#241a0c;border:1px solid rgba(255,200,120,.4);border-radius:18px;padding:18px;">
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px;color:#ffe6bf;">🎪 広告・お知らせを貼る</div>
+    <div style="font-size:12px;color:#e6c79a;margin-bottom:10px;">お祭りの告知・宣伝・動画などを掲示できます</div>
+    <input id="ad-title" maxlength="40" placeholder="タイトル（例：ライブ配信 20時〜）" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <input id="ad-file" type="file" accept="image/png,image/jpeg" style="width:100%;color:#ffe6bf;margin-bottom:8px;">
+    <div style="font-size:11px;color:#c9a877;margin-bottom:8px;">↑ 画像（任意・15MBまで PNG/JPG）</div>
+    <input id="ad-video" maxlength="300" placeholder="動画URL（YouTube か .mp4・任意）" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <input id="ad-link" maxlength="200" placeholder="リンク（https://… 任意）" style="width:100%;padding:9px;margin-bottom:10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
+    <button id="ad-go" onclick="doAd()" style="width:100%;padding:11px;border:none;border-radius:999px;background:linear-gradient(120deg,#ffcf6b,#ff8f4b);color:#3a2200;font-weight:800;cursor:pointer;">貼る</button>
+    <button onclick="document.getElementById('adform').style.display='none'" style="width:100%;padding:9px;margin-top:8px;background:none;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#e6c79a;cursor:pointer;">閉じる</button>
+  </div>
+</div>
+<div id="adview" style="position:fixed;inset:0;z-index:38;display:none;align-items:center;justify-content:center;background:rgba(4,10,20,.9);padding:16px;">
+  <div style="width:min(96%,900px);">
+    <div id="adview-body" style="border-radius:14px;overflow:hidden;background:#000;"></div>
+    <div id="adview-cap" style="color:#ffe6bf;font-weight:700;margin-top:10px;text-align:center;"></div>
+    <div style="text-align:center;margin-top:10px;"><button onclick="closeAdView()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;padding:10px 24px;border-radius:999px;cursor:pointer;">閉じる</button></div>
+  </div>
+</div>
 <div id="submit" style="position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(4,16,28,.7);padding:16px;">
   <div style="width:min(94%,460px);background:#0c2438;border:1px solid rgba(160,220,255,.3);border-radius:18px;padding:18px;">
-    <div style="font-size:17px;font-weight:800;margin-bottom:4px;">ポスターを展示する</div>
+    <div id="submit-title" style="font-size:17px;font-weight:800;margin-bottom:4px;">ポスターを展示する</div>
     <div id="sub-note" style="font-size:12px;color:#9fd0ee;margin-bottom:10px;">PDF または 画像（PNG/JPG）・15MBまで</div>
     <input id="f-file" type="file" accept="application/pdf,image/png,image/jpeg" style="width:100%;color:#dff2ff;margin-bottom:8px;">
     <input id="f-product" maxlength="40" placeholder="プロダクト名" style="width:100%;padding:9px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;">
@@ -104,6 +128,7 @@ function initScene(){
   } else {
     subscribeExhibits();
   }
+  subscribeAds();
   animate();
 }
 
@@ -152,8 +177,9 @@ function subscribeExhibits(){
     frames.forEach(loadFrameImage);
   });
 }
-let yaw=0,pitch=0,move=false; const keys={};
-if(isMobile){ document.body.classList.add('mobile'); document.getElementById('touch').style.display='block'; document.getElementById('fwd').style.display='flex'; }
+let yaw=0,pitch=0,move=false,moveL=false,moveR=false; const keys={};
+if(isMobile){ document.body.classList.add('mobile'); document.getElementById('touch').style.display='block';
+  ['fwd','mvL','mvR'].forEach(id=>document.getElementById(id).style.display='flex'); }
 function setupControls(){
   if(!isMobile){
     addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
@@ -167,8 +193,11 @@ function setupControls(){
     t.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
     t.addEventListener('touchmove',e=>{ if(!drag)return; const x=e.touches[0].clientX,y=e.touches[0].clientY; yaw-=(x-lx)*0.005; pitch-=(y-ly)*0.005; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=x;ly=y; },{passive:true});
     t.addEventListener('touchend',()=>drag=false);
-    const f=document.getElementById('fwd'); const on=()=>move=true,off=()=>move=false;
-    f.addEventListener('touchstart',e=>{e.preventDefault();on();}); f.addEventListener('touchend',off); f.addEventListener('touchcancel',off);
+    const bind=(id,setOn,setOff)=>{ const b=document.getElementById(id);
+      b.addEventListener('touchstart',e=>{e.preventDefault();setOn();}); b.addEventListener('touchend',setOff); b.addEventListener('touchcancel',setOff); };
+    bind('fwd',()=>move=true,()=>move=false);
+    bind('mvL',()=>moveL=true,()=>moveL=false);
+    bind('mvR',()=>moveR=true,()=>moveR=false);
   }
 }
 let submissionsOpen=true;
@@ -194,8 +223,36 @@ async function deleteExhibit(id){
   try{ await db.ref('penguin/exhibits/'+id).remove(); await db.ref('penguin/images/'+id).remove().catch(()=>{}); renderAdminList(); }
   catch(e){ alert('削除に失敗：'+(e.message||e)); }
 }
+// 自分が出したポスターの記録（この端末）
+const MINE_KEY='pg_mine';
+function myKeys(){ try{return JSON.parse(localStorage.getItem(MINE_KEY)||'[]');}catch(e){return[];} }
+function addMine(k){ const a=myKeys(); if(!a.includes(k)){ a.push(k); localStorage.setItem(MINE_KEY,JSON.stringify(a)); } }
+function rmMine(k){ localStorage.setItem(MINE_KEY,JSON.stringify(myKeys().filter(x=>x!==k))); }
+let editingKey=null;
+function editExhibit(id){
+  const f=frames.find(fr=>fr.data.id===id); if(!f) return; const d=f.data;
+  editingKey=id;
+  document.getElementById('f-product').value=d.productName||'';
+  document.getElementById('f-author').value=d.author||'';
+  document.getElementById('f-link').value=d.link||'';
+  document.getElementById('f-highlight').value=d.highlight||'';
+  document.getElementById('submit-title').textContent='ポスターを修正する';
+  document.getElementById('sub-note').textContent='内容を修正できます。画像を変える時だけファイルを選び直してください';
+  const go=document.getElementById('f-go'); go.textContent='更新する'; go.disabled=false; go.style.opacity=1;
+  closeInfo();
+  document.getElementById('submit').style.display='flex';
+}
+async function deleteMine(id){
+  if(!confirm('あなたのポスターを削除しますか？')) return;
+  try{ await db.ref('penguin/exhibits/'+id).remove(); await db.ref('penguin/images/'+id).remove().catch(()=>{}); rmMine(id); closeInfo(); }
+  catch(e){ alert('削除に失敗：'+(e.message||e)); }
+}
 function showSubmit(){
+  editingKey=null;
+  document.getElementById('submit-title').textContent='ポスターを展示する';
   const n=document.getElementById('sub-note'), go=document.getElementById('f-go');
+  n.textContent='PDF または 画像（PNG/JPG）・15MBまで'; go.textContent='展示する'; go.disabled=false; go.style.opacity=1;
+  document.getElementById('f-file').value='';
   if(!submissionsOpen){ n.textContent='受付は終了しました（鑑賞はできます）'; go.disabled=true; go.style.opacity=.5; }
   document.getElementById('submit').style.display='flex';
 }
@@ -225,21 +282,30 @@ async function doSubmit(){
   const author=document.getElementById('f-author').value.trim();
   const link=document.getElementById('f-link').value.trim();
   const highlight=document.getElementById('f-highlight').value.trim();
-  if(!submissionsOpen){ alert('受付は終了しました'); return; }
-  if(!file){ alert('ファイルを選んでください'); return; }
-  if(file.size>15*1024*1024){ alert('15MBまでにしてください'); return; }
-  if(!/^(application\/pdf|image\/png|image\/jpeg)$/.test(file.type)){ alert('PDF/PNG/JPGのみ'); return; }
+  if(!submissionsOpen && !editingKey){ alert('受付は終了しました'); return; }
+  if(!file && !editingKey){ alert('ファイルを選んでください'); return; }
+  if(file){
+    if(file.size>15*1024*1024){ alert('15MBまでにしてください'); return; }
+    if(!/^(application\/pdf|image\/png|image\/jpeg)$/.test(file.type)){ alert('PDF/PNG/JPGのみ'); return; }
+  }
   if(!productName||!author){ alert('プロダクト名と名前は必須です'); return; }
-  const go=document.getElementById('f-go'); go.disabled=true; go.textContent='展示中…';
+  const go=document.getElementById('f-go'); go.disabled=true; go.textContent=editingKey?'更新中…':'展示中…';
   try{
-    const canvas=resizeCanvas(await fileToCanvas(file),1400);
-    const dataUrl=canvas.toDataURL('image/jpeg',0.8);
-    const key=db.ref('penguin/exhibits').push().key;
-    await db.ref('penguin/images/'+key).set(dataUrl);                                  // 画像は別パスに
-    await db.ref('penguin/exhibits/'+key).set({ productName, author, link, highlight, ts:Date.now() }); // メタは軽く
+    const key = editingKey || db.ref('penguin/exhibits').push().key;
+    if(file){
+      const canvas=resizeCanvas(await fileToCanvas(file),1400);
+      await db.ref('penguin/images/'+key).set(canvas.toDataURL('image/jpeg',0.8)); // 画像は別パス
+    }
+    if(editingKey){
+      await db.ref('penguin/exhibits/'+key).update({ productName, author, link, highlight }); // 並び順維持のためtsは触らない
+    }else{
+      await db.ref('penguin/exhibits/'+key).set({ productName, author, link, highlight, ts:Date.now() });
+      addMine(key); // この端末の投稿として記録
+    }
+    editingKey=null;
     document.getElementById('submit').style.display='none';
     document.getElementById('f-file').value=''; document.getElementById('f-product').value=''; document.getElementById('f-author').value=''; document.getElementById('f-link').value=''; document.getElementById('f-highlight').value='';
-  }catch(e){ console.error(e); alert('展示に失敗しました：'+(e.message||e)); }
+  }catch(e){ console.error(e); alert('失敗しました：'+(e.message||e)); }
   finally{ go.disabled=false; go.textContent='展示する'; }
 }
 
@@ -252,11 +318,94 @@ function fillInfo(d){
   info.querySelector('.pa').textContent=d.author?('— '+d.author):'';
   info.querySelector('.ph').textContent=d.highlight||'';
   const url=safeLink(d.link);
-  info.querySelector('.pl').innerHTML = url
-    ? `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:8px 16px;border-radius:999px;text-decoration:none;">リンクを開く 🔗</a>` : '';
+  const linkHtml = url ? `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(127,214,255,.2);border:1px solid rgba(127,214,255,.5);color:#dff2ff;padding:8px 16px;border-radius:999px;text-decoration:none;margin-right:8px;">リンクを開く 🔗</a>` : '';
+  const mine = myKeys().includes(d.id);
+  const ownHtml = mine ? `<button onclick="editExhibit('${d.id}')" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 14px;border-radius:999px;cursor:pointer;margin-right:6px;">✏ 修正</button><button onclick="deleteMine('${d.id}')" style="background:rgba(255,120,120,.2);border:1px solid rgba(255,150,150,.5);color:#ffd0d0;padding:8px 14px;border-radius:999px;cursor:pointer;">🗑 削除</button>` : '';
+  info.querySelector('.pl').innerHTML = linkHtml + ownHtml;
 }
 function openInfo(){ if(!nearFrame) return; fillInfo(nearFrame.data); info.style.opacity='1'; info.style.transform='translate(-50%,0)'; info.style.pointerEvents='auto'; document.getElementById('peek').style.display='none'; }
 function closeInfo(){ info.style.opacity='0'; info.style.transform='translate(-50%,16px)'; info.style.pointerEvents='none'; if(nearFrame) document.getElementById('peek').style.display='inline-block'; }
+
+// ===== 🎪 お祭り広告ボード =====
+const AD_COLORS=[['#ff5d73','#ffd166'],['#4cc9f0','#b5179e'],['#ffbe0b','#fb5607'],['#43e97b','#38f9d7'],['#f78ca0','#f9748f'],['#7b2ff7','#f107a3']];
+let adFrames=[], nearAd=null;
+function makeBannerTexture(title,idx){
+  const c=document.createElement('canvas'); c.width=512; c.height=320; const x=c.getContext('2d');
+  const col=AD_COLORS[idx%AD_COLORS.length];
+  const g=x.createLinearGradient(0,0,512,320); g.addColorStop(0,col[0]); g.addColorStop(1,col[1]);
+  x.fillStyle=g; x.fillRect(0,0,512,320);
+  x.fillStyle='rgba(255,255,255,.9)'; x.fillRect(0,0,512,52);
+  x.fillStyle='#3a2200'; x.font='bold 30px sans-serif'; x.fillText('🎪 おしらせ',16,37);
+  x.fillStyle='#fff'; x.font='bold 40px sans-serif'; x.textBaseline='top';
+  const words=(title||'').split(''); let line='',y=90;
+  for(const ch of words){ if(x.measureText(line+ch).width>470){ x.fillText(line,24,y); line=ch; y+=50; if(y>250)break; } else line+=ch; }
+  x.fillText(line,24,y);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+function clearAds(){ adFrames.forEach(a=>{ scene.remove(a.mesh); if(a.pole)scene.remove(a.pole); }); adFrames=[]; }
+function layoutAds(list){
+  clearAds();
+  const n=list.length; const R=7;
+  list.forEach((d,i)=>{
+    const ang=(i-(n-1)/2)*0.5; // 入口(前方 +z)側に扇状
+    const x=Math.sin(ang)*R, z=Math.cos(ang)*R;
+    const BW=2.8,BH=1.75;
+    const panel=new THREE.Mesh(new THREE.BoxGeometry(BW,BH,0.12),
+      new THREE.MeshBasicMaterial({map:makeBannerTexture(d.title,i)}));
+    panel.position.set(x,2.7,z); panel.lookAt(0,2.7,0); scene.add(panel);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.7,6), new THREE.MeshStandardMaterial({color:0x9a6b3a}));
+    pole.position.set(x,1.35,z); scene.add(pole);
+    adFrames.push({mesh:panel,pole,data:d,pos:panel.position.clone()});
+  });
+}
+function subscribeAds(){
+  if(!fbReady) return;
+  db.ref('penguin/ads').on('value',snap=>{
+    const val=snap.val()||{};
+    const list=Object.entries(val).map(([id,d])=>({id,...d})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    layoutAds(list);
+  });
+}
+function showAd(){ document.getElementById('adform').style.display='flex'; }
+async function doAd(){
+  const title=document.getElementById('ad-title').value.trim();
+  const file=document.getElementById('ad-file').files[0];
+  const videoUrl=document.getElementById('ad-video').value.trim();
+  const link=document.getElementById('ad-link').value.trim();
+  if(!title){ alert('タイトルを入れてください'); return; }
+  if(file && file.size>15*1024*1024){ alert('画像は15MBまで'); return; }
+  const go=document.getElementById('ad-go'); go.disabled=true; go.textContent='貼っています…';
+  try{
+    const key=db.ref('penguin/ads').push().key;
+    let hasImage=false;
+    if(file){ const canvas=resizeCanvas(await fileToCanvas(file),1400); await db.ref('penguin/adimages/'+key).set(canvas.toDataURL('image/jpeg',0.8)); hasImage=true; }
+    await db.ref('penguin/ads/'+key).set({ title, videoUrl, link, hasImage, ts:Date.now() });
+    addMine(key);
+    document.getElementById('adform').style.display='none';
+    document.getElementById('ad-title').value=''; document.getElementById('ad-file').value=''; document.getElementById('ad-video').value=''; document.getElementById('ad-link').value='';
+  }catch(e){ console.error(e); alert('失敗しました：'+(e.message||e)); }
+  finally{ go.disabled=false; go.textContent='貼る'; }
+}
+function ytId(u){ const m=(u||'').match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/); return m?m[1]:''; }
+async function openAdView(){
+  if(!nearAd) return; const d=nearAd.data;
+  const body=document.getElementById('adview-body'); body.innerHTML='';
+  const yt=ytId(d.videoUrl);
+  if(yt){ body.innerHTML=`<iframe width="100%" height="500" src="https://www.youtube.com/embed/${yt}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="display:block;"></iframe>`; }
+  else if(/^https?:\/\/.*\.mp4/i.test(d.videoUrl||'')){ body.innerHTML=`<video src="${esc(d.videoUrl)}" controls autoplay playsinline style="width:100%;max-height:70vh;display:block;"></video>`; }
+  else if(d.hasImage){ const s=await db.ref('penguin/adimages/'+d.id).once('value'); body.innerHTML=`<img src="${s.val()||''}" style="width:100%;max-height:70vh;object-fit:contain;display:block;">`; }
+  else { body.innerHTML=`<div style="padding:40px;text-align:center;color:#ffe6bf;font-size:20px;background:#241a0c;">${esc(d.title)}</div>`; }
+  const url=safeLink(d.link); const mine=myKeys().includes(d.id);
+  document.getElementById('adview-cap').innerHTML=`${esc(d.title)}　${url?`<a href="${esc(url)}" target="_blank" rel="noopener" style="color:#7fd6ff;">リンクを開く 🔗</a>`:''} ${mine?`<button onclick="deleteAd('${d.id}')" style="margin-left:10px;background:rgba(255,120,120,.2);border:1px solid rgba(255,150,150,.5);color:#ffd0d0;padding:4px 12px;border-radius:999px;cursor:pointer;">🗑 削除</button>`:''}`;
+  document.getElementById('adview').style.display='flex';
+  document.getElementById('adPeek').style.display='none';
+}
+function closeAdView(){ document.getElementById('adview').style.display='none'; document.getElementById('adview-body').innerHTML=''; if(nearAd) document.getElementById('adPeek').style.display='inline-block'; }
+async function deleteAd(id){
+  if(!confirm('この広告を削除しますか？')) return;
+  try{ await db.ref('penguin/ads/'+id).remove(); await db.ref('penguin/adimages/'+id).remove().catch(()=>{}); rmMine(id); closeAdView(); }
+  catch(e){ alert('削除に失敗：'+(e.message||e)); }
+}
 
 let LITE=false, aurora=null, snow=null, penguins=null; const penDummy=new THREE.Object3D();
 function buildAurora(){
@@ -324,8 +473,8 @@ function animate(){
   const sp=0.14;
   if(keys['w']||keys['arrowup']||move) camera.position.addScaledVector(_fwd,sp);
   if(keys['s']||keys['arrowdown']) camera.position.addScaledVector(_fwd,-sp);
-  if(keys['a']||keys['arrowleft']) camera.position.addScaledVector(_right,-sp);
-  if(keys['d']||keys['arrowright']) camera.position.addScaledVector(_right,sp);
+  if(keys['a']||keys['arrowleft']||moveL) camera.position.addScaledVector(_right,-sp);
+  if(keys['d']||keys['arrowright']||moveR) camera.position.addScaledVector(_right,sp);
   const lim=radiusFor(frames.length)+3; const dd=Math.hypot(camera.position.x,camera.position.z);
   if(dd>lim){ camera.position.x*=lim/dd; camera.position.z*=lim/dd; }
   camera.position.y=1.6;
@@ -334,6 +483,12 @@ function animate(){
   frames.forEach(f=>{ const d2=camera.position.distanceTo(f.pos); if(d2<nd){nd=d2;nf=f;} });
   if((nf&&nf.data.id)!==(nearFrame&&nearFrame.data.id)){
     nearFrame=nf; closeInfo(); document.getElementById('peek').style.display= nf?'inline-block':'none';
+  }
+  // 広告の近接判定
+  let na=null,nad=6;
+  adFrames.forEach(a=>{ const d3=camera.position.distanceTo(a.pos); if(d3<nad){nad=d3;na=a;} });
+  if((na&&na.data.id)!==(nearAd&&nearAd.data.id)){
+    nearAd=na; if(document.getElementById('adview').style.display!=='flex') document.getElementById('adPeek').style.display= na?'inline-block':'none';
   }
   renderer.render(scene,camera);
 }
