@@ -9,7 +9,7 @@
   html,body{height:100%;overflow:hidden;background:#0a1826;font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:#eaf6ff;}
   #c{display:block;width:100%;height:100%;}
 </style>
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
@@ -85,7 +85,9 @@
   <div class="ph" style="font-size:13px;line-height:1.7;margin-top:10px;color:#dcefff;"></div>
   <div class="pl" style="margin-top:12px;"></div>
 </div>
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth<900);
 let fbReady=false, db=null, storage=null;
 try{
@@ -421,16 +423,29 @@ function buildSnow(){
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
   snow=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:0.18,transparent:true,opacity:0.85})); scene.add(snow);
 }
+// GLBモデル（ペンギン・いちご）を読み込んで使う
+const gltfLoader=new GLTFLoader(); let penguinProto=null, berryProto=null; let _lastPenguinCount=48;
+function fitProto(obj,targetH){ obj.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(obj);
+  const s=targetH/(box.getSize(new THREE.Vector3()).y||1); obj.scale.setScalar(s); obj.updateMatrixWorld(true);
+  const b2=new THREE.Box3().setFromObject(obj); obj.userData.footY=-b2.min.y; return obj; }
+gltfLoader.load('models/pengin.glb',g=>{ penguinProto=fitProto(g.scene,0.95); if(penguins){ scene.remove(penguins); penguins=null; } buildPenguins(_lastPenguinCount); });
+gltfLoader.load('models/strawberry.glb',g=>{ berryProto=fitProto(g.scene,0.34);
+  // stockモデルは無着色なので、上部=ヘタ(緑)・それ以外=赤 に色付け
+  const meshes=[]; berryProto.traverse(n=>{ if(n.isMesh) meshes.push(n); });
+  meshes.forEach(m=>{ const cy=new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3()).y;
+    m.material=new THREE.MeshStandardMaterial({ color: cy>0.24?0x36a03f:0xff2d55, roughness:0.45 }); });
+});
 function buildPenguins(count){
-  const body=new THREE.CylinderGeometry(0.28,0.36,0.9,8);
-  penguins=new THREE.InstancedMesh(body,new THREE.MeshStandardMaterial({color:0x20303f,roughness:0.7}),count);
-  const R=radiusFor(frames.length)-2;
+  _lastPenguinCount=count;
+  if(!penguinProto) return; // 読み込み完了後に呼ばれる
+  penguins=new THREE.Group();
+  const R=radiusFor(frames.length)-2, footY=penguinProto.userData.footY||0;
   for(let i=0;i<count;i++){
     const ang=Math.random()*Math.PI*2, r=Math.min(R, 4+Math.random()*(R-4));
-    penDummy.position.set(Math.sin(ang)*r,0.45,Math.cos(ang)*r); penDummy.rotation.y=Math.random()*Math.PI*2; penDummy.updateMatrix();
-    penguins.setMatrixAt(i,penDummy.matrix);
+    const p=penguinProto.clone(); p.position.set(Math.sin(ang)*r,footY,Math.cos(ang)*r); p.rotation.y=Math.random()*Math.PI*2;
+    penguins.add(p);
   }
-  penguins.instanceMatrix.needsUpdate=true; scene.add(penguins);
+  scene.add(penguins);
 }
 function updateDecor(t){
   if(aurora){ aurora.material.opacity=0.12+0.05*Math.sin(t*0.5); aurora.userData.a2.material.opacity=0.08+0.04*Math.sin(t*0.4+1); }
@@ -446,11 +461,12 @@ function toggleLite(){ LITE=!LITE;
 
 const berries=[]; const berryGeo=new THREE.SphereGeometry(0.16,10,8); const berryMat=new THREE.MeshStandardMaterial({color:0xff375f,roughness:0.5});
 function throwBerry(){
-  const m=new THREE.Mesh(berryGeo,berryMat);
+  const m = berryProto ? berryProto.clone() : new THREE.Mesh(berryGeo,berryMat);
   m.position.copy(camera.position);
   const dir=_fwd.clone().normalize();
   const v=dir.multiplyScalar(9); v.y=4.5;
-  berries.push({m,v,life:6}); scene.add(m);
+  const spin=new THREE.Vector3((Math.random()-.5)*6,(Math.random()-.5)*6,(Math.random()-.5)*6);
+  berries.push({m,v,life:6,spin}); scene.add(m);
   if(berries.length>120){ const old=berries.shift(); scene.remove(old.m); }
 }
 let _lt=performance.now();
@@ -458,7 +474,8 @@ function updateBerries(){
   const now=performance.now(), dt=Math.min(0.05,(now-_lt)/1000); _lt=now;
   for(let i=berries.length-1;i>=0;i--){ const b=berries[i];
     b.v.y-=14*dt; b.m.position.addScaledVector(b.v,dt);
-    if(b.m.position.y<0.16){ b.m.position.y=0.16; b.v.y=-b.v.y*0.4; b.v.x*=0.7; b.v.z*=0.7; }
+    if(b.spin){ b.m.rotation.x+=b.spin.x*dt; b.m.rotation.y+=b.spin.y*dt; b.m.rotation.z+=b.spin.z*dt; }
+    if(b.m.position.y<0.16){ b.m.position.y=0.16; b.v.y=-b.v.y*0.4; b.v.x*=0.7; b.v.z*=0.7; if(b.spin)b.spin.multiplyScalar(0.6); }
     b.life-=dt; if(b.life<=0){ scene.remove(b.m); berries.splice(i,1); }
   }
 }
@@ -495,6 +512,9 @@ function animate(){
 initScene();
 setupControls();
 buildDecor();
+
+// インラインonclickから呼べるようにグローバル公開（module化のため）
+Object.assign(window,{ throwBerry, openInfo, closeInfo, openAdView, closeAdView, showAd, doAd, showSubmit, doSubmit, toggleLite, adminUnlock, toggleSubmissions, editExhibit, deleteMine, deleteExhibit, deleteAd });
 </script>
 </body>
 </html>
