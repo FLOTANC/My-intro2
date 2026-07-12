@@ -7,7 +7,6 @@
 - rowke 本体：https://art-feedback.vercel.app
 - 3Dバーチャル展示室：https://art-feedback.vercel.app/gallery.html
 - Wake Path（受験デッサン特化）：https://wake-path.vercel.app
-- 美術科受験ナビ：https://bijutsu-nav.vercel.app
 - ぺんぎん展示室（発表会用ポスター展示）：https://penguin-gallery.vercel.app
 
 ---
