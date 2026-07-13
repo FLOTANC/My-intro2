@@ -117,10 +117,8 @@ function initScene(){
   const floor=new THREE.Mesh(new THREE.CircleGeometry(120,64),
     new THREE.MeshStandardMaterial({color:0x16324a,roughness:0.35,metalness:0.1}));
   floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
-  // 中央の氷山（目印）
-  const berg=new THREE.Mesh(new THREE.ConeGeometry(4.5,9,6),
-    new THREE.MeshStandardMaterial({color:0xbfe6ff,roughness:0.5,flatShading:true}));
-  berg.position.set(0,4.5,0); scene.add(berg);
+  // 中央の流氷風・低ポリ氷山（目印）
+  buildIceberg();
   addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
   // 動作確認用モック / 実データ購読
   if(new URLSearchParams(location.search).get('mock')){
@@ -410,6 +408,20 @@ async function deleteAd(id){
 }
 
 let LITE=false, aurora=null, snow=null, penguins=null; const penDummy=new THREE.Object3D();
+function buildIceberg(){
+  const grp=new THREE.Group();
+  const iceMat=new THREE.MeshStandardMaterial({color:0xe4f2ff,roughness:0.65,flatShading:true});
+  const iceMat2=new THREE.MeshStandardMaterial({color:0xbcd8f5,roughness:0.65,flatShading:true});
+  // 尖った低ポリの峰（主峰＋副峰）
+  const peaks=[[0,0,4.2,9,7],[2.6,1.5,2.4,5.5,5],[-2.8,1.2,2.0,4.8,5],[1.2,-2.6,2.2,6.2,6],[-1.6,-2.2,1.6,4.0,5]];
+  peaks.forEach(([x,z,r,h,seg],i)=>{ const c=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg), i%2?iceMat2:iceMat);
+    c.position.set(x,h/2,z); c.rotation.y=Math.random()*Math.PI; grp.add(c); });
+  // 足元の流氷（角ばった氷板）
+  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2, r=5+Math.random()*2.5;
+    const slab=new THREE.Mesh(new THREE.BoxGeometry(2.5+Math.random()*2,0.6+Math.random(),2+Math.random()*2), i%2?iceMat:iceMat2);
+    slab.position.set(Math.cos(a)*r,0.3,Math.sin(a)*r); slab.rotation.y=Math.random()*Math.PI; grp.add(slab); }
+  scene.add(grp); return grp;
+}
 function buildAurora(){
   const g=new THREE.PlaneGeometry(240,60,1,1);
   const m=new THREE.MeshBasicMaterial({color:0x66ffcc,transparent:true,opacity:0.14,side:THREE.DoubleSide,depthWrite:false});
@@ -424,38 +436,51 @@ function buildSnow(){
   snow=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:0.18,transparent:true,opacity:0.85})); scene.add(snow);
 }
 // GLBモデル（ペンギン・いちご）を読み込んで使う
-const gltfLoader=new GLTFLoader(); let penguinProto=null, berryProto=null; let _lastPenguinCount=48;
+const gltfLoader=new GLTFLoader(); let penguinProto=null, berryProto=null; let _lastPenguinCount=1;
 function fitProto(obj,targetH){ obj.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(obj);
   const s=targetH/(box.getSize(new THREE.Vector3()).y||1); obj.scale.setScalar(s); obj.updateMatrixWorld(true);
   const b2=new THREE.Box3().setFromObject(obj); obj.userData.footY=-b2.min.y; return obj; }
-gltfLoader.load('models/pengin.glb',g=>{ penguinProto=fitProto(g.scene,0.95); if(penguins){ scene.remove(penguins); penguins=null; } buildPenguins(_lastPenguinCount); });
+gltfLoader.load('models/penguin2.glb',g=>{ penguinProto=fitProto(g.scene,1.1); if(penguins){ scene.remove(penguins); penguins=null; } buildPenguins(_lastPenguinCount); });
 gltfLoader.load('models/strawberry.glb',g=>{ berryProto=fitProto(g.scene,0.34);
-  // stockモデルは無着色なので、上部=ヘタ(緑)・それ以外=赤 に色付け
+  // stockモデルは無着色 → 一番上のメッシュ=ヘタ(緑)・それ以外=赤 に色付け
   const meshes=[]; berryProto.traverse(n=>{ if(n.isMesh) meshes.push(n); });
-  meshes.forEach(m=>{ const cy=new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3()).y;
-    m.material=new THREE.MeshStandardMaterial({ color: cy>0.24?0x36a03f:0xff2d55, roughness:0.45 }); });
+  const tops=meshes.map(m=>({m,top:new THREE.Box3().setFromObject(m).max.y}));
+  const maxTop=Math.max(...tops.map(t=>t.top));
+  tops.forEach(t=>{ const isLeaf=t.top>=maxTop-0.05;
+    t.m.material=new THREE.MeshStandardMaterial({ color: isLeaf?0x2fbf4a:0xff2d55, roughness:0.45 }); });
 });
 function buildPenguins(count){
   _lastPenguinCount=count;
   if(!penguinProto) return; // 読み込み完了後に呼ばれる
   penguins=new THREE.Group();
-  const R=radiusFor(frames.length)-2, footY=penguinProto.userData.footY||0;
+  const footY=penguinProto.userData.footY||0;
+  const R=radiusFor(frames.length)-2;
+  // あちこちに散らす（一部は流氷の上に乗せる）
   for(let i=0;i<count;i++){
-    const ang=Math.random()*Math.PI*2, r=Math.min(R, 4+Math.random()*(R-4));
-    const p=penguinProto.clone(); p.position.set(Math.sin(ang)*r,footY,Math.cos(ang)*r); p.rotation.y=Math.random()*Math.PI*2;
+    const ang=Math.random()*Math.PI*2, r=Math.min(R, 4.5+Math.random()*(R-4.5));
+    const onFloe = Math.random()<0.22 && r<8.5; // 一部は流氷(高さ約0.6)の上
+    const p=penguinProto.clone();
+    p.position.set(Math.sin(ang)*r, footY+(onFloe?0.6:0), Math.cos(ang)*r);
+    p.rotation.y=Math.random()*Math.PI*2;
     penguins.add(p);
   }
+  // ファーストペンギン：流氷の縁から飛び出そうとしている1体（前のめり）
+  const first=penguinProto.clone();
+  first.position.set(0.8, footY+1.2, 7.0);
+  first.lookAt(0, footY+1.0, 0); // 中央（水面）を向く
+  first.rotateX(-0.75);           // ダイブ姿勢に前傾
+  penguins.add(first);
   scene.add(penguins);
 }
 function updateDecor(t){
   if(aurora){ aurora.material.opacity=0.12+0.05*Math.sin(t*0.5); aurora.userData.a2.material.opacity=0.08+0.04*Math.sin(t*0.4+1); }
   if(snow){ const p=snow.geometry.attributes.position; for(let i=0;i<p.count;i++){ let y=p.getY(i)-0.03; if(y<0)y=40; p.setY(i,y);} p.needsUpdate=true; }
 }
-function buildDecor(){ buildAurora(); buildSnow(); buildPenguins(LITE?18:48); }
+function buildDecor(){ buildAurora(); buildSnow(); buildPenguins(28); }
 function toggleLite(){ LITE=!LITE;
   if(aurora){scene.remove(aurora);scene.remove(aurora.userData.a2);aurora=null;}
   if(snow){scene.remove(snow);snow=null;} if(penguins){scene.remove(penguins);penguins=null;}
-  if(!LITE) buildDecor(); else { buildSnow(); buildPenguins(18); }
+  if(!LITE) buildDecor(); else { buildSnow(); buildPenguins(12); }
   document.getElementById('lite').textContent=LITE?'標準モード':'軽量モード';
 }
 
