@@ -409,7 +409,14 @@ async function deleteAd(id){
 }
 
 let LITE=false, aurora=null, snow=null, penguins=null; const penDummy=new THREE.Object3D();
+let obstacles=[]; // ペンギンが避ける氷 {x,z,r}
+function clearSpot(rMin,rMax){
+  for(let t=0;t<30;t++){ const a=Math.random()*6.283, r=rMin+Math.random()*(rMax-rMin); const x=Math.sin(a)*r, z=Math.cos(a)*r;
+    if(!obstacles.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+0.9)) return {x,z}; }
+  const a=Math.random()*6.283; return {x:Math.sin(a)*rMax, z:Math.cos(a)*rMax};
+}
 function buildIceberg(){
+  obstacles=[{x:0,z:0,r:5}]; // 中央氷山
   const grp=new THREE.Group();
   const iceMat=new THREE.MeshStandardMaterial({color:0xe4f2ff,roughness:0.65,flatShading:true});
   const iceMat2=new THREE.MeshStandardMaterial({color:0xbcd8f5,roughness:0.65,flatShading:true});
@@ -417,10 +424,18 @@ function buildIceberg(){
   const peaks=[[0,0,4.2,9,7],[2.6,1.5,2.4,5.5,5],[-2.8,1.2,2.0,4.8,5],[1.2,-2.6,2.2,6.2,6],[-1.6,-2.2,1.6,4.0,5]];
   peaks.forEach(([x,z,r,h,seg],i)=>{ const c=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg), i%2?iceMat2:iceMat);
     c.position.set(x,h/2,z); c.rotation.y=Math.random()*Math.PI; grp.add(c); });
-  // 足元の流氷（角ばった氷板）
-  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2, r=5+Math.random()*2.5;
-    const slab=new THREE.Mesh(new THREE.BoxGeometry(2.5+Math.random()*2,0.6+Math.random(),2+Math.random()*2), i%2?iceMat:iceMat2);
-    slab.position.set(Math.cos(a)*r,0.3,Math.sin(a)*r); slab.rotation.y=Math.random()*Math.PI; grp.add(slab); }
+  // 足元の流氷：不均一に（一部スキップ・箱/尖った氷/結晶を混在）
+  const slots=8;
+  for(let i=0;i<slots;i++){
+    if(Math.random()<0.32) continue; // 一部は氷を置かない
+    const a=(i/slots)*6.283 + (Math.random()-0.5)*0.5, r=4.3+Math.random()*2.4;
+    const x=Math.sin(a)*r, z=Math.cos(a)*r; const kind=Math.random(); let m, foot;
+    if(kind<0.5){ const w=2+Math.random()*2.2, h=0.4+Math.random()*0.7, dp=1.8+Math.random()*1.8;
+      m=new THREE.Mesh(new THREE.BoxGeometry(w,h,dp), i%2?iceMat:iceMat2); m.position.set(x,h/2,z); m.rotation.y=Math.random()*Math.PI; foot=Math.max(w,dp)/2; }
+    else if(kind<0.8){ const s=1.2+Math.random()*1.4; m=new THREE.Mesh(new THREE.ConeGeometry(s,s*1.7,5), iceMat); m.position.set(x,s*0.85,z); m.rotation.y=Math.random()*Math.PI; foot=s; }
+    else { const s=1+Math.random()*1.2; m=new THREE.Mesh(new THREE.IcosahedronGeometry(s,0), iceMat2); m.position.set(x,s*0.6,z); m.rotation.set(Math.random(),Math.random(),Math.random()); foot=s; }
+    grp.add(m); obstacles.push({x,z,r:foot});
+  }
   scene.add(grp); return grp;
 }
 function buildAurora(){
@@ -442,12 +457,21 @@ let penguinAgents=[]; let _plt=performance.now();
 function updatePenguins(){
   if(!penguinAgents.length) return;
   const now=performance.now(), dt=Math.min(0.05,(now-_plt)/1000); _plt=now;
-  const Rmin=7.5, Rmax=13;
+  const Rmin=8, Rmax=Math.max(11, radiusFor(frames.length)-2);
   for(const a of penguinAgents){
     a.phase+=dt*a.wad;
+    if(a.mode!=='walk'){ // 鑑賞・会話：その場で止まって向きだけ固定＋小さく揺れる
+      a.obj.lookAt(a.face.x, a.obj.position.y, a.face.z);
+      a.obj.rotateZ(Math.sin(a.phase)*0.05);
+      a.obj.position.y=a.baseY+Math.abs(Math.sin(a.phase))*0.02;
+      continue;
+    }
     a.turnT-=dt; if(a.turnT<=0){ a.heading+=(Math.random()-0.5)*1.3; a.turnT=2+Math.random()*3; }
-    const dx=Math.sin(a.heading), dz=Math.cos(a.heading);
-    a.obj.position.x+=dx*a.speed*dt; a.obj.position.z+=dz*a.speed*dt;
+    a.obj.position.x+=Math.sin(a.heading)*a.speed*dt; a.obj.position.z+=Math.cos(a.heading)*a.speed*dt;
+    // 氷（obstacles）を避ける：近すぎたら氷から離れる向きへ
+    for(const o of obstacles){ const ox=a.obj.position.x-o.x, oz=a.obj.position.z-o.z, od=Math.hypot(ox,oz);
+      if(od<o.r+1.3){ a.heading=Math.atan2(ox,oz);
+        a.obj.position.x+=Math.sin(a.heading)*a.speed*dt*2; a.obj.position.z+=Math.cos(a.heading)*a.speed*dt*2; break; } }
     const d=Math.hypot(a.obj.position.x,a.obj.position.z);
     if(d>Rmax){ a.heading=Math.atan2(-a.obj.position.x,-a.obj.position.z); } // 外に出たら中心へ
     else if(d<Rmin){ a.heading=Math.atan2(a.obj.position.x,a.obj.position.z); } // 内に入りすぎたら外へ
@@ -473,32 +497,57 @@ gltfLoader.load('models/strawberry.glb',g=>{ berryProto=fitProto(g.scene,0.34);
 function buildPenguins(count){
   _lastPenguinCount=count;
   if(!penguinProto) return; // 読み込み完了後に呼ばれる
-  penguins=new THREE.Group();
+  penguins=new THREE.Group(); penguinAgents=[];
   const footY=penguinProto.userData.footY||0;
-  // 流氷(半径5〜7.5)を避けた開けた地面(半径8〜)にあちこち置く
-  penguinAgents=[];
-  const R=Math.max(9, radiusFor(frames.length)-2);
-  for(let i=0;i<count;i++){
-    const ang=Math.random()*Math.PI*2, r=8+Math.random()*(R-8);
-    const p=skeletonClone(penguinProto);
-    p.position.set(Math.sin(ang)*r, footY, Math.cos(ang)*r); // 地面に立たせる
-    penguins.add(p);
-    penguinAgents.push({ obj:p, baseY:footY, phase:Math.random()*6.28, wad:5+Math.random()*3,
-      heading:Math.random()*Math.PI*2, speed:0.5+Math.random()*0.7, turnT:1+Math.random()*3 });
+  const R=Math.max(10, radiusFor(frames.length)-2);
+  const addPeng=(x,z)=>{ const p=skeletonClone(penguinProto); p.position.set(x,footY,z); penguins.add(p); return p; };
+  let made=0;
+  // 3匹で会話しているグループ（向き合って輪になる）
+  const groups=Math.max(1, Math.floor(count/12));
+  for(let g=0; g<groups && made+3<=count; g++){
+    const c=clearSpot(9,R-1); const gc=new THREE.Vector3(c.x,footY,c.z); // グループ中心を向く
+    for(let k=0;k<3;k++){ const ang=k/3*6.283; const p=addPeng(c.x+Math.cos(ang)*0.95, c.z+Math.sin(ang)*0.95);
+      penguinAgents.push({obj:p,baseY:footY,phase:Math.random()*6.28,wad:2.5+Math.random()*1.5,mode:'chat',face:gc.clone()}); made++; }
   }
+  // 約1/5は止まってポスター/広告を鑑賞
+  const watchers=Math.max(1, Math.round(count*0.2));
+  for(let i=0;i<watchers && made<count;i++,made++){ const c=clearSpot(9.5,R); const p=addPeng(c.x,c.z);
+    const face = (i%2===0) ? new THREE.Vector3(c.x*2,footY,c.z*2)   // 外向き＝ポスターを見る
+                           : new THREE.Vector3(0,footY,0);          // 内向き＝広告/中央を見る
+    penguinAgents.push({obj:p,baseY:footY,phase:Math.random()*6.28,wad:2+Math.random()*1.5,mode:'watch',face}); }
+  // 残りは歩き回る（氷を避ける）
+  for(; made<count; made++){ const c=clearSpot(8.5,R); const p=addPeng(c.x,c.z);
+    penguinAgents.push({obj:p,baseY:footY,phase:Math.random()*6.28,wad:5+Math.random()*3,mode:'walk',
+      heading:Math.random()*6.283,speed:0.5+Math.random()*0.6,turnT:1+Math.random()*3}); }
   // ファーストペンギン：地面の縁から飛び出そうとしている1体（前のめり・歩かない）
-  const first=skeletonClone(penguinProto);
-  first.position.set(0.6, footY, 8.4);
-  first.lookAt(0, footY, 0); // 中央（水面）を向く
-  first.rotateX(-0.55);       // ダイブ姿勢に少し前傾
-  penguins.add(first);
+  const first=addPeng(0.6,8.4); first.lookAt(0,footY,0); first.rotateX(-0.55);
   scene.add(penguins);
 }
 function updateDecor(t){
   if(aurora){ aurora.material.opacity=0.12+0.05*Math.sin(t*0.5); aurora.userData.a2.material.opacity=0.08+0.04*Math.sin(t*0.4+1); }
   if(snow){ const p=snow.geometry.attributes.position; for(let i=0;i<p.count;i++){ let y=p.getY(i)-0.03; if(y<0)y=40; p.setY(i,y);} p.needsUpdate=true; }
 }
-function buildDecor(){ buildAurora(); buildSnow(); buildPenguins(28); }
+// 授業のサイン（WEB3/AI GAIRON）を空のいろんな方向に浮かべる
+let skySigns=null;
+function buildSkySigns(){
+  if(skySigns) return; // 一度だけ
+  skySigns=new THREE.Group();
+  const tex=texLoader.load('photo/web3ai_gairon.png'); tex.colorSpace=THREE.SRGBColorSpace;
+  const mat=new THREE.MeshBasicMaterial({map:tex, transparent:true, side:THREE.DoubleSide, depthWrite:false, fog:false});
+  const AR=2594/1456; // 画像アスペクト比
+  const P=[ // {r:距離, ang:方位, y:高さ, w:幅, tilt:見下ろし角}
+    {r:34,ang:0.3,y:16,w:20,tilt:-0.16},
+    {r:38,ang:1.7,y:21,w:16,tilt:-0.1},
+    {r:33,ang:3.1,y:14,w:18,tilt:-0.22},
+    {r:40,ang:4.2,y:23,w:15,tilt:-0.08},
+    {r:36,ang:5.5,y:17,w:17,tilt:-0.15},
+  ];
+  P.forEach(p=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.w/AR), mat);
+    m.position.set(Math.sin(p.ang)*p.r, p.y, Math.cos(p.ang)*p.r);
+    m.lookAt(0, p.y-2, 0); m.rotateX(p.tilt); skySigns.add(m); });
+  scene.add(skySigns);
+}
+function buildDecor(){ buildAurora(); buildSnow(); buildPenguins(28); buildSkySigns(); }
 function toggleLite(){ LITE=!LITE;
   if(aurora){scene.remove(aurora);scene.remove(aurora.userData.a2);aurora=null;}
   if(snow){scene.remove(snow);snow=null;} if(penguins){scene.remove(penguins);penguins=null;}
