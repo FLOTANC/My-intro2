@@ -8,17 +8,23 @@ export async function POST(req: Request) {
   if (typeof code !== 'string' || code.trim().length < 3)
     return json({ ok: false, error: 'あいことばは3もじいじょうにしてね' }, 400);
 
-  const families = await sql`select id, code_hash from family limit 1`;
+  const trimmed = code.trim(); // 前後の空白ちがいでログイン不能になるのを防ぐ
+
+  // order by id で決定論的に最初のfamilyを使う（万一2行できても常に同じ行）
+  const families = await sql`select id, code_hash from family order by id limit 1`;
   let playerId: number;
 
   if (families.length === 0) {
-    const fam = await sql`insert into family (code_hash) values (${hashCode(code)}) returning id`;
+    const fam = await sql`insert into family (code_hash) values (${hashCode(trimmed)}) returning id`;
     const pl = await sql`insert into player (family_id) values (${fam[0].id}) returning id`;
     playerId = pl[0].id;
   } else {
-    if (!verifyCode(code, families[0].code_hash))
+    if (!verifyCode(trimmed, families[0].code_hash))
       return json({ ok: false, error: 'あいことばがちがうみたい' }, 401);
-    const pl = await sql`select id from player where family_id = ${families[0].id} limit 1`;
+    // playerが無ければ自動作成（登録が途中で失敗していても復旧できる）
+    let pl = await sql`select id from player where family_id = ${families[0].id} order by id limit 1`;
+    if (pl.length === 0)
+      pl = await sql`insert into player (family_id) values (${families[0].id}) returning id`;
     playerId = pl[0].id;
   }
 
