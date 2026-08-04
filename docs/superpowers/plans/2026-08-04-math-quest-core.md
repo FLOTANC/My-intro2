@@ -265,6 +265,21 @@ test('every stage generates valid problems (100 samples each)', () => {
   }
 });
 
+test('unknown stage throws', () => {
+  expect(() => generateProblem('nope')).toThrow();
+});
+
+test('w4 dividends stay within advertised digit counts', () => {
+  for (let i = 0; i < 200; i++) {
+    const p1 = generateProblem('w4-1');
+    if (p1.kind === 'div') { expect(p1.a).toBeGreaterThanOrEqual(10); expect(p1.a).toBeLessThanOrEqual(99); }
+    const p2 = generateProblem('w4-2');
+    if (p2.kind === 'div') { expect(p2.a).toBeGreaterThanOrEqual(100); expect(p2.a).toBeLessThanOrEqual(999); }
+    const p4 = generateProblem('w4-4');
+    if (p4.kind === 'div') { expect(p4.a).toBeGreaterThanOrEqual(100); expect(p4.a).toBeLessThanOrEqual(999); }
+  }
+});
+
 test('kuku stages stay within their dan', () => {
   for (let i = 0; i < 50; i++) {
     const p = generateProblem('w1-1');
@@ -318,6 +333,12 @@ const divmod = (bLo: number, bHi: number, qLo: number, qHi: number): Problem => 
   const b = ri(Math.max(bLo, 2), bHi), q = ri(qLo, qHi), r = ri(1, b - 1);
   return { kind: 'divmod', a: b * q + r, b, q, r };
 };
+// 割られる数の桁数を保証する割り算（qをa範囲から逆算）
+const divByDividend = (bLo: number, bHi: number, aLo: number, aHi: number): Problem => {
+  const b = ri(bLo, bHi);
+  const q = ri(Math.ceil(aLo / b), Math.floor(aHi / b));
+  return { kind: 'div', a: b * q, b, answer: q };
+};
 // 小数: (ai, sa) は ai×10^-sa。積は厳密。
 const decMul = (aDigits: number, sa: number, bDigits: number, sb: number): Problem => {
   const ai = ri(10 ** (aDigits - 1) + 1, 10 ** aDigits - 1);
@@ -368,9 +389,9 @@ const gens: Record<string, () => Problem> = {
   'w3-1': () => mul(11, 99, 2, 9), 'w3-2': () => mul(101, 999, 2, 9),
   'w3-3': () => mul(11, 99, 11, 99), 'w3-4': () => mul(101, 999, 11, 99),
   'w3-5': () => pick([() => mul(11, 99, 2, 9), () => mul(11, 99, 11, 99), () => mul(101, 999, 11, 99)])(),
-  'w4-1': () => divExact(2, 9, 11, 99), 'w4-2': () => divExact(2, 9, 101, 999),
-  'w4-3': () => divmod(3, 9, 11, 99), 'w4-4': () => divExact(11, 19, 11, 99),
-  'w4-5': () => pick([() => divExact(2, 9, 11, 99), () => divmod(3, 9, 11, 99), () => divExact(11, 19, 11, 99)])(),
+  'w4-1': () => divByDividend(2, 9, 10, 99), 'w4-2': () => divByDividend(2, 9, 100, 999),
+  'w4-3': () => divmod(3, 9, 11, 99), 'w4-4': () => divByDividend(11, 19, 100, 999),
+  'w4-5': () => pick([() => divByDividend(2, 9, 10, 99), () => divmod(3, 9, 11, 99), () => divByDividend(11, 19, 100, 999)])(),
   'w5-1': () => decMul(2, 1, 1, 0), 'w5-2': () => decMul(2, 1, 1, 1),
   'w5-3': () => decDiv(2, 1, 1, 0), 'w5-4': () => decDiv(1, 1, 1, 1),
   'w5-5': () => pick([() => decMul(2, 1, 1, 1), () => decDiv(2, 1, 1, 0)])(),
