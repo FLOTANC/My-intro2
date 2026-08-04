@@ -10,7 +10,8 @@ export function hashCode(code: string): string {
 
 export function verifyCode(code: string, stored: string): boolean {
   const [salt, h] = stored.split(':');
-  if (!salt || !h) return false;
+  // 64桁hex以外は不正（長さ違いでtimingSafeEqualが例外を投げるのを防ぐ）
+  if (!salt || !h || !/^[0-9a-f]{64}$/.test(h)) return false;
   const got = scryptSync(code.normalize('NFKC'), salt, 32);
   return timingSafeEqual(got, Buffer.from(h, 'hex'));
 }
@@ -25,9 +26,9 @@ export function signSession(playerId: number): string {
 export function verifySession(token: string | undefined): number | null {
   if (!token) return null;
   const [id, sig] = token.split('.');
-  if (!id || !sig || !/^\d+$/.test(id)) return null;
+  // sigは64桁hex限定（マルチバイト文字などでtimingSafeEqualが例外を投げるのを防ぐ）
+  if (!id || !sig || !/^\d+$/.test(id) || !/^[0-9a-f]{64}$/.test(sig)) return null;
   const expect = hmac(id);
-  if (sig.length !== expect.length) return null;
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expect))) return null;
+  if (!timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expect, 'hex'))) return null;
   return Number(id);
 }

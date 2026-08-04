@@ -16,3 +16,11 @@ test('signSession/verifySession', () => {
   expect(verifySession(t + 'x')).toBeNull();
   expect(verifySession('12.abcdef')).toBeNull();
 });
+
+test('malformed inputs never throw', () => {
+  expect(verifyCode('abc', 'not-a-valid-stored-hash')).toBe(false);
+  expect(verifyCode('abc', 'salt:zzzz')).toBe(false);
+  expect(verifySession('12.' + 'é'.repeat(64))).toBeNull();
+  expect(verifySession('12.' + 'ab'.repeat(10))).toBeNull();
+  expect(verifySession('')).toBeNull();
+});
