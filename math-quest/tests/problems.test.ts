@@ -37,6 +37,21 @@ test('every stage generates valid problems (100 samples each)', () => {
   }
 });
 
+test('unknown stage throws', () => {
+  expect(() => generateProblem('nope')).toThrow();
+});
+
+test('w4 dividends stay within advertised digit counts', () => {
+  for (let i = 0; i < 200; i++) {
+    const p1 = generateProblem('w4-1');
+    if (p1.kind === 'div') { expect(p1.a).toBeGreaterThanOrEqual(10); expect(p1.a).toBeLessThanOrEqual(99); }
+    const p2 = generateProblem('w4-2');
+    if (p2.kind === 'div') { expect(p2.a).toBeGreaterThanOrEqual(100); expect(p2.a).toBeLessThanOrEqual(999); }
+    const p4 = generateProblem('w4-4');
+    if (p4.kind === 'div') { expect(p4.a).toBeGreaterThanOrEqual(100); expect(p4.a).toBeLessThanOrEqual(999); }
+  }
+});
+
 test('kuku stages stay within their dan', () => {
   for (let i = 0; i < 50; i++) {
     const p = generateProblem('w1-1');
