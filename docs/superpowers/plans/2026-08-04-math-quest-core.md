@@ -230,6 +230,8 @@ import { expect, test } from 'vitest';
 import { generateProblem, formatScaled, reduceFrac } from '@/lib/problems';
 import { STAGES } from '@/lib/stages';
 
+const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);
+
 test('formatScaled', () => {
   expect(formatScaled(120, 2)).toBe('1.2');
   expect(formatScaled(1035, 0)).toBe('1035');
@@ -257,8 +259,7 @@ test('every stage generates valid problems (100 samples each)', () => {
           .toBeCloseTo(Number(p.answer), 6);
       if (p.kind === 'frac-mul' || p.kind === 'frac-div') {
         expect(p.answer.d).toBeGreaterThan(0);
-        const g = ((a: number, b: number): number => (b ? g(b, a % b) : a))(p.answer.n, p.answer.d);
-        expect(g).toBe(1); // 約分済み
+        expect(gcd(p.answer.n, p.answer.d)).toBe(1); // 約分済み
       }
     }
   }
