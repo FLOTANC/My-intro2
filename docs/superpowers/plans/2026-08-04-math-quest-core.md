@@ -718,7 +718,7 @@ git commit -m "math-quest: add coin scoring and JST streak logic"
   - `hashCode(code: string): string` / `verifyCode(code: string, hash: string): boolean` — scrypt+salt
   - `signSession(playerId: number): string` / `verifySession(token: string): number | null` — HMAC署名トークン
   - `SESSION_COOKIE = 'mq_session'`
-- 注意: `.env.local` はコミット禁止。`math-quest/.gitignore`（create-next-app生成）に `.env*` が含まれることを確認する。
+- 注意: `.env.local` はコミット禁止。`math-quest/.gitignore`（create-next-app生成）の `.env*` 行は残したまま、`!.env.local.example` の否定行だけを追加する（`.env*` を狭めて素の `.env` がコミット可能になる変更は禁止）。
 
 - [ ] **Step 1: 依存追加とスキーマ**
 
@@ -794,6 +794,14 @@ test('signSession/verifySession', () => {
   expect(verifySession(t + 'x')).toBeNull();
   expect(verifySession('12.abcdef')).toBeNull();
 });
+
+test('malformed inputs never throw', () => {
+  expect(verifyCode('abc', 'not-a-valid-stored-hash')).toBe(false);
+  expect(verifyCode('abc', 'salt:zzzz')).toBe(false);
+  expect(verifySession('12.' + 'é'.repeat(64))).toBeNull();
+  expect(verifySession('12.' + 'ab'.repeat(10))).toBeNull();
+  expect(verifySession('')).toBeNull();
+});
 ```
 
 - [ ] **Step 3: 失敗を確認**
@@ -825,7 +833,8 @@ export function hashCode(code: string): string {
 
 export function verifyCode(code: string, stored: string): boolean {
   const [salt, h] = stored.split(':');
-  if (!salt || !h) return false;
+  // 64桁hex以外は不正（長さ違いでtimingSafeEqualが例外を投げるのを防ぐ）
+  if (!salt || !h || !/^[0-9a-f]{64}$/.test(h)) return false;
   const got = scryptSync(code.normalize('NFKC'), salt, 32);
   return timingSafeEqual(got, Buffer.from(h, 'hex'));
 }
@@ -840,10 +849,10 @@ export function signSession(playerId: number): string {
 export function verifySession(token: string | undefined): number | null {
   if (!token) return null;
   const [id, sig] = token.split('.');
-  if (!id || !sig || !/^\d+$/.test(id)) return null;
+  // sigは64桁hex限定（マルチバイト文字などでtimingSafeEqualが例外を投げるのを防ぐ）
+  if (!id || !sig || !/^\d+$/.test(id) || !/^[0-9a-f]{64}$/.test(sig)) return null;
   const expect = hmac(id);
-  if (sig.length !== expect.length) return null;
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expect))) return null;
+  if (!timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expect, 'hex'))) return null;
   return Number(id);
 }
 ```
