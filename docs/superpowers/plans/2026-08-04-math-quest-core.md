@@ -46,14 +46,14 @@ npx create-next-app@latest math-quest --ts --app --no-tailwind --no-eslint --src
 cd math-quest && npm i -D vitest
 ```
 
-`math-quest/vitest.config.ts`:
+`math-quest/vitest.config.mts`（ESMロードでCJS非推奨警告を避けるため .mts）:
 
 ```ts
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
-  resolve: { alias: { '@': path.resolve(__dirname) } },
+  resolve: { alias: { '@': path.resolve(import.meta.dirname) } },
   test: { include: ['tests/**/*.test.ts'] },
 });
 ```
