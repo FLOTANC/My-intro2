@@ -28,5 +28,6 @@ export async function POST(req: Request) {
   const [p] = await sql`
     update player set coins = coins + ${correct ? coins : 0}
     where id = ${pid} returning coins`;
+  if (!p) return json({ ok: false }, 401);
   return json({ ok: true, coins: p.coins, graduated });
 }

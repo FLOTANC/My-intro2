@@ -10,12 +10,15 @@ export async function POST() {
   const today = todayJST();
   const [p] = await sql`
     select streak, coins, last_play_date::text from player where id = ${pid}`;
-  if (p.last_play_date === today)
-    return json({ ok: true, streak: p.streak, coins: p.coins, bonus: 0 });
+  if (!p) return json({ ok: false }, 401);
   const streak = nextStreak(p.last_play_date, today, p.streak);
-  const [u] = await sql`
+  // 同日2回目はWHERE句で弾く（二重リクエストでもボーナスは1日1回だけ）
+  const rows = await sql`
     update player set streak = ${streak}, last_play_date = ${today},
       coins = coins + ${DAILY_BONUS}
-    where id = ${pid} returning streak, coins`;
-  return json({ ok: true, streak: u.streak, coins: u.coins, bonus: DAILY_BONUS });
+    where id = ${pid} and last_play_date is distinct from ${today}
+    returning streak, coins`;
+  if (rows.length === 0)
+    return json({ ok: true, streak: p.streak, coins: p.coins, bonus: 0 });
+  return json({ ok: true, streak: rows[0].streak, coins: rows[0].coins, bonus: DAILY_BONUS });
 }

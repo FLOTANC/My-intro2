@@ -15,6 +15,7 @@ export async function POST(req: Request) {
 
   const next = nextStageId(stageId);
   const [p] = await sql`select current_stage from player where id = ${pid}`;
+  if (!p) return json({ ok: false }, 401);
   if (next && p.current_stage === stageId) {
     await sql`update player set current_stage = ${next} where id = ${pid}`;
   }
