@@ -1550,9 +1550,12 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const router = useRouter();
 
   const submit = async () => {
+    if (busy || code.trim().length < 3) return; // 二重送信と空送信を防ぐ
+    setBusy(true);
     setError('');
     try {
       const r = await fetch('/api/auth', {
@@ -1564,6 +1567,8 @@ export default function LoginPage() {
       else setError(d.error ?? 'あいことばがちがうみたい');
     } catch {
       setError('でんぱがよわいみたい。もういちどためしてね');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1573,11 +1578,15 @@ export default function LoginPage() {
       <p style={{ textAlign: 'center', color: 'var(--muted)' }}>あいことばを いれてね</p>
       <input
         value={code} onChange={e => setCode(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') submit(); }}
         style={{ fontSize: '1.4rem', padding: 12, borderRadius: 16, border: 'none', textAlign: 'center' }}
         placeholder="あいことば"
       />
       {error && <p style={{ color: 'var(--bad)', textAlign: 'center' }}>{error}</p>}
-      <button className="btn-primary" onClick={submit}>はじめる</button>
+      <button className="btn-primary" onClick={submit} disabled={busy || code.trim().length < 3}
+        style={{ opacity: busy || code.trim().length < 3 ? 0.5 : 1 }}>
+        {busy ? 'まってね…' : 'はじめる'}
+      </button>
     </main>
   );
 }
@@ -1592,7 +1601,7 @@ export default function LoginPage() {
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { stageById } from '@/lib/stages';
+import { stageById, STAGES } from '@/lib/stages';
 
 type State = {
   ok: boolean; coins: number; streak: number; currentStage: string;
@@ -1631,7 +1640,7 @@ export default function Home() {
 
       <Link href="/map">
         <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
-          ぼうけんマップ（いま: {stageById(state.currentStage)?.title}）
+          ぼうけんマップ（いま: {stageById(state.currentStage)?.title ?? STAGES[0].title}）
         </button>
       </Link>
 
@@ -1670,7 +1679,8 @@ export default function MapPage() {
   if (!state) return <main><p>じゅんびちゅう…</p></main>;
 
   const stars = new Map(state.clearedStages.map(c => [c.stageId, c.stars]));
-  const currentIdx = STAGES.findIndex(s => s.id === state.currentStage);
+  // 未知のステージIDでも全ロックにならないよう最低0に丸める
+  const currentIdx = Math.max(STAGES.findIndex(s => s.id === state.currentStage), 0);
 
   return (
     <main>
