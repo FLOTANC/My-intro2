@@ -17,7 +17,8 @@ export default function MapPage() {
   if (!state) return <main><p>じゅんびちゅう…</p></main>;
 
   const stars = new Map(state.clearedStages.map(c => [c.stageId, c.stars]));
-  const currentIdx = STAGES.findIndex(s => s.id === state.currentStage);
+  // 未知のステージIDでも全ロックにならないよう最低0に丸める
+  const currentIdx = Math.max(STAGES.findIndex(s => s.id === state.currentStage), 0);
 
   return (
     <main>

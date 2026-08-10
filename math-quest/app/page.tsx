@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { stageById } from '@/lib/stages';
+import { stageById, STAGES } from '@/lib/stages';
 
 type State = {
   ok: boolean; coins: number; streak: number; currentStage: string;
@@ -41,7 +41,7 @@ export default function Home() {
 
       <Link href="/map">
         <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
-          ぼうけんマップ（いま: {stageById(state.currentStage)?.title}）
+          ぼうけんマップ（いま: {stageById(state.currentStage)?.title ?? STAGES[0].title}）
         </button>
       </Link>
 
