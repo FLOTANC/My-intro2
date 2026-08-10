@@ -1237,7 +1237,8 @@ export default function Keypad({ keys, onKey }: { keys: string[]; onKey: (k: str
             minHeight: 56, fontSize: '1.5rem', fontWeight: 'bold',
             background: k === 'OK' ? 'var(--good)' : 'var(--card)',
             color: k === 'OK' ? '#1a1440' : 'var(--text)',
-            gridColumn: k === 'OK' ? 'span 2' : undefined,
+            // 3の倍数でないときだけOKを最終行いっぱいに広げる（すきま防止）
+            gridColumn: k === 'OK' && keys.length % 3 !== 0 ? '1 / -1' : undefined,
           }}
         >
           {k === '←' ? '⌫' : k}
@@ -1273,12 +1274,24 @@ export default function AnswerForm({ problem, onSubmit }:
   const [vals, setVals] = useState<AnswerInput>({});
   const [active, setActive] = useState<Field>(fields[0].field);
   const dec = problem.kind === 'dec-mul' || problem.kind === 'dec-div';
-  const keys = ['7','8','9','4','5','6','1','2','3', dec ? '.' : '', '0','←','OK'].filter(Boolean);
+  // 12キー(3×4)ぴったり。小数のときだけ '.' を足して13キー（OKは最終行いっぱい）
+  const keys = dec
+    ? ['7','8','9','4','5','6','1','2','3','.','0','←','OK']
+    : ['7','8','9','4','5','6','1','2','3','←','0','OK'];
+
+  // 未入力・末尾が「.」だけの欄は「まだ書けてない」とみなす
+  const incomplete = (f: Field) => {
+    const v = vals[f] ?? '';
+    return v.length === 0 || v.endsWith('.');
+  };
 
   const onKey = (k: string) => {
     if (k === 'OK') {
+      if (incomplete(active)) return; // 何も入れずにすすませない
       const idx = fields.findIndex(f => f.field === active);
       if (idx < fields.length - 1) { setActive(fields[idx + 1].field); return; }
+      const blank = fields.find(f => incomplete(f.field));
+      if (blank) { setActive(blank.field); return; } // 空の欄にもどす
       onSubmit(vals); return;
     }
     setVals(v => {
@@ -1424,6 +1437,9 @@ import type { Problem } from '@/lib/types';
 
 type State = { currentStage: string; reviewProblems: { id: number; problem: Problem }[] };
 
+const starsFor = (correctCount: number, total: number) =>
+  correctCount === total ? 3 : correctCount / total >= 0.8 ? 2 : 1;
+
 export default function QuizPage({ params }: { params: Promise<{ stageId: string }> }) {
   const { stageId } = use(params);
   const router = useRouter();
@@ -1445,7 +1461,7 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
 
   const finish = async (r: { correctCount: number; total: number }) => {
     setResult(r);
-    const stars = r.correctCount === r.total ? 3 : r.correctCount / r.total >= 0.8 ? 2 : 1;
+    const stars = starsFor(r.correctCount, r.total);
     if (isMission) await fetch('/api/mission-complete', { method: 'POST' }).catch(() => {});
     else await fetch('/api/stage-clear', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -1465,7 +1481,7 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
       {result && (
         <div className="card" style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem' }}>
-            {'★'.repeat(result.correctCount === result.total ? 3 : result.correctCount / result.total >= 0.8 ? 2 : 1)}
+            {'★'.repeat(starsFor(result.correctCount, result.total))}
           </div>
           <p style={{ margin: '8px 0' }}>{result.total}もん中 {result.correctCount}もん せいかい！</p>
           <button className="btn-primary" onClick={() => router.push('/')}>ホームへ</button>
