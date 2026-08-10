@@ -1652,6 +1652,7 @@ export default function Home() {
 ```tsx
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { STAGES, WORLDS } from '@/lib/stages';
 
@@ -1659,7 +1660,13 @@ type State = { ok: boolean; currentStage: string; clearedStages: { stageId: stri
 
 export default function MapPage() {
   const [state, setState] = useState<State | null>(null);
-  useEffect(() => { fetch('/api/state').then(r => r.json()).then(setState).catch(() => {}); }, []);
+  const router = useRouter();
+  // 通信失敗時に「じゅんびちゅう…」で固まらないよう、ホーム同様ログインへ戻す
+  useEffect(() => {
+    fetch('/api/state').then(r => r.json()).then(d => {
+      if (!d.ok) router.replace('/login'); else setState(d);
+    }).catch(() => router.replace('/login'));
+  }, [router]);
   if (!state) return <main><p>じゅんびちゅう…</p></main>;
 
   const stars = new Map(state.clearedStages.map(c => [c.stageId, c.stars]));
