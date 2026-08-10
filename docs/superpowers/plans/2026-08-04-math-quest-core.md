@@ -1313,7 +1313,7 @@ export default function AnswerForm({ problem, onSubmit }:
 
 ```tsx
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Problem, AnswerInput } from '@/lib/types';
 import { checkAnswer, problemText, correctText, explainLines } from '@/lib/check';
 import { coinsFor } from '@/lib/scoring';
@@ -1336,16 +1336,29 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<Phase>({ name: 'ask' });
   const [combo, setCombo] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
   const [startMs, setStartMs] = useState(Date.now());
+  // 正解数はrefで持つ（setTimeout内のnextがstateの古い値を読むのを防ぐ）
+  const correctRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const item = items[i];
 
-  const submit = async (input: AnswerInput) => {
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const next = () => {
+    if (i + 1 >= items.length) {
+      setPhase({ name: 'done' });
+      onFinish({ correctCount: correctRef.current, total: items.length });
+      return;
+    }
+    setI(i + 1); setPhase({ name: 'ask' }); setStartMs(Date.now());
+  };
+
+  const submit = (input: AnswerInput) => {
     const correct = checkAnswer(item.problem, input);
     const coins = coinsFor(correct, Date.now() - startMs, combo);
     setPhase(correct ? { name: 'correct', coins } : { name: 'wrong' });
     setCombo(correct ? combo + 1 : 0);
-    if (correct) setCorrectCount(c => c + 1);
+    if (correct) correctRef.current += 1;
     fetch('/api/answer', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -1354,12 +1367,7 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
         mistakeId: item.mistakeId,
       }),
     }).catch(() => {});
-    if (correct) setTimeout(next, 1000);
-  };
-
-  const next = () => {
-    if (i + 1 >= items.length) { setPhase({ name: 'done' }); onFinish({ correctCount, total: items.length }); return; }
-    setI(i + 1); setPhase({ name: 'ask' }); setStartMs(Date.now());
+    if (correct) timerRef.current = setTimeout(next, 1000);
   };
 
   if (!item || phase.name === 'done') return null;
@@ -1400,7 +1408,7 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
 }
 ```
 
-注意: `onFinish` 呼び出し時の `correctCount` は state 更新タイミングのずれに注意。実装時に「最後の1問が正解だった場合に数え漏れがないか」を必ず手で確認し、ずれる場合は `submit` 内でローカル変数に計算した値を `done` 時に渡すよう修正する。
+注意: 正解数は `correctRef` で管理する（`setTimeout(next, 1000)` が捕捉するクロージャは submit 時点の render のもので、state の `correctCount` だと最後の1問の正解が数え漏れる）。`next` は `submit` より前に定義すること。
 
 - [ ] **Step 5: クイズページ実装**
 
