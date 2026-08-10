@@ -1842,7 +1842,7 @@ export default function NotebookPage() {
             <div style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '4px 0' }}>
               まえのこたえ: {e.wrongAnswer || '（むかいとう）'} ／ せいかい: {correctText(e.problem)}
             </div>
-            <button className="btn-primary" style={{ minHeight: 40, fontSize: '1rem' }}
+            <button className="btn-primary" style={{ minHeight: 44, fontSize: '1rem' }}
               onClick={() => setSolving(e)}>といなおす</button>
           </div>
         ))}
