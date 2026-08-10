@@ -1,69 +1,55 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { stageById } from '@/lib/stages';
+
+type State = {
+  ok: boolean; coins: number; streak: number; currentStage: string;
+  missionDoneToday: boolean; reviewProblems: unknown[];
+};
 
 export default function Home() {
+  const [state, setState] = useState<State | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/state').then(r => r.json()).then(d => {
+      if (!d.ok) router.replace('/login'); else setState(d);
+    }).catch(() => router.replace('/login'));
+  }, [router]);
+
+  if (!state) return <main><p>じゅんびちゅう…</p></main>;
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem' }}>
+        <span>🔥 {state.streak}日れんぞく</span>
+        <span>🪙 {state.coins}</span>
+      </header>
+
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '4rem' }}>🐣</div>
+        <p style={{ color: 'var(--muted)' }}>（アバターは これから そだつよ）</p>
+      </div>
+
+      <Link href="/quiz/mission">
+        <button className="btn-primary">
+          {state.missionDoneToday ? 'きょうのミッション クリアずみ！もういっかい？' : 'きょうのミッションを はじめる！'}
+        </button>
+      </Link>
+
+      <Link href="/map">
+        <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
+          ぼうけんマップ（いま: {stageById(state.currentStage)?.title}）
+        </button>
+      </Link>
+
+      <Link href="/notebook">
+        <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
+          まちがいノート
+        </button>
+      </Link>
+    </main>
   );
 }
