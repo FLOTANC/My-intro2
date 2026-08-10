@@ -18,12 +18,24 @@ export default function AnswerForm({ problem, onSubmit }:
   const [vals, setVals] = useState<AnswerInput>({});
   const [active, setActive] = useState<Field>(fields[0].field);
   const dec = problem.kind === 'dec-mul' || problem.kind === 'dec-div';
-  const keys = ['7','8','9','4','5','6','1','2','3', dec ? '.' : '', '0','←','OK'].filter(Boolean);
+  // 12キー(3×4)ぴったり。小数のときだけ '.' を足して13キー（OKは最終行いっぱい）
+  const keys = dec
+    ? ['7','8','9','4','5','6','1','2','3','.','0','←','OK']
+    : ['7','8','9','4','5','6','1','2','3','←','0','OK'];
+
+  // 未入力・末尾が「.」だけの欄は「まだ書けてない」とみなす
+  const incomplete = (f: Field) => {
+    const v = vals[f] ?? '';
+    return v.length === 0 || v.endsWith('.');
+  };
 
   const onKey = (k: string) => {
     if (k === 'OK') {
+      if (incomplete(active)) return; // 何も入れずにすすませない
       const idx = fields.findIndex(f => f.field === active);
       if (idx < fields.length - 1) { setActive(fields[idx + 1].field); return; }
+      const blank = fields.find(f => incomplete(f.field));
+      if (blank) { setActive(blank.field); return; } // 空の欄にもどす
       onSubmit(vals); return;
     }
     setVals(v => {

@@ -11,7 +11,8 @@ export default function Keypad({ keys, onKey }: { keys: string[]; onKey: (k: str
             minHeight: 56, fontSize: '1.5rem', fontWeight: 'bold',
             background: k === 'OK' ? 'var(--good)' : 'var(--card)',
             color: k === 'OK' ? '#1a1440' : 'var(--text)',
-            gridColumn: k === 'OK' ? 'span 2' : undefined,
+            // 3の倍数でないときだけOKを最終行いっぱいに広げる（すきま防止）
+            gridColumn: k === 'OK' && keys.length % 3 !== 0 ? '1 / -1' : undefined,
           }}
         >
           {k === '←' ? '⌫' : k}
