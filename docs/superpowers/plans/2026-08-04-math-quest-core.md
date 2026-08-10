@@ -1770,6 +1770,7 @@ export async function GET() {
 ```tsx
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Problem, AnswerInput } from '@/lib/types';
 import { checkAnswer, problemText, correctText, explainLines } from '@/lib/check';
@@ -1782,10 +1783,13 @@ export default function NotebookPage() {
   const [graduated, setGraduated] = useState(0);
   const [solving, setSolving] = useState<Entry | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const router = useRouter();
 
+  // 他画面と同じ規約：通信失敗・未ログインならログイン画面へ戻す
   const load = () => fetch('/api/mistakes').then(r => r.json()).then(d => {
-    if (d.ok) { setEntries(d.active); setGraduated(d.graduatedCount); }
-  }).catch(() => {});
+    if (!d.ok) { router.replace('/login'); return; }
+    setEntries(d.active); setGraduated(d.graduatedCount);
+  }).catch(() => router.replace('/login'));
   useEffect(() => { load(); }, []);
 
   const submit = async (input: AnswerInput) => {
