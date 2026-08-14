@@ -14,7 +14,7 @@ export default function MapPage() {
       if (!d.ok) router.replace('/login'); else setState(d);
     }).catch(() => router.replace('/login'));
   }, [router]);
-  if (!state) return <main><p>じゅんびちゅう…</p></main>;
+  if (!state) return <main><p>準備中…</p></main>;
 
   const stars = new Map(state.clearedStages.map(c => [c.stageId, c.stars]));
   // 未知のステージIDでも全ロックにならないよう最低0に丸める
@@ -23,7 +23,7 @@ export default function MapPage() {
   return (
     <main>
       <Link href="/" style={{ color: 'var(--muted)' }}>← ホーム</Link>
-      <h1 style={{ margin: '12px 0' }}>ぼうけんマップ</h1>
+      <h1 style={{ margin: '12px 0' }}>冒険マップ</h1>
       {WORLDS.map(w => (
         <section key={w.id} style={{ marginBottom: 20 }}>
           <h2 style={{ fontSize: '1rem', color: 'var(--accent)', marginBottom: 8 }}>

@@ -66,28 +66,28 @@ export function explainLines(p: Problem): string[] {
   switch (p.kind) {
     case 'mul': {
       if (p.b <= 9 && p.a <= 9) return [`九九で ${p.a} × ${p.b} = ${p.answer} だよ`];
-      return [`くらいごとに分けて計算しよう`, ...partialProducts(p.a, p.b).text.split('\n')];
+      return [`位ごとに分けて計算しよう`, ...partialProducts(p.a, p.b).text.split('\n')];
     }
     case 'div':
-      return [`${p.b} × いくつ で ${p.a} になるかな?`, `${p.b} × ${p.answer} = ${p.a} だから、こたえは ${p.answer}`];
+      return [`${p.b} × いくつ で ${p.a} になるかな?`, `${p.b} × ${p.answer} = ${p.a} だから、答えは ${p.answer}`];
     case 'divmod':
       return [
-        `${p.b} × ${p.q} = ${p.b * p.q} で、${p.a} をこえない いちばん大きい数`,
-        `${p.a} − ${p.b * p.q} = ${p.r} があまり`,
-        `こたえ: ${p.q} あまり ${p.r}`,
+        `${p.b} × ${p.q} = ${p.b * p.q} で、${p.a} をこえない一番大きい数`,
+        `${p.a} − ${p.b * p.q} = ${p.r} が余り`,
+        `答え: ${p.q} あまり ${p.r}`,
       ];
     case 'dec-mul': {
       const sa = (p.a.split('.')[1] ?? '').length, sb = (p.b.split('.')[1] ?? '').length;
       const ai = Number(p.a.replace('.', '')), bi = Number(p.b.replace('.', ''));
       return [
-        `小数点をとって計算: ${ai} × ${bi} = ${ai * bi}`,
-        `小数点を ${sa + sb} つ左にもどすと ${p.answer}`,
+        `小数点を取って計算: ${ai} × ${bi} = ${ai * bi}`,
+        `小数点を ${sa + sb} つ左に戻すと ${p.answer}`,
       ];
     }
     case 'dec-div':
       return [
         `わる数が整数になるように、両方の小数点を同じだけ動かそう`,
-        `そのあとはふつうのわり算。こたえは ${p.answer}`,
+        `そのあとは同じようにわり算。答えは ${p.answer}`,
       ];
     case 'frac-mul':
       return [
@@ -99,7 +99,7 @@ export function explainLines(p: Problem): string[] {
       return [
         `わり算は「ひっくり返してかけ算」！`,
         `${fracStr(p.a)} × ${p.b.d}/${p.b.n} にする`,
-        `こたえは ${correctText(p)}`,
+        `答えは ${correctText(p)}`,
       ];
   }
 }

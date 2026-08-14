@@ -6,7 +6,7 @@ import { json } from '@/lib/api';
 export async function POST(req: Request) {
   const { code } = await req.json().catch(() => ({}));
   if (typeof code !== 'string' || code.trim().length < 3)
-    return json({ ok: false, error: 'あいことばは3もじいじょうにしてね' }, 400);
+    return json({ ok: false, error: '合い言葉は3文字以上にしてね' }, 400);
 
   const trimmed = code.trim(); // 前後の空白ちがいでログイン不能になるのを防ぐ
 
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     playerId = pl[0].id;
   } else {
     if (!verifyCode(trimmed, families[0].code_hash))
-      return json({ ok: false, error: 'あいことばがちがうみたい' }, 401);
+      return json({ ok: false, error: '合い言葉が違うみたい' }, 401);
     // playerが無ければ自動作成（登録が途中で失敗していても復旧できる）
     let pl = await sql`select id from player where family_id = ${families[0].id} order by id limit 1`;
     if (pl.length === 0)

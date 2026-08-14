@@ -24,10 +24,10 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
     }).catch(() => setState({ currentStage: 'w1-1', reviewProblems: [] }));
   }, [router]);
 
-  if (!state) return <main><p>じゅんびちゅう…</p></main>;
+  if (!state) return <main><p>準備中…</p></main>;
 
   const realStage = isMission ? state.currentStage : stageId;
-  if (!stageById(realStage)) return <main><p>そのステージはないみたい</p></main>;
+  if (!stageById(realStage)) return <main><p>そのステージは無いみたい</p></main>;
 
   const finish = async (r: { correctCount: number; total: number }) => {
     setResult(r);
@@ -42,7 +42,7 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
   return (
     <main>
       <h1 style={{ fontSize: '1.1rem', margin: '8px 0 16px' }}>
-        {isMission ? 'きょうのミッション' : stageById(realStage)!.title}
+        {isMission ? '今日のミッション' : stageById(realStage)!.title}
       </h1>
       {!result && (
         <QuizRunner stageId={realStage}
@@ -53,7 +53,7 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
           <div style={{ fontSize: '2rem' }}>
             {'★'.repeat(starsFor(result.correctCount, result.total))}
           </div>
-          <p style={{ margin: '8px 0' }}>{result.total}もん中 {result.correctCount}もん せいかい！</p>
+          <p style={{ margin: '8px 0' }}>{result.total}問中 {result.correctCount}問 正解！</p>
           <button className="btn-primary" onClick={() => router.push('/')}>ホームへ</button>
         </div>
       )}

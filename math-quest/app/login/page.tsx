@@ -19,9 +19,9 @@ export default function LoginPage() {
       });
       const d = await r.json();
       if (d.ok) router.push('/');
-      else setError(d.error ?? 'あいことばがちがうみたい');
+      else setError(d.error ?? '合い言葉が違うみたい');
     } catch {
-      setError('でんぱがよわいみたい。もういちどためしてね');
+      setError('電波が弱いみたい。もう一度試してね');
     } finally {
       setBusy(false);
     }
@@ -30,17 +30,17 @@ export default function LoginPage() {
   return (
     <main style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
       <h1 style={{ textAlign: 'center' }}>さんすうクエスト</h1>
-      <p style={{ textAlign: 'center', color: 'var(--muted)' }}>あいことばを いれてね</p>
+      <p style={{ textAlign: 'center', color: 'var(--muted)' }}>合い言葉を入れてね</p>
       <input
         value={code} onChange={e => setCode(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') submit(); }}
         style={{ fontSize: '1.4rem', padding: 12, borderRadius: 16, border: 'none', textAlign: 'center' }}
-        placeholder="あいことば"
+        placeholder="合い言葉"
       />
       {error && <p style={{ color: 'var(--bad)', textAlign: 'center' }}>{error}</p>}
       <button className="btn-primary" onClick={submit} disabled={busy || code.trim().length < 3}
         style={{ opacity: busy || code.trim().length < 3 ? 0.5 : 1 }}>
-        {busy ? 'まってね…' : 'はじめる'}
+        {busy ? '待ってね…' : '始める'}
       </button>
     </main>
   );

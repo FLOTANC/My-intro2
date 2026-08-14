@@ -61,9 +61,9 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: 'var(--muted)' }}>
-        <span>{i + 1} / {items.length} もんめ</span>
+        <span>{i + 1} / {items.length} 問目</span>
         {combo >= 2 && <span style={{ color: 'var(--accent)' }}>🔥 {combo} コンボ</span>}
-        {item.isReview && <span>ふくしゅう</span>}
+        {item.isReview && <span>復習</span>}
       </div>
       <div className="card" style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: 'bold', margin: '12px 0' }}>
         {problemText(item.problem)} = ?
@@ -73,7 +73,7 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
 
       {phase.name === 'correct' && (
         <div className="card" style={{ textAlign: 'center', background: 'var(--good)', color: '#1a1440' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>せいかい！</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>正解！</div>
           <div>+{phase.coins} コイン</div>
         </div>
       )}
@@ -81,7 +81,7 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
       {phase.name === 'wrong' && (
         <div className="card">
           <div style={{ color: 'var(--bad)', fontWeight: 'bold', marginBottom: 8 }}>
-            ざんねん… こたえは {correctText(item.problem)}
+            残念… 答えは {correctText(item.problem)}
           </div>
           {explainLines(item.problem).map((l, j) => (
             <p key={j} style={{ margin: '4px 0', color: 'var(--muted)' }}>{l}</p>

@@ -35,22 +35,22 @@ export default function NotebookPage() {
   if (solving) {
     return (
       <main>
-        <h1 style={{ margin: '8px 0 16px' }}>といなおし</h1>
+        <h1 style={{ margin: '8px 0 16px' }}>解き直し</h1>
         <div className="card" style={{ textAlign: 'center', fontSize: '2rem', fontWeight: 'bold', marginBottom: 12 }}>
           {problemText(solving.problem)} = ?
         </div>
         {!feedback && <AnswerForm problem={solving.problem} onSubmit={submit} />}
         {feedback === 'correct' && (
           <div className="card" style={{ background: 'var(--good)', color: '#1a1440', textAlign: 'center' }}>
-            <p style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>せいかい！ +10コイン</p>
-            <button className="btn-primary" style={{ marginTop: 8 }} onClick={closeSolve}>もどる</button>
+            <p style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>正解！ +10コイン</p>
+            <button className="btn-primary" style={{ marginTop: 8 }} onClick={closeSolve}>戻る</button>
           </div>
         )}
         {feedback === 'wrong' && (
           <div className="card">
-            <p style={{ color: 'var(--bad)', fontWeight: 'bold' }}>こたえは {correctText(solving.problem)}</p>
+            <p style={{ color: 'var(--bad)', fontWeight: 'bold' }}>答えは {correctText(solving.problem)}</p>
             {explainLines(solving.problem).map((l, i) => <p key={i} style={{ color: 'var(--muted)', margin: '4px 0' }}>{l}</p>)}
-            <button className="btn-primary" style={{ marginTop: 8 }} onClick={closeSolve}>もどる</button>
+            <button className="btn-primary" style={{ marginTop: 8 }} onClick={closeSolve}>戻る</button>
           </div>
         )}
       </main>
@@ -60,18 +60,18 @@ export default function NotebookPage() {
   return (
     <main>
       <Link href="/" style={{ color: 'var(--muted)' }}>← ホーム</Link>
-      <h1 style={{ margin: '12px 0' }}>まちがいノート</h1>
-      <p style={{ color: 'var(--accent)', marginBottom: 12 }}>🎓 そつぎょうした問題: {graduated}こ</p>
-      {entries.length === 0 && <p className="card">いまは にがてな問題は ないよ！すごい！</p>}
+      <h1 style={{ margin: '12px 0' }}>間違いノート</h1>
+      <p style={{ color: 'var(--accent)', marginBottom: 12 }}>🎓 卒業した問題: {graduated}個</p>
+      {entries.length === 0 && <p className="card">今は苦手な問題は無いよ！すごい！</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {entries.map(e => (
           <div key={e.id} className="card">
             <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>{problemText(e.problem)}</div>
             <div style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '4px 0' }}>
-              まえのこたえ: {e.wrongAnswer || '（むかいとう）'} ／ せいかい: {correctText(e.problem)}
+              前の答え: {e.wrongAnswer || '（未回答）'} ／ 正解: {correctText(e.problem)}
             </div>
             <button className="btn-primary" style={{ minHeight: 44, fontSize: '1rem' }}
-              onClick={() => setSolving(e)}>といなおす</button>
+              onClick={() => setSolving(e)}>解き直す</button>
           </div>
         ))}
       </div>

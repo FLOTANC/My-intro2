@@ -6,10 +6,10 @@ import Keypad from './Keypad';
 type Field = 'value' | 'q' | 'r' | 'n' | 'd';
 
 const fieldsFor = (p: Problem): { field: Field; label: string }[] => {
-  if (p.kind === 'divmod') return [{ field: 'q', label: 'こたえ' }, { field: 'r', label: 'あまり' }];
+  if (p.kind === 'divmod') return [{ field: 'q', label: '答え' }, { field: 'r', label: 'あまり' }];
   if (p.kind === 'frac-mul' || p.kind === 'frac-div')
     return [{ field: 'n', label: '分子(上)' }, { field: 'd', label: '分母(下)' }];
-  return [{ field: 'value', label: 'こたえ' }];
+  return [{ field: 'value', label: '答え' }];
 };
 
 export default function AnswerForm({ problem, onSubmit }:
