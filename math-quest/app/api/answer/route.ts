@@ -8,6 +8,10 @@ export async function POST(req: Request) {
   if (typeof correct !== 'boolean' || typeof coins !== 'number' || coins < 0 || coins > 100)
     return json({ ok: false }, 400);
 
+  // 数値以外のmistakeIdはPostgresのcastエラー（500）になるので弾く
+  if (mistakeId != null && !Number.isInteger(mistakeId))
+    return json({ ok: false }, 400);
+
   let graduated = false;
   if (mistakeId != null) {
     if (correct) {

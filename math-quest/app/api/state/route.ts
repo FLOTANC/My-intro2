@@ -9,10 +9,11 @@ export async function GET() {
     select coins, streak, last_play_date::text, current_stage from player where id = ${pid}`;
   if (!player) return json({ ok: false }, 401);
   const cleared = await sql`select stage_id, stars from progress where player_id = ${pid}`;
+  // ランダムに選ぶ：毎日おなじ苦手3問だけが出続けて心が折れるのを防ぐ
   const reviews = await sql`
     select id, problem from mistakes
     where player_id = ${pid} and graduated = false
-    order by created_at asc limit 3`;
+    order by random() limit 3`;
   return json({
     ok: true,
     coins: player.coins, streak: player.streak,
