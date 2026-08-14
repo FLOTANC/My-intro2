@@ -151,20 +151,20 @@ export type PlayerStats = { totalStars: number; streak: number };
 export const SLOTS: Slot[] = ['hair', 'hat', 'face', 'clothes', 'body', 'bg'];
 
 export const SLOT_LABEL: Record<Slot, string> = {
-  hair: 'かみがた', hat: 'ぼうし', face: 'かお',
-  clothes: 'ふく', body: 'からだ', bg: 'はいけい',
+  hair: '髪型', hat: '帽子', face: '顔',
+  clothes: '服', body: '体', bg: '背景',
 };
 
 export const ITEMS: Item[] = [
   // はいけい
-  { id: 'bg-night', slot: 'bg', name: 'よぞら', price: 0, color: '#1a1440' },
-  { id: 'bg-sky', slot: 'bg', name: 'あおぞら', price: 80, color: '#38bdf8' },
-  { id: 'bg-sunset', slot: 'bg', name: 'ゆうやけ', price: 120, color: '#fb7185' },
-  { id: 'bg-space', slot: 'bg', name: 'うちゅう', price: 300, color: '#0b1026',
+  { id: 'bg-night', slot: 'bg', name: '夜空', price: 0, color: '#1a1440' },
+  { id: 'bg-sky', slot: 'bg', name: '青空', price: 80, color: '#38bdf8' },
+  { id: 'bg-sunset', slot: 'bg', name: '夕焼け', price: 120, color: '#fb7185' },
+  { id: 'bg-space', slot: 'bg', name: '宇宙', price: 300, color: '#0b1026',
     unlock: { kind: 'stars', count: 20 } },
   // からだ
-  { id: 'body-peach', slot: 'body', name: 'はだいろ', price: 0, color: '#f5c9a6' },
-  { id: 'body-tan', slot: 'body', name: 'こむぎいろ', price: 60, color: '#c98b5e' },
+  { id: 'body-peach', slot: 'body', name: 'はだ色', price: 0, color: '#f5c9a6' },
+  { id: 'body-tan', slot: 'body', name: '小麦色', price: 60, color: '#c98b5e' },
   { id: 'body-robot', slot: 'body', name: 'ロボット', price: 250, color: '#94a3b8' },
   { id: 'body-slime', slot: 'body', name: 'スライム', price: 400, color: '#4ade80',
     unlock: { kind: 'streak', days: 7 } },
@@ -182,13 +182,13 @@ export const ITEMS: Item[] = [
   // ぼうし
   { id: 'hat-none', slot: 'hat', name: 'なし', price: 0, shape: 'none' },
   { id: 'hat-cap', slot: 'hat', name: 'キャップ', price: 90, shape: 'cap', color: '#ef4444' },
-  { id: 'hat-wizard', slot: 'hat', name: 'まほうのぼうし', price: 200, shape: 'wizard', color: '#7c3aed' },
-  { id: 'hat-crown', slot: 'hat', name: 'おうかん', price: 500, shape: 'crown', color: '#ffb703',
+  { id: 'hat-wizard', slot: 'hat', name: '魔法の帽子', price: 200, shape: 'wizard', color: '#7c3aed' },
+  { id: 'hat-crown', slot: 'hat', name: '王冠', price: 500, shape: 'crown', color: '#ffb703',
     unlock: { kind: 'streak', days: 14 } },
   // かお
   { id: 'face-smile', slot: 'face', name: 'にこにこ', price: 0, shape: 'smile' },
   { id: 'face-cool', slot: 'face', name: 'クール', price: 70, shape: 'cool' },
-  { id: 'face-glasses', slot: 'face', name: 'めがね', price: 110, shape: 'glasses' },
+  { id: 'face-glasses', slot: 'face', name: '眼鏡', price: 110, shape: 'glasses' },
   { id: 'face-star', slot: 'face', name: 'スターアイ', price: 220, shape: 'star',
     unlock: { kind: 'stars', count: 15 } },
 ];
@@ -217,8 +217,8 @@ export function isUnlocked(item: Item, stats: PlayerStats): boolean {
 export function unlockLabel(item: Item): string | null {
   if (!item.unlock) return null;
   return item.unlock.kind === 'stars'
-    ? `★を ${item.unlock.count}こ あつめると かえるよ`
-    : `${item.unlock.days}日れんぞく で かえるよ`;
+    ? `★を${item.unlock.count}個集めると買えるよ`
+    : `${item.unlock.days}日連続で買えるよ`;
 }
 
 export function canBuy(
@@ -410,7 +410,7 @@ export default function Avatar({ equipped, size = 160 }: { equipped: Equipped; s
 
   return (
     <svg viewBox="0 0 100 120" width={size} height={size * 1.2}
-      role="img" aria-label="きみのアバター" style={{ display: 'block' }}>
+      role="img" aria-label="アバター" style={{ display: 'block' }}>
       <rect width="100" height="120" rx="14" fill={bg.color ?? '#1a1440'} />
       {/* あし */}
       <rect x="36" y="90" width="10" height="22" rx="3" fill={skin} />
@@ -474,7 +474,7 @@ Expected: エラーなし、29件パス
 preview_start で `math-quest` を起動し、モバイル（375×812）で `/avatar-preview` を開く。確認する点：
 
 - 24パターンすべてが崩れずに描画される（頭・体・手足が欠けない、パーツが枠外にはみ出ない）
-- 帽子「まほうのぼうし」の先端が上に切れていないこと（viewBox上端に注意。切れていたら `polygon points` のy座標を下げて調整してよい）
+- 帽子「魔法の帽子」の先端が上に切れていないこと（viewBox上端に注意。切れていたら `polygon points` のy座標を下げて調整してよい）
 - 「ワンピース」「よろい」で体が不自然に隠れないこと
 - スクリーンショットを1枚撮る
 - read_console_messages にエラーがないこと
@@ -664,7 +664,7 @@ git commit -m "math-quest: add avatar columns, shop and equip APIs"
 
 **Interfaces:**
 - Consumes: `GET /api/state`, `POST /api/shop`, `POST /api/equip`、`<Avatar />`、`ITEMS`, `SLOTS`, `SLOT_LABEL`, `isOwned`, `isUnlocked`, `unlockLabel`, `ITEM_BY_ID`, `type Equipped`
-- Produces: `/shop` 画面（上部に現在のアバターとコイン、下にスロット別のアイテム一覧）。ホームに実アバター表示と「ショップ・きせかえ」ボタン
+- Produces: `/shop` 画面（上部に現在のアバターとコイン、下にスロット別のアイテム一覧）。ホームに実アバター表示と「ショップ・着せかえ」ボタン
 - 挙動:
   - 所持済みアイテム → タップで即装備（`/api/equip`）。装備中はふちが `--accent` で光る
   - 未所持・解放済み → 「◯◯コインで かう」ボタン。押すと購入し、成功したらそのまま装備する
@@ -704,7 +704,7 @@ export default function ShopPage() {
     }).catch(() => router.replace('/login'));
   }, [router]);
 
-  if (!state) return <main><p>じゅんびちゅう…</p></main>;
+  if (!state) return <main><p>準備中…</p></main>;
 
   const stats = { totalStars: state.totalStars, streak: state.streak };
 
@@ -733,7 +733,7 @@ export default function ShopPage() {
     if (busy) return;
     const item = ITEM_BY_ID[itemId];
     if (state.coins < item.price) {
-      setMessage(`コインが たりないよ（あと ${item.price - state.coins}まい）`);
+      setMessage(`コインが足りないよ（あと${item.price - state.coins}枚）`);
       return;
     }
     setBusy(true); setMessage('');
@@ -744,11 +744,11 @@ export default function ShopPage() {
       });
       const d = await r.json();
       if (!d.ok) {
-        setMessage(d.reason === 'poor' ? 'コインが たりないよ' : 'いま かえないみたい');
+        setMessage(d.reason === 'poor' ? 'コインが足りないよ' : '今は買えないみたい');
         return;
       }
       setState(s => (s ? { ...s, coins: d.coins, ownedItems: d.ownedItems } : s));
-      setMessage(`${item.name} を てにいれた！`);
+      setMessage(`${item.name} を手に入れた！`);
       await doEquip(itemId);
     } catch {
       setMessage('でんぱがよわいみたい。もういちどためしてね');
@@ -763,8 +763,8 @@ export default function ShopPage() {
         <Avatar equipped={state.equipped} size={110} />
         <div>
           <div style={{ fontSize: '1.3rem' }}>🪙 {state.coins}</div>
-          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>★ぜんぶで {state.totalStars}こ</div>
-          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>🔥 {state.streak}日れんぞく</div>
+          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>★合計 {state.totalStars}個</div>
+          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>🔥 {state.streak}日連続</div>
         </div>
       </div>
 
@@ -805,14 +805,14 @@ export default function ShopPage() {
                         background: wearing ? 'var(--card)' : 'var(--good)',
                         color: wearing ? 'var(--muted)' : '#1a1440',
                       }}>
-                      {wearing ? 'きてるよ' : 'きがえる'}
+                      {wearing ? '着てるよ' : '着がえる'}
                     </button>
                   )}
                   {unlocked && !owned && (
                     <button className="btn-primary" disabled={busy}
                       onClick={() => buy(item.id)}
                       style={{ minHeight: 44, fontSize: '0.95rem', width: '100%' }}>
-                      🪙{item.price} で かう
+                      🪙{item.price} で買う
                     </button>
                   )}
                 </div>
@@ -861,7 +861,7 @@ type State = {
 ```tsx
       <Link href="/shop">
         <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
-          ショップ・きせかえ
+          ショップ・着せかえ
         </button>
       </Link>
 ```
@@ -946,11 +946,11 @@ docker exec mathquest-pg psql -U mathquest -d mathquest -c "update player set co
 ```
 
 確認する流れ：
-1. ホームにアバターが表示され、「ショップ・きせかえ」でショップに行ける
+1. ホームにアバターが表示され、「ショップ・着せかえ」でショップに行ける
 2. 「キャップ」を買う → コインが90減り、そのまま装備されてアバターに反映される
-3. 別の髪型に「きがえる」→ 即座にアバターが変わる。装備中は「きてるよ」になり押せない
-4. 未解放アイテム（うちゅう・よろい・スターアイ・スライム・おうかん）が 🔒 と条件文つきでグレー表示される
-5. コインを減らして不足時の文言を確認: `update player set coins = 10;` → 買おうとすると「コインが たりないよ（あと ◯まい）」
+3. 別の髪型に「着がえる」→ 即座にアバターが変わる。装備中は「着てるよ」になり押せない
+4. 未解放アイテム（宇宙・よろい・スターアイ・スライム・王冠）が 🔒 と条件文つきでグレー表示される
+5. コインを減らして不足時の文言を確認: `update player set coins = 10;` → 買おうとすると「コインが足りないよ（あと◯枚）」
 6. ホームに戻ってもアバターが保持されている（DBに保存されている）
 7. `docker exec mathquest-pg psql -U mathquest -d mathquest -c "select coins, owned_items, equipped from player;"` で行の中身を確認
 8. `/quiz/w1-1` を開き、進捗行の左に小さいアバターが出て、レイアウトが崩れていないこと
