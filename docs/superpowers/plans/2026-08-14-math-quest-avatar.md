@@ -987,8 +987,12 @@ import { neon } from '@neondatabase/serverless';
 const url = fs.readFileSync(process.argv[2],'utf8')
   .match(/^DATABASE_URL=(.*)$/m)[1].trim().replace(/^["']|["']$/g,'');
 const sql = neon(url);
-const stmts = fs.readFileSync('db/migrations/002-avatar.sql','utf8')
-  .split(';').map(s => s.trim()).filter(s => s && !s.startsWith('--'));
+// 先にコメント行を落としてから ; で分割する。
+// 逆順にすると「コメント＋ALTER」が1つの塊になり、ALTERごと捨ててしまう
+const raw = fs.readFileSync('db/migrations/002-avatar.sql','utf8')
+  .split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+const stmts = raw.split(';').map(s => s.trim()).filter(Boolean);
+console.log('statements to run:', stmts.length); // 期待値: 2
 for (const s of stmts) { await sql.query(s); console.log('OK:', s.slice(0, 60)); }
 const cols = await sql`select column_name from information_schema.columns
   where table_name = 'player' order by column_name`;
