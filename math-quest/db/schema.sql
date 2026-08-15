@@ -11,6 +11,8 @@ create table if not exists player (
   streak int not null default 0,
   last_play_date date,
   current_stage text not null default 'w1-1',
+  owned_items text[] not null default '{}',
+  equipped jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
