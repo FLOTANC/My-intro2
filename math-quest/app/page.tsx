@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { stageById, STAGES } from '@/lib/stages';
+import Avatar from '@/components/Avatar';
+import { DEFAULT_EQUIPPED, type Equipped } from '@/lib/avatar';
 
 type State = {
   ok: boolean; coins: number; streak: number; currentStage: string;
-  missionDoneToday: boolean; reviewProblems: unknown[];
+  missionDoneToday: boolean; reviewProblems: unknown[]; equipped?: Equipped;
 };
 
 export default function Home() {
@@ -29,8 +31,9 @@ export default function Home() {
       </header>
 
       <div className="card" style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '4rem' }}>🐣</div>
-        <p style={{ color: 'var(--muted)' }}>（アバターはこれから育つよ）</p>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Avatar equipped={state.equipped ?? DEFAULT_EQUIPPED} size={150} />
+        </div>
       </div>
 
       <Link href="/quiz/mission">
@@ -48,6 +51,12 @@ export default function Home() {
       <Link href="/notebook">
         <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
           間違いノート
+        </button>
+      </Link>
+
+      <Link href="/shop">
+        <button className="btn-primary" style={{ background: 'var(--card)', color: 'var(--text)' }}>
+          ショップ・着せかえ
         </button>
       </Link>
     </main>

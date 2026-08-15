@@ -5,13 +5,16 @@ import { checkAnswer, problemText, correctText, explainLines } from '@/lib/check
 import { coinsFor } from '@/lib/scoring';
 import { buildMission } from '@/lib/mission';
 import AnswerForm from './AnswerForm';
+import Avatar from './Avatar';
+import type { Equipped } from '@/lib/avatar';
 
 type Item = { problem: Problem; isReview: boolean; mistakeId?: number };
 type Phase = { name: 'ask' } | { name: 'correct'; coins: number } | { name: 'wrong' } | { name: 'done' };
 
-export default function QuizRunner({ stageId, reviews, onFinish }: {
+export default function QuizRunner({ stageId, reviews, equipped, onFinish }: {
   stageId: string;
   reviews: { id: number; problem: Problem }[];
+  equipped: Equipped;
   onFinish: (r: { correctCount: number; total: number }) => void;
 }) {
   const items: Item[] = useMemo(() => {
@@ -60,10 +63,11 @@ export default function QuizRunner({ stageId, reviews, onFinish }: {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: 'var(--muted)' }}>
-        <span>{i + 1} / {items.length} 問目</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--muted)' }}>
+        <Avatar equipped={equipped} size={32} />
+        <span>{i + 1} / {items.length} もんめ</span>
         {combo >= 2 && <span style={{ color: 'var(--accent)' }}>🔥 {combo} コンボ</span>}
-        {item.isReview && <span>復習</span>}
+        {item.isReview && <span>ふくしゅう</span>}
       </div>
       <div className="card" style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: 'bold', margin: '12px 0' }}>
         {problemText(item.problem)} = ?
