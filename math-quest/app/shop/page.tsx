@@ -10,7 +10,7 @@ import {
 
 type State = {
   ok: boolean; coins: number; streak: number; totalStars: number;
-  ownedItems: string[]; equipped: Equipped;
+  ownedItems: string[]; equipped?: Equipped;
 };
 
 export default function ShopPage() {
@@ -29,6 +29,8 @@ export default function ShopPage() {
   if (!state) return <main><p>準備中…</p></main>;
 
   const stats = { totalStars: state.totalStars, streak: state.streak };
+  // 古い /api/state レスポンスでも落ちないようデフォルトに退避する
+  const equipped = state.equipped ?? DEFAULT_EQUIPPED;
 
   // setState は必ず関数形で更新する。buy の直後に doEquip を呼ぶため、
   // 古い state を展開すると購入で減ったコインを巻き戻してしまう
@@ -47,7 +49,7 @@ export default function ShopPage() {
     try {
       await doEquip(itemId);
     } catch {
-      setMessage('でんぱがよわいみたい。もういちどためしてね');
+      setMessage('電波が弱いみたい。もう一度試してね');
     } finally { setBusy(false); }
   };
 
@@ -71,9 +73,10 @@ export default function ShopPage() {
       }
       setState(s => (s ? { ...s, coins: d.coins, ownedItems: d.ownedItems } : s));
       setMessage(`${item.name} を手に入れた！`);
-      await doEquip(itemId);
+      // 着替えだけ失敗しても購入は成功しているので、成功メッセージは残す
+      try { await doEquip(itemId); } catch { /* 所持済みなので後から着替えられる */ }
     } catch {
-      setMessage('でんぱがよわいみたい。もういちどためしてね');
+      setMessage('電波が弱いみたい。もう一度試してね');
     } finally { setBusy(false); }
   };
 
@@ -82,7 +85,7 @@ export default function ShopPage() {
       <Link href="/" style={{ color: 'var(--muted)' }}>← ホーム</Link>
 
       <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
-        <Avatar equipped={state.equipped} size={110} />
+        <Avatar equipped={equipped} size={110} />
         <div>
           <div style={{ fontSize: '1.3rem' }}>🪙 {state.coins}</div>
           <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>★合計 {state.totalStars}個</div>
@@ -105,7 +108,7 @@ export default function ShopPage() {
             {ITEMS.filter(i => i.slot === slot).map(item => {
               const owned = isOwned(item.id, state.ownedItems);
               const unlocked = isUnlocked(item, stats);
-              const wearing = state.equipped[slot] === item.id;
+              const wearing = equipped[slot] === item.id;
               return (
                 <div key={item.id} className="card"
                   style={{

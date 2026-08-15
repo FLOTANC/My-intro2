@@ -65,9 +65,9 @@ export default function QuizRunner({ stageId, reviews, equipped, onFinish }: {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--muted)' }}>
         <Avatar equipped={equipped} size={32} />
-        <span>{i + 1} / {items.length} もんめ</span>
+        <span>{i + 1} / {items.length} 問目</span>
         {combo >= 2 && <span style={{ color: 'var(--accent)' }}>🔥 {combo} コンボ</span>}
-        {item.isReview && <span>ふくしゅう</span>}
+        {item.isReview && <span>復習</span>}
       </div>
       <div className="card" style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: 'bold', margin: '12px 0' }}>
         {problemText(item.problem)} = ?
