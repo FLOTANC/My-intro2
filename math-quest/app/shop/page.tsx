@@ -138,7 +138,7 @@ export default function ShopPage() {
                         minHeight: 44, fontSize: '0.85rem', width: '100%',
                         padding: '10px 4px', whiteSpace: 'nowrap',
                       }}>
-                      🪙{item.price}で買う
+                      {item.price}コインで買う
                     </button>
                   )}
                 </div>
