@@ -38,9 +38,10 @@ function Hat({ shape, color }: { shape?: string; color?: string }) {
     </g>
   );
   if (shape === 'wizard') return (
-    <g fill={c}>
-      <polygon points="50,3 36,18 64,18" />
-      <rect x="26" y="16" width="48" height="6" rx="3" />
+    <g>
+      <polygon points="50,1 35,19 65,19" fill={c} />
+      <rect x="38" y="12" width="24" height="4" fill="#ffb703" />
+      <rect x="24" y="17" width="52" height="6" rx="3" fill={c} />
     </g>
   );
   if (shape === 'crown') return (
@@ -84,14 +85,28 @@ function Face({ shape }: { shape?: string }) {
   );
 }
 
+// 素足に見えないよう、ワンピース以外は下ばきを描く
+function Bottoms({ color = '#334155' }: { color?: string }) {
+  return (
+    <g fill={color}>
+      <rect x="33" y="86" width="34" height="12" rx="3" />
+      <rect x="35" y="94" width="12" height="8" rx="2" />
+      <rect x="53" y="94" width="12" height="8" rx="2" />
+    </g>
+  );
+}
+
 function Clothes({ shape, color }: { shape?: string; color?: string }) {
   const c = color ?? '#38bdf8';
   if (shape === 'hoodie') return (
-    <g fill={c}>
-      <rect x="30" y="56" width="40" height="38" rx="4" />
-      <rect x="20" y="58" width="12" height="26" rx="4" />
-      <rect x="68" y="58" width="12" height="26" rx="4" />
-      <rect x="36" y="52" width="28" height="10" rx="5" />
+    <g>
+      <Bottoms />
+      <g fill={c}>
+        <rect x="30" y="56" width="40" height="38" rx="4" />
+        <rect x="20" y="58" width="12" height="26" rx="4" />
+        <rect x="68" y="58" width="12" height="26" rx="4" />
+        <rect x="36" y="52" width="28" height="10" rx="5" />
+      </g>
     </g>
   );
   if (shape === 'dress') return (
@@ -101,18 +116,24 @@ function Clothes({ shape, color }: { shape?: string; color?: string }) {
     </g>
   );
   if (shape === 'armor') return (
-    <g fill={c}>
-      <rect x="30" y="56" width="40" height="38" rx="4" />
-      <rect x="18" y="56" width="14" height="14" rx="5" />
-      <rect x="68" y="56" width="14" height="14" rx="5" />
-      <rect x="46" y="60" width="8" height="30" fill="#94a3b8" />
+    <g>
+      <Bottoms color="#64748b" />
+      <g fill={c}>
+        <rect x="30" y="56" width="40" height="38" rx="4" />
+        <rect x="18" y="56" width="14" height="14" rx="5" />
+        <rect x="68" y="56" width="14" height="14" rx="5" />
+        <rect x="46" y="60" width="8" height="30" fill="#94a3b8" />
+      </g>
     </g>
   );
   return (
-    <g fill={c}>
-      <rect x="32" y="56" width="36" height="34" rx="3" />
-      <rect x="22" y="58" width="12" height="14" rx="3" />
-      <rect x="66" y="58" width="12" height="14" rx="3" />
+    <g>
+      <Bottoms />
+      <g fill={c}>
+        <rect x="32" y="56" width="36" height="34" rx="3" />
+        <rect x="22" y="58" width="12" height="14" rx="3" />
+        <rect x="66" y="58" width="12" height="14" rx="3" />
+      </g>
     </g>
   );
 }
