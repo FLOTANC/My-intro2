@@ -81,15 +81,16 @@ export default function MonsterView({
       }}>
       <g transform={isBoss ? 'translate(50,54) scale(1.06) translate(-50,-50)' : undefined}>
         <Body shape={monster.shape} color={monster.color} />
+        {/* ダメージ時は体の形そのものを赤くする（枠全体を塗るとカードが赤くなって見える） */}
+        <g opacity={hurt ? 0.8 : 0}
+          style={{ transition: 'opacity 150ms ease', pointerEvents: 'none' }}>
+          <Body shape={monster.shape} color="#ff2d2d" />
+        </g>
         <Eyes y={eyeY} />
       </g>
       {isBoss && (
         <polygon points="34,14 34,2 42,9 50,0 58,9 66,2 66,14" fill="#ffb703" stroke="#1a1440" strokeWidth="1" strokeLinejoin="round" />
       )}
-      {/* ダメージ時の赤いフラッシュ */}
-      <rect x="0" y="0" width="100" height="80" fill="#ff2d2d"
-        opacity={hurt ? 0.68 : 0}
-        style={{ transition: 'opacity 150ms ease', pointerEvents: 'none' }} />
     </svg>
   );
 }
