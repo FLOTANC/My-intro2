@@ -1,6 +1,6 @@
 import type { Monster, MonsterShape } from '@/lib/battle';
 
-const EYE = '#1a1440';
+const EYE = 'var(--bg)';
 
 function Eyes({ y = 42 }: { y?: number }) {
   return (
@@ -84,12 +84,12 @@ export default function MonsterView({
         {/* ダメージ時は体の形そのものを赤くする（枠全体を塗るとカードが赤くなって見える） */}
         <g opacity={hurt ? 0.8 : 0}
           style={{ transition: 'opacity 150ms ease', pointerEvents: 'none' }}>
-          <Body shape={monster.shape} color="#ff2d2d" />
+          <Body shape={monster.shape} color="var(--hit)" />
         </g>
         <Eyes y={eyeY} />
       </g>
       {isBoss && (
-        <polygon points="34,14 34,2 42,9 50,0 58,9 66,2 66,14" fill="#ffb703" stroke="#1a1440" strokeWidth="1" strokeLinejoin="round" />
+        <polygon points="34,14 34,2 42,9 50,0 58,9 66,2 66,14" fill="var(--accent)" stroke="var(--bg)" strokeWidth="1" strokeLinejoin="round" />
       )}
     </svg>
   );

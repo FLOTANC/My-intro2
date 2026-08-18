@@ -4,6 +4,7 @@
   --accent: #ffb703;
   --good: #4ade80;
   --bad: #fb7185;
+  --hit: #ff2d2d; /* 被弾フラッシュ用。--bad より強い赤 */
   --text: #ffffff;
   --muted: #b8b0e0;
   --radius: 16px;
