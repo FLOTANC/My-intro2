@@ -11,6 +11,12 @@ function Eyes({ y = 42 }: { y?: number }) {
   );
 }
 
+// 形ごとに体のてっぺんの高さが違うので、王冠を頭に乗せるための下げ幅
+// （ボス表示のスケール後の位置に合わせてある）
+const CROWN_DY: Record<MonsterShape, number> = {
+  slime: 23, rock: 10, bat: 1, ghost: 0, fish: 0, dragon: 0,
+};
+
 function Body({ shape, color }: { shape: MonsterShape; color: string }) {
   if (shape === 'bat') return (
     <g fill={color}>
@@ -89,7 +95,9 @@ export default function MonsterView({
         <Eyes y={eyeY} />
       </g>
       {isBoss && (
-        <polygon points="34,14 34,2 42,9 50,0 58,9 66,2 66,14" fill="var(--accent)" stroke="var(--bg)" strokeWidth="1" strokeLinejoin="round" />
+        <polygon points="34,14 34,2 42,9 50,0 58,9 66,2 66,14" fill="var(--accent)" stroke="var(--bg)"
+          strokeWidth="1" strokeLinejoin="round"
+          transform={`translate(0, ${CROWN_DY[monster.shape]})`} />
       )}
     </svg>
   );
