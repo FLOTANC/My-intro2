@@ -19,7 +19,9 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
   const { stageId } = use(params);
   const router = useRouter();
   const [state, setState] = useState<State | null>(null);
-  const [result, setResult] = useState<{ correctCount: number; total: number } | null>(null);
+  const [result, setResult] = useState<
+    { correctCount: number; total: number; defeated: boolean; bonusCoins: number } | null
+  >(null);
   const isMission = stageId === 'mission';
 
   useEffect(() => {
@@ -34,13 +36,19 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
   const realStage = isMission ? state.currentStage : stageId;
   if (!stageById(realStage)) return <main><p>そのステージは無いみたい</p></main>;
 
-  const finish = async (r: { correctCount: number; total: number }) => {
+  const finish = async (r: { correctCount: number; total: number; defeated: boolean; bonusCoins: number }) => {
     setResult(r);
     const stars = starsFor(r.correctCount, r.total);
+    if (r.bonusCoins > 0) {
+      await fetch('/api/answer', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ correct: true, coins: r.bonusCoins }),
+      }).catch(() => {});
+    }
     if (isMission) await fetch('/api/mission-complete', { method: 'POST' }).catch(() => {});
     else await fetch('/api/stage-clear', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ stageId: realStage, stars }),
+      body: JSON.stringify({ stageId: realStage, stars, defeated: r.defeated }),
     }).catch(() => {});
   };
 
@@ -59,6 +67,9 @@ export default function QuizPage({ params }: { params: Promise<{ stageId: string
             {'★'.repeat(starsFor(result.correctCount, result.total))}
           </div>
           <p style={{ margin: '8px 0' }}>{result.total}問中 {result.correctCount}問 正解！</p>
+          {result.defeated && (
+            <p style={{ color: 'var(--accent)' }}>モンスターをたおした！ +{result.bonusCoins}コイン</p>
+          )}
           <button className="btn-primary" onClick={() => router.push('/')}>ホームへ</button>
         </div>
       )}
