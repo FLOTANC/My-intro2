@@ -10,7 +10,7 @@ import {
 
 type State = {
   ok: boolean; coins: number; streak: number; totalStars: number;
-  ownedItems: string[]; equipped?: Equipped;
+  ownedItems: string[]; equipped?: Equipped; defeatedBosses: number[];
 };
 
 export default function ShopPage() {
@@ -28,7 +28,10 @@ export default function ShopPage() {
 
   if (!state) return <main><p>準備中…</p></main>;
 
-  const stats = { totalStars: state.totalStars, streak: state.streak };
+  const stats = {
+    totalStars: state.totalStars, streak: state.streak,
+    defeatedBosses: state.defeatedBosses ?? [],
+  };
   // 古い /api/state レスポンスでも落ちないようデフォルトに退避する
   const equipped = state.equipped ?? DEFAULT_EQUIPPED;
 

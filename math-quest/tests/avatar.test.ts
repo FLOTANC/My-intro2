@@ -28,21 +28,21 @@ test('isOwned: 無料アイテムは常に所持あつかい', () => {
 test('isUnlocked: 条件つきアイテムは条件を満たすまでロック', () => {
   const locked = ITEMS.find(i => i.unlock?.kind === 'stars')!;
   const need = (locked.unlock as { kind: 'stars'; count: number }).count;
-  expect(isUnlocked(locked, { totalStars: need - 1, streak: 0 })).toBe(false);
-  expect(isUnlocked(locked, { totalStars: need, streak: 0 })).toBe(true);
+  expect(isUnlocked(locked, { totalStars: need - 1, streak: 0, defeatedBosses: [] })).toBe(false);
+  expect(isUnlocked(locked, { totalStars: need, streak: 0, defeatedBosses: [] })).toBe(true);
   const free = ITEM_BY_ID[DEFAULT_EQUIPPED.hat];
-  expect(isUnlocked(free, { totalStars: 0, streak: 0 })).toBe(true);
+  expect(isUnlocked(free, { totalStars: 0, streak: 0, defeatedBosses: [] })).toBe(true);
 });
 
 test('canBuy: 不明・所持済み・ロック中・コイン不足をそれぞれ弾く', () => {
-  const stats = { totalStars: 999, streak: 999 };
+  const stats = { totalStars: 999, streak: 999, defeatedBosses: [] };
   expect(canBuy('nope', 999, [], stats)).toEqual({ ok: false, reason: 'unknown' });
   expect(canBuy('hat-cap', 999, ['hat-cap'], stats)).toEqual({ ok: false, reason: 'already' });
   const cap = ITEM_BY_ID['hat-cap'];
   expect(canBuy('hat-cap', cap.price - 1, [], stats)).toEqual({ ok: false, reason: 'poor' });
   expect(canBuy('hat-cap', cap.price, [], stats)).toEqual({ ok: true, price: cap.price });
   const locked = ITEMS.find(i => i.unlock)!;
-  expect(canBuy(locked.id, 99999, [], { totalStars: 0, streak: 0 }))
+  expect(canBuy(locked.id, 99999, [], { totalStars: 0, streak: 0, defeatedBosses: [] }))
     .toEqual({ ok: false, reason: 'locked' });
 });
 
@@ -71,4 +71,19 @@ test('equipItem: 所持していれば差し替え、していなければnull',
   expect(next!.hat).toBe('hat-cap');
   expect(next!.hair).toBe(DEFAULT_EQUIPPED.hair); // 他スロットは変わらない
   expect(DEFAULT_EQUIPPED.hat).not.toBe('hat-cap'); // 元を書き換えない
+});
+
+test('boss解放: ボスを倒すまでロック', () => {
+  const bossItem = ITEMS.find(i => i.unlock?.kind === 'boss')!;
+  expect(bossItem).toBeDefined();
+  const world = (bossItem.unlock as { kind: 'boss'; world: number }).world;
+  expect(isUnlocked(bossItem, { totalStars: 999, streak: 999, defeatedBosses: [] })).toBe(false);
+  expect(isUnlocked(bossItem, { totalStars: 0, streak: 0, defeatedBosses: [world] })).toBe(true);
+  expect(unlockLabel(bossItem)).toContain('ボス');
+});
+
+test('既存の解放条件は defeatedBosses があっても壊れない', () => {
+  const starItem = ITEMS.find(i => i.unlock?.kind === 'stars')!;
+  const need = (starItem.unlock as { kind: 'stars'; count: number }).count;
+  expect(isUnlocked(starItem, { totalStars: need, streak: 0, defeatedBosses: [] })).toBe(true);
 });

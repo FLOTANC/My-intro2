@@ -13,6 +13,7 @@ create table if not exists player (
   current_stage text not null default 'w1-1',
   owned_items text[] not null default '{}',
   equipped jsonb not null default '{}'::jsonb,
+  defeated_bosses int[] not null default '{}',
   created_at timestamptz not null default now()
 );
 

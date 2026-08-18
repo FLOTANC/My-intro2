@@ -7,7 +7,7 @@ export async function GET() {
   const pid = await requirePlayer();
   if (!pid) return json({ ok: false }, 401);
   const [player] = await sql`
-    select coins, streak, last_play_date::text, current_stage, owned_items, equipped
+    select coins, streak, last_play_date::text, current_stage, owned_items, equipped, defeated_bosses
     from player where id = ${pid}`;
   if (!player) return json({ ok: false }, 401);
   const cleared = await sql`select stage_id, stars from progress where player_id = ${pid}`;
@@ -28,5 +28,6 @@ export async function GET() {
     ownedItems,
     equipped: normalizeEquipped(player.equipped, ownedItems),
     totalStars,
+    defeatedBosses: player.defeated_bosses ?? [],
   });
 }

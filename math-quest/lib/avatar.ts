@@ -1,11 +1,14 @@
 export type Slot = 'bg' | 'body' | 'clothes' | 'hair' | 'hat' | 'face';
-export type Unlock = { kind: 'stars'; count: number } | { kind: 'streak'; days: number };
+export type Unlock =
+  | { kind: 'stars'; count: number }
+  | { kind: 'streak'; days: number }
+  | { kind: 'boss'; world: number };
 export type Item = {
   id: string; slot: Slot; name: string; price: number;
   shape?: string; color?: string; unlock?: Unlock;
 };
 export type Equipped = Record<Slot, string>;
-export type PlayerStats = { totalStars: number; streak: number };
+export type PlayerStats = { totalStars: number; streak: number; defeatedBosses: number[] };
 
 export const SLOTS: Slot[] = ['hair', 'hat', 'face', 'clothes', 'body', 'bg'];
 
@@ -43,7 +46,7 @@ export const ITEMS: Item[] = [
   { id: 'hat-cap', slot: 'hat', name: 'キャップ', price: 90, shape: 'cap', color: '#ef4444' },
   { id: 'hat-wizard', slot: 'hat', name: '魔法の帽子', price: 200, shape: 'wizard', color: '#7c3aed' },
   { id: 'hat-crown', slot: 'hat', name: '王冠', price: 500, shape: 'crown', color: '#ffb703',
-    unlock: { kind: 'streak', days: 14 } },
+    unlock: { kind: 'boss', world: 1 } },
   // かお
   { id: 'face-smile', slot: 'face', name: 'にこにこ', price: 0, shape: 'smile' },
   { id: 'face-cool', slot: 'face', name: 'クール', price: 70, shape: 'cool' },
@@ -68,16 +71,16 @@ export function isOwned(id: string, owned: string[]): boolean {
 
 export function isUnlocked(item: Item, stats: PlayerStats): boolean {
   if (!item.unlock) return true;
-  return item.unlock.kind === 'stars'
-    ? stats.totalStars >= item.unlock.count
-    : stats.streak >= item.unlock.days;
+  if (item.unlock.kind === 'stars') return stats.totalStars >= item.unlock.count;
+  if (item.unlock.kind === 'streak') return stats.streak >= item.unlock.days;
+  return stats.defeatedBosses.includes(item.unlock.world);
 }
 
 export function unlockLabel(item: Item): string | null {
   if (!item.unlock) return null;
-  return item.unlock.kind === 'stars'
-    ? `★を${item.unlock.count}個集めると買えるよ`
-    : `${item.unlock.days}日連続で買えるよ`;
+  if (item.unlock.kind === 'stars') return `★を${item.unlock.count}個集めると買えるよ`;
+  if (item.unlock.kind === 'streak') return `${item.unlock.days}日連続で買えるよ`;
+  return `ワールド${item.unlock.world}のボスを倒すと買えるよ`;
 }
 
 export function canBuy(

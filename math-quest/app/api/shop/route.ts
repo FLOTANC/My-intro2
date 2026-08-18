@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   if (typeof itemId !== 'string') return json({ ok: false, reason: 'unknown' }, 400);
 
   const [player] = await sql`
-    select coins, streak, owned_items from player where id = ${pid}`;
+    select coins, streak, owned_items, defeated_bosses from player where id = ${pid}`;
   if (!player) return json({ ok: false }, 401);
   const [starRow] = await sql`
     select coalesce(sum(stars), 0)::int as total from progress where player_id = ${pid}`;
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
   const owned: string[] = player.owned_items ?? [];
   const check = canBuy(itemId, player.coins, owned, {
     totalStars: starRow.total, streak: player.streak,
+    defeatedBosses: player.defeated_bosses ?? [],
   });
   if (!check.ok) return json({ ok: false, reason: check.reason }, 400);
 
