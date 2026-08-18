@@ -88,7 +88,7 @@ export default function MonsterView({
       <g transform={isBoss ? 'translate(50,54) scale(1.06) translate(-50,-50)' : undefined}>
         <Body shape={monster.shape} color={monster.color} />
         {/* ダメージ時は体の形そのものを赤くする（枠全体を塗るとカードが赤くなって見える） */}
-        <g opacity={hurt ? 0.8 : 0}
+        <g opacity={hurt && !defeated ? 0.8 : 0}
           style={{ transition: 'opacity 150ms ease', pointerEvents: 'none' }}>
           <Body shape={monster.shape} color="var(--hit)" />
         </g>
