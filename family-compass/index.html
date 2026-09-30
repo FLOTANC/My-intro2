@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>家族コンパス</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:     #ece8e0;
+      --card:   #e4e0d8;
+      --text:   #242220;
+      --sub:    #706c66;
+      --muted:  #9e9a94;
+      --rule:   #d4d0c8;
+      --border: #c8c4bc;
+      --lime:   #3a8c1a;
+      --alert:  #c42020;
+      --num:    'Inter', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 400;
+      min-height: 100vh;
+    }
+
+    /* nav */
+    .nav {
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo-small {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav-logo-line {
+      display: block; width: 28px; height: 1px; background: var(--muted);
+    }
+    .nav-logo-text {
+      font-family: var(--num); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.32em; text-transform: uppercase; color: var(--sub);
+    }
+    .nav-date {
+      font-family: var(--num);
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* tabs */
+    .tabs {
+      display: flex;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 4px;
+      text-align: center;
+      font-family: var(--num);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+    /* screens */
+    .screen { display: none; max-width: 480px; margin: 0 auto; }
+    .screen.active { display: block; }
+
+    /* block */
+    .block {
+      padding: 36px 24px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* dark floating card */
+    .block-dark {
+      background: #111;
+      border-bottom: none;
+      border-radius: 2px;
+      margin: 0 0 1px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+    }
+    .block-dark .blk-label { color: #888; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 20px; }
+    .block-dark .tl-body { font-weight: 300; font-size: 18px; color: #e8e8e8; }
+    .block-dark .ptag { color: #555; }
+    .block-dark .tl-time { color: #aaa; font-weight: 300; font-size: 28px; }
+    .block-dark .tl-item { border-bottom-color: #222; padding: 18px 0; }
+    .block-dark .tl-badge { border-color: #333; color: #666; }
+    .block-dark #timeline-eta { color: #555; }
+    .block-dark #timeline-eta-text { color: #555 !important; }
+
+    /* block label — "Previous events" style */
+    .blk-label {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--text);
+      margin-bottom: 28px;
+    }
+
+    /* density pill */
+    .density-pill-wrap {
+      background: var(--border);
+      border-radius: 99px;
+      height: 44px;
+      overflow: hidden;
+      margin: 18px 0 12px;
+      position: relative;
+    }
+    .density-pill-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--text);
+      transition: width 0.6s ease;
+    }
+    .density-pill-labels {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; pointer-events: none;
+    }
+    .density-pill-labels span {
+      font-family: var(--num); font-size: 15px;
+      font-weight: 600; letter-spacing: 0.06em; color: var(--bg);
+    }
+
+    /* timeline */
+    .timeline { list-style: none; }
+    .tl-item {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--rule);
+      align-items: start;
+      gap: 16px;
+    }
+    .tl-item:last-child { border-bottom: none; }
+    .tl-time {
+      font-family: var(--num); font-size: 28px;
+      font-weight: 300; color: #aaa; letter-spacing: -0.5px;
+      line-height: 1.2; text-align: left;
+    }
+    .tl-body { font-size: 18px; font-weight: 300; line-height: 1.4; color: #e8e8e8; }
+    .ptag {
+      font-family: var(--num); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); display: block; margin-bottom: 3px;
+    }
+    .tl-badge {
+      font-family: var(--num); font-size: 13px; letter-spacing: 0.04em;
+      color: var(--muted); border: 1px solid var(--border);
+      padding: 2px 7px; margin-left: 6px; vertical-align: middle;
+    }
+
+    /* status */
+    .status-row { display: flex; align-items: center; justify-content: space-between; }
+    .status-label {
+      font-family: var(--num); font-size: 26px; font-weight: 600;
+      letter-spacing: 0.02em; display: flex; align-items: center; gap: 10px;
+      color: var(--text);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border); border: 1px solid var(--muted);
+    }
+    .status-dot.live { background: var(--text); border-color: var(--text); animation: pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .status-time { font-family: var(--num); font-size: 16px; color: var(--muted); }
+
+    /* ETA */
+    .eta-block {
+      padding: 40px 24px;
+      border-bottom: 1px solid var(--rule);
+      text-align: left;
+      background: var(--bg);
+    }
+    .eta-eyebrow {
+      font-family: var(--num); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .eta-number {
+      font-family: var(--num); font-size: 80px; font-weight: 900;
+      line-height: 1; letter-spacing: -4px; color: var(--border);
+    }
+    .eta-number.active { color: var(--text); }
+    .eta-caption {
+      font-family: var(--num); font-size: 14px;
+      letter-spacing: 0.04em; color: var(--muted); margin-top: 12px;
+    }
+
+    /* flash */
+    @keyframes flash-alert {
+      0%   { background: var(--bg); }
+      8%   { background: var(--alert); }
+      45%  { background: var(--alert); }
+      100% { background: var(--bg); }
+    }
+    .flash { animation: flash-alert 2.8s ease forwards; }
+
+    @keyframes flash-lime {
+      0%   { color: var(--border); }
+      8%   { color: var(--alert); }
+      45%  { color: var(--alert); }
+      100% { color: var(--text); }
+    }
+    .flash-num { animation: flash-lime 2.8s ease forwards; }
+
+    /* schedule list */
+    .sched-list { list-style: none; }
+    .sched-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 16px;
+      padding: 18px 0; border-bottom: 1px solid var(--rule); align-items: center;
+    }
+    .sched-item:last-child { border-bottom: none; }
+    .sched-name { font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.3; }
+    .sched-detail { font-size: 14px; color: var(--muted); margin-top: 6px; letter-spacing: 0.01em; }
+    .sched-right { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
+    .sched-time-row { display: flex; align-items: center; gap: 24px; }
+    .sched-time {
+      font-family: var(--num); font-size: 48px; font-weight: 800;
+      letter-spacing: -2px; color: var(--text); line-height: 1;
+    }
+    .sched-label {
+      font-family: var(--num); font-size: 11px; letter-spacing: 0.14em;
+      color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 14px;
+    }
+    .badge {
+      font-family: var(--num); font-size: 14px; letter-spacing: 0.08em;
+      padding: 3px 8px; display: inline-block; margin-top: 4px; margin-left: 10px;
+    }
+    .badge.done    { background: var(--text); color: var(--bg); }
+    .badge.pending { border: 1px solid var(--border); color: var(--muted); }
+    .badge.urgent  { background: var(--alert); color: #fff; }
+
+    /* notify */
+    .notify-list { list-style: none; }
+    .notify-item {
+      display: grid; grid-template-columns: 72px 1fr;
+      padding: 18px 0; border-bottom: 1px solid var(--rule);
+    }
+    .notify-item:last-child { border-bottom: none; }
+    .notify-who {
+      font-family: var(--num); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--muted); padding-top: 4px;
+    }
+    .notify-msg { font-size: 20px; font-weight: 400; line-height: 1.5; color: var(--text); }
+
+    /* checklist */
+    .check-list { list-style: none; }
+    .check-item {
+      display: grid; grid-template-columns: 22px 1fr auto; gap: 14px;
+      padding: 18px 0; border-bottom: 1px solid var(--rule); align-items: center;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 26px; height: 26px;
+      border: 1.5px solid var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; margin-top: 4px;
+      font-family: var(--num); font-size: 14px; font-weight: 700;
+      color: #000;
+    }
+    .check-box.checked { background: var(--text); border-color: var(--text); }
+    .check-title { font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.4; }
+    .check-title.done { text-decoration: line-through; color: var(--muted); }
+    .check-who {
+      font-family: var(--num); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted); margin-top: 5px;
+    }
+    .check-due {
+      font-family: var(--num); font-size: 13px;
+      font-weight: 600; letter-spacing: 0.1em; color: var(--muted);
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .check-due.urgent { color: var(--alert); }
+
+    /* buttons */
+    .btn {
+      width: 100%; padding: 18px 20px;
+      border: 1px solid var(--text);
+      font-size: 16px; font-family: var(--num); font-weight: 500;
+      letter-spacing: 0.04em; text-transform: none;
+      cursor: pointer; margin-top: 20px;
+      background: transparent; color: var(--text);
+      display: flex; align-items: center; justify-content: space-between;
+      transition: opacity 0.15s;
+    }
+    .btn::after { content: '→'; font-size: 18px; font-weight: 400; }
+    .btn.filled { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+    .btn:not(:disabled):hover { opacity: 0.6; }
+
+    /* departure */
+    .departure-wrap {
+      padding: 56px 24px 40px;
+      border-bottom: 1px solid var(--rule); text-align: center;
+    }
+    .departure-btn {
+      width: 160px; height: 160px; border-radius: 50%;
+      border: 2px solid var(--text);
+      background: var(--text); color: var(--bg);
+      font-family: var(--num); font-size: 21px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
+      display: inline-flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 6px;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .departure-btn:active { transform: scale(0.97); }
+    .departure-btn:hover { opacity: 0.7; }
+    .departure-btn.pressed {
+      background: var(--text); color: var(--bg); border-color: var(--text);
+    }
+    .departure-btn .btn-sub {
+      font-size: 14px; font-weight: 400; letter-spacing: 0.04em;
+      text-transform: none; color: var(--muted);
+    }
+    .departure-btn.pressed .btn-sub { color: rgba(255,255,255,0.5); }
+    .departure-status {
+      margin-top: 14px; font-family: var(--num); font-size: 16px;
+      letter-spacing: 0.06em; color: var(--muted); min-height: 20px;
+    }
+
+    /* voice */
+    .voice-wrap { padding: 36px 24px; border-bottom: 1px solid var(--rule); text-align: center; }
+    .wave-row { display: flex; justify-content: center; align-items: flex-end; gap: 5px; height: 28px; margin-bottom: 12px; }
+    .wave-bar {
+      display: inline-block; width: 3px; border-radius: 1px; background: var(--text);
+      animation: wave 0.85s ease-in-out infinite alternate;
+    }
+    @keyframes wave { 0%{height:4px;opacity:0.15} 100%{height:26px;opacity:0.8} }
+    .wave-bar.muted { animation: none; height: 4px; background: var(--border); }
+    .voice-state {
+      font-family: var(--num); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); margin-bottom: 6px;
+    }
+    .voice-sub { font-family: var(--num); font-size: 18px; color: var(--sub); letter-spacing: 0.03em; min-height: 28px; font-weight: 500; }
+    .voice-toggle {
+      margin-top: 12px; background: none; border: 1px solid var(--border);
+      padding: 7px 16px; font-family: var(--num); font-size: 12px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--sub); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .voice-toggle:hover { border-color: var(--sub); }
+
+    .resolved-bar {
+      padding: 12px 16px; background: var(--text); color: var(--bg);
+      font-family: var(--num); font-size: 13px; letter-spacing: 0.1em;
+      text-transform: uppercase; display: none; margin-top: 14px;
+      font-weight: 700;
+    }
+
+    /* logo hero */
+    .logo-block {
+      background: #000;
+      padding: 48px 24px 40px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-main {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 56px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.05;
+      color: var(--text);
+    }
+    .logo-sub {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .logo-sub-line {
+      display: block;
+      width: 36px;
+      height: 1px;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .logo-sub-text {
+      font-family: var(--num);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .spacer { height: 80px; }
+
+    /* chat */
+    .chat-wrap { background: #272320; }
+    .chat-who-bar { background: #272320; padding: 16px 16px 12px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid #333; }
+    .chat-who-btn { background: none; border: 1px solid #444; padding: 7px 16px; font-family: var(--num); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #888; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; border-radius: 1px; }
+    .chat-who-btn.active { background: #ece8e0; color: #242220; border-color: #ece8e0; }
+    .chat-messages { min-height: 60vh; padding: 20px 16px 90px; background: #272320; }
+    .chat-msg { margin-bottom: 20px; overflow: hidden; }
+    .chat-msg.mine { text-align: right; }
+    .chat-msg.theirs { text-align: left; }
+    .chat-sender-name { font-family: var(--num); font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .chat-bubble { display: inline-block; background: #ece8e0; color: #242220; padding: 12px 18px; font-size: 16px; line-height: 1.55; border-radius: 12px; max-width: 82%; text-align: left; word-break: break-word; }
+    .chat-bubble.dark { background: #3a3733; color: #e8e4dc; }
+    .chat-t { font-family: var(--num); font-size: 11px; color: #666; margin-top: 5px; }
+    .chat-input-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: #ece8e0; padding: 12px 16px; display: flex; gap: 12px; align-items: center; border-top: 1px solid #d4d0c8; z-index: 50; }
+    .chat-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid #c8c4bc; padding: 8px 0; font-size: 18px; font-family: 'Noto Sans JP', sans-serif; color: #242220; outline: none; }
+    .chat-input::placeholder { color: #b0aca4; }
+    .chat-send { background: #242220; color: #ece8e0; border: none; padding: 11px 20px; font-family: var(--num); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; flex-shrink: 0; }
+
+    /* settings */
+    .settings-overlay {
+      position: fixed; inset: 0; background: rgba(36,34,32,0.55);
+      z-index: 200; display: none; flex-direction: column; justify-content: flex-end;
+    }
+    .settings-overlay.open { display: flex; }
+    .settings-sheet {
+      background: var(--bg); padding: 32px 24px 52px;
+      width: 100%; max-width: 480px; margin: 0 auto;
+      border-top: 1px solid var(--rule);
+    }
+    .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .settings-title { font-size: 22px; font-weight: 400; color: var(--text); }
+    .settings-close { background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; padding: 4px; }
+    .settings-field { margin-bottom: 22px; }
+    .settings-field label { display: block; font-family: var(--num); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .settings-input { width: 100%; border: none; border-bottom: 1px solid var(--border); background: transparent; padding: 10px 0; font-size: 22px; font-family: 'Noto Sans JP', sans-serif; color: var(--text); outline: none; }
+    .settings-input:focus { border-bottom-color: var(--text); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo-small">
+    <span class="nav-logo-line"></span>
+    <span class="nav-logo-text">Family Compass</span>
+    <span class="nav-logo-line"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="nav-date" id="nav-date">--</div>
+    <button onclick="openSettings()" style="background:none;border:none;cursor:pointer;font-family:var(--num);font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);padding:4px 0;">Edit</button>
+  </div>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('home',this)">Dashboard</div>
+  <div class="tab" id="tab-husband" onclick="switchTab('husband',this)">Chanmi</div>
+  <div class="tab" id="tab-wife" onclick="switchTab('wife',this)">Flotan</div>
+  <div class="tab" id="tab-kids" onclick="switchTab('kids',this)">Kids</div>
+  <div class="tab" onclick="switchTab('chat',this)">Chat</div>
+</div>
+
+<!-- Chat画面 -->
+<div id="screen-chat" class="screen">
+  <div class="chat-wrap">
+    <div style="display:flex;align-items:center;background:#272320;border-bottom:1px solid #333;">
+      <div class="chat-who-bar" id="chat-who-bar" style="border-bottom:none;flex:1;"></div>
+      <button onclick="clearAllChat()" title="全消去" style="background:none;border:none;color:#666;font-size:17px;padding:12px 16px;cursor:pointer;flex-shrink:0;" title="チャットを全消去">🗑</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+  </div>
+  <div class="chat-input-bar">
+    <input class="chat-input" id="chat-input" type="text" placeholder="メッセージを入力…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">送信</button>
+  </div>
+</div>
+
+<!-- Kids画面 -->
+<div id="screen-kids" class="screen">
+
+  <div class="block">
+    <div class="blk-label"><span data-person="kid1">Korotan</span></div>
+    <div style="text-align:center; padding: 16px 0 8px;">
+      <button class="departure-btn" id="pickup-btn-kid1" onclick="requestPickup('kid1')" style="width:180px;height:180px;font-size:22px;letter-spacing:0.06em;">
+        迎えに来て！
+      </button>
+    </div>
+    <div id="pickup-status-kid1" style="margin-top:20px; font-family:var(--num); font-size:15px; color:var(--muted); text-align:center; min-height:20px; line-height:1.6;"></div>
+    <div style="text-align:center; margin-top:8px;">
+      <button id="pickup-reset-kid1" onclick="resetPickup('kid1')" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 18px;font-size:12px;color:var(--muted);cursor:pointer;">↺ リセット</button>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="blk-label"><span data-person="kid2">Lori</span></div>
+    <div style="text-align:center; padding: 16px 0 8px;">
+      <button class="departure-btn" id="pickup-btn-kid2" onclick="requestPickup('kid2')" style="width:180px;height:180px;font-size:22px;letter-spacing:0.06em;">
+        迎えに来て！
+      </button>
+    </div>
+    <div id="pickup-status-kid2" style="margin-top:20px; font-family:var(--num); font-size:15px; color:var(--muted); text-align:center; min-height:20px; line-height:1.6;"></div>
+    <div style="text-align:center; margin-top:8px;">
+      <button id="pickup-reset-kid2" onclick="resetPickup('kid2')" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 18px;font-size:12px;color:var(--muted);cursor:pointer;">↺ リセット</button>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+</div>
+
+<!-- ダッシュボード -->
+<div id="screen-home" class="screen active">
+
+  <div id="pickup-requests" style="display:none;">
+  </div>
+
+  <div class="block">
+    <div class="blk-label" id="blk-husband"><span data-person="husband">Chanmi</span></div>
+    <div class="status-row">
+      <div class="status-label">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="husband-status-text">連絡待ち</span>
+      </div>
+      <span class="status-time" id="husband-updated">--</span>
+    </div>
+    <div id="eta-mini" style="font-family:var(--num); font-size:16px; color:var(--muted); margin-top:14px; letter-spacing:0.04em;">
+      「出発」と言うと到着予測が表示されます
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="blk-label">今日の密度</div>
+    <div class="density-pill-wrap">
+      <div class="density-pill-fill" style="width:62%"></div>
+      <div class="density-pill-labels">
+        <span>余裕</span>
+        <span>やや忙しい — 62%</span>
+        <span>限界</span>
+      </div>
+    </div>
+    <div style="margin-top:14px; font-size:15px; color:var(--muted); letter-spacing:0.02em;">夕食は簡単メニューにすると余裕が生まれます</div>
+  </div>
+
+  <div class="block block-dark">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="blk-label" style="margin-bottom:0;">Today's Timeline</div>
+      <button onclick="openSchedSheet()" style="background:none;border:1px solid #333;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:#888;cursor:pointer;">＋ 編集</button>
+    </div>
+    <ul class="timeline" id="timeline-list"></ul>
+  </div>
+
+  <div class="spacer"></div>
+</div>
+
+<!-- Chanmi画面 -->
+<div id="screen-husband" class="screen">
+
+  <div class="departure-wrap">
+    <button class="departure-btn" id="departure-btn" onclick="pressDeparture()">
+      <span id="btn-main-label">出発する</span>
+    </button>
+    <div class="departure-status" id="departure-status">未送信</div>
+    <button id="departure-reset-btn" onclick="resetDeparture()" style="display:none;margin-top:16px;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 18px;font-size:12px;color:var(--muted);cursor:pointer;letter-spacing:0.06em;">↺ リセット（翌日用）</button>
+  </div>
+
+  <div id="husband-pickup-requests" style="display:none;"></div>
+
+  <div class="voice-wrap">
+    <div id="voice-start-screen">
+      <div style="font-family:var(--num); font-size:13px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">音声モード</div>
+      <div style="font-size:26px; font-weight:600; color:var(--text); margin-bottom:10px; line-height:1.4;">
+        タップ1回でマイク常時オン
+      </div>
+      <div style="font-size:16px; color:var(--muted); margin-bottom:20px; line-height:1.6; font-family:var(--num);">
+        「出発」と言うだけで家族に通知されます
+      </div>
+      <button onclick="initVoice()" class="btn filled" style="width:auto; display:inline-block; padding:11px 26px; margin-top:0;">起動する</button>
+    </div>
+    <div id="voice-active-screen" style="display:none;">
+      <div class="wave-row">
+        <span class="wave-bar" style="animation-delay:0s"></span>
+        <span class="wave-bar" style="animation-delay:0.15s"></span>
+        <span class="wave-bar" style="animation-delay:0.3s"></span>
+        <span class="wave-bar" style="animation-delay:0.45s"></span>
+        <span class="wave-bar" style="animation-delay:0.6s"></span>
+      </div>
+      <div id="voice-label" class="voice-state">聞いています</div>
+      <div id="voice-status" class="voice-sub">「出発」と言うと送信されます</div>
+      <button onclick="toggleVoice()" id="voice-toggle-btn" class="voice-toggle">マイクをオフにする</button>
+    </div>
+  </div>
+
+  <div class="eta-block">
+    <div class="eta-eyebrow">Estimated Arrival</div>
+    <div class="eta-number" id="eta-display">--:--</div>
+    <div class="eta-caption" id="eta-sub">出発後に自動計算されます</div>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="blk-label" style="margin-bottom:0;">今日の家族予定</div>
+      <button onclick="openSchedSheet()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--sub);cursor:pointer;">＋ 編集</button>
+    </div>
+    <ul class="sched-list" id="schedule-list"></ul>
+    <button class="btn filled" onclick="offerPickup('kid2')" style="margin-bottom:8px;"><span data-person="kid2">Lori</span>のお迎え、自分が行ける</button>
+    <button class="btn filled" onclick="offerPickup('kid1')"><span data-person="kid1">Korotan</span>のお迎え、自分が行ける</button>
+  </div>
+
+  <div class="spacer"></div>
+</div>
+
+<!-- Flotan画面 -->
+<div id="screen-wife" class="screen">
+
+  <div id="wife-pickup-requests" style="display:none;"></div>
+
+  <div id="family-notify-group" style="display:none;">
+    <div class="block">
+      <div class="blk-label">通知済み</div>
+      <ul class="notify-list">
+        <li class="notify-item flash">
+          <div class="notify-who" data-person="wife">Flotan</div>
+          <div class="notify-msg" id="wife-notify-body">Chanmiが出発しました。-- 頃に到着予定です</div>
+        </li>
+        <li class="notify-item flash" style="animation-delay:0.25s">
+          <div class="notify-who" data-person="kid1">Korotan</div>
+          <div class="notify-msg" id="hikaru-notify-body">パパがもうすぐ帰ってくるよ！-- 頃の予定だよ</div>
+        </li>
+        <li class="notify-item flash" style="animation-delay:0.5s">
+          <div class="notify-who" data-person="kid2">Lori</div>
+          <div class="notify-msg" id="yuto-notify-body">パパがもうすぐ帰ってくるよ！-- 頃の予定だよ</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="eta-block">
+    <div class="eta-eyebrow" id="eta-eyebrow-wife"><span data-person="husband">Chanmi</span> — Estimated Arrival</div>
+    <div class="eta-number" id="wife-eta-display">--:--</div>
+    <div class="eta-caption" id="wife-eta-sub">出発後に表示されます</div>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="blk-label" style="margin-bottom:0;">今日のお迎え</div>
+      <button onclick="openPickupSheet()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--sub);cursor:pointer;">＋ 編集</button>
+    </div>
+    <ul class="sched-list" id="pickup-schedule-list"></ul>
+    <div class="resolved-bar" id="pickup-resolved"><span data-person="husband">Chanmi</span>が<span data-person="kid2">Lori</span>のお迎えを引き受けました</div>
+    <button class="btn filled" id="notify-child-btn" onclick="notifyChild('kid2')" style="margin-bottom:8px;"><span data-person="kid2">Lori</span>に「もうすぐ行くよ」を送る</button>
+    <button class="btn filled" onclick="notifyChild('kid1')"><span data-person="kid1">Korotan</span>に「もうすぐ行くよ」を送る</button>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="blk-label" style="margin-bottom:0;"><span data-person="kid3">Peach</span> — Today's Schedule</div>
+      <button onclick="openPeachSheet()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--sub);cursor:pointer;">＋ 編集</button>
+    </div>
+    <ul class="sched-list" id="peach-schedule-list"></ul>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="blk-label" style="margin-bottom:0;">提出物 / 持ち物</div>
+      <button onclick="openCheckSheet()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--sub);cursor:pointer;">＋ 編集</button>
+    </div>
+    <ul class="check-list" id="check-list-dynamic"></ul>
+  </div>
+
+  <div class="spacer"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+  // --- Firebase ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyCio3NPmFHG9HEuNkCS4QnSNGlbeM_ZLCs",
+    authDomain: "family-compass-37891.firebaseapp.com",
+    projectId: "family-compass-37891",
+    storageBucket: "family-compass-37891.firebasestorage.app",
+    messagingSenderId: "832790097576",
+    appId: "1:832790097576:web:7451a91920051c1c769c9d",
+    databaseURL: "https://family-compass-37891-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('nav-date').textContent =
+    `${d.getMonth()+1}.${String(d.getDate()).padStart(2,'0')} ${days[d.getDay()]}`;
+
+  // --- Name management ---
+  const defaultNames = { husband: 'Chanmi', wife: 'Flotan', kid1: 'Korotan', kid2: 'Lori', kid3: 'Peach' };
+  let names = { ...defaultNames };
+
+  function loadNames() {
+    try { const s = localStorage.getItem('familyNames'); if (s) names = { ...defaultNames, ...JSON.parse(s) }; } catch(e) {}
+    applyNames();
+  }
+
+  function applyNames() {
+    document.querySelectorAll('[data-person]').forEach(el => {
+      const r = el.getAttribute('data-person');
+      if (names[r]) el.textContent = names[r];
+    });
+    document.getElementById('tab-husband').textContent = names.husband;
+    document.getElementById('tab-wife').textContent = names.wife;
+  }
+
+  function openSettings() {
+    document.getElementById('input-husband').value = names.husband;
+    document.getElementById('input-wife').value = names.wife;
+    document.getElementById('input-kid1').value = names.kid1;
+    document.getElementById('input-kid2').value = names.kid2;
+    document.getElementById('input-kid3').value = names.kid3;
+    document.getElementById('settings-overlay').classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-overlay').classList.remove('open');
+  }
+
+  function closeSettingsOutside(e) {
+    if (e.target === document.getElementById('settings-overlay')) closeSettings();
+  }
+
+  function saveNames() {
+    names.husband = document.getElementById('input-husband').value.trim() || defaultNames.husband;
+    names.wife    = document.getElementById('input-wife').value.trim()    || defaultNames.wife;
+    names.kid1    = document.getElementById('input-kid1').value.trim()    || defaultNames.kid1;
+    names.kid2    = document.getElementById('input-kid2').value.trim()    || defaultNames.kid2;
+    names.kid3    = document.getElementById('input-kid3').value.trim()    || defaultNames.kid3;
+    try { localStorage.setItem('familyNames', JSON.stringify(names)); } catch(e) {}
+    applyNames();
+    closeSettings();
+  }
+
+  loadNames();
+  // --- End name management ---
+
+  // --- Chat ---
+  let chatSender = 'wife';
+  const chatLog = [];
+
+  initChat();
+
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+
+  let departed = false;
+
+  // --- 自宅座標（端末ローカルに保存・外部共有なし）---
+  let homeCoords = null;
+  const savedHome = localStorage.getItem('home_location');
+  if (savedHome) homeCoords = JSON.parse(savedHome);
+
+  function setHomeLocation() {
+    const status = document.getElementById('home-loc-status');
+    status.textContent = '取得中…';
+    navigator.geolocation.getCurrentPosition(pos => {
+      homeCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      localStorage.setItem('home_location', JSON.stringify(homeCoords));
+      status.textContent = '✓ この端末に登録しました';
+    }, () => {
+      status.textContent = '取得失敗。位置情報を許可してください';
+    }, { enableHighAccuracy: true });
+  }
+
+  // Firebaseに出発を書き込む（GPS + OSRM で所要時間計算）
+  function pressDeparture() {
+    if (departed) return;
+    const statusEl = document.getElementById('departure-status');
+    statusEl.textContent = '位置情報を取得中…';
+
+    if (!homeCoords) {
+      // 自宅未設定なら42分固定
+      sendDeparture(42);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${homeCoords.lng},${homeCoords.lat}?overview=false`;
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          const secs = data.routes?.[0]?.duration || 42 * 60;
+          const mins = Math.round(secs / 60);
+          sendDeparture(mins);
+        })
+        .catch(() => sendDeparture(42));
+    }, () => {
+      // GPS失敗 → 42分固定
+      sendDeparture(42);
+    }, { enableHighAccuracy: true, timeout: 8000 });
+  }
+
+  function sendDeparture(mins) {
+    const now = new Date();
+    const eta = new Date(now.getTime() + mins * 60000);
+    const etaStr = `${eta.getHours()}:${String(eta.getMinutes()).padStart(2,'0')}`;
+    const nowStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+    db.ref('state/departure').set({ active: true, etaStr, nowStr, minutes: mins });
+  }
+
+  // 出発UIをすべての端末に適用
+  function applyDepartureUI(etaStr, nowStr, minutes) {
+    const btn = document.getElementById('departure-btn');
+    if (btn) btn.classList.add('pressed');
+    const label = document.getElementById('btn-main-label');
+    if (label) label.textContent = '出発済み';
+    const status = document.getElementById('departure-status');
+    if (status) status.textContent = `${nowStr} — ${names.wife}・${names.kid1}・${names.kid2}へ通知`;
+
+    const etaNum = document.getElementById('eta-display');
+    if (etaNum) { etaNum.textContent = etaStr; etaNum.classList.add('active', 'flash-num'); }
+    const etaSub = document.getElementById('eta-sub');
+    const minsLabel = minutes ? `約${minutes}分` : '約42分';
+    if (etaSub) etaSub.textContent = `自宅まで${minsLabel}`;
+
+    const dot = document.getElementById('status-dot');
+    if (dot) dot.classList.add('live');
+    const statusText = document.getElementById('husband-status-text');
+    if (statusText) statusText.textContent = '帰宅中';
+    const updated = document.getElementById('husband-updated');
+    if (updated) updated.textContent = 'たった今更新';
+    const etaMini = document.getElementById('eta-mini');
+    if (etaMini) etaMini.textContent = `${etaStr} 頃に到着予定（${minsLabel}）`;
+    const tlEta = document.getElementById('timeline-eta');
+    if (tlEta) tlEta.textContent = etaStr;
+    const etaText = document.getElementById('timeline-eta-text');
+    if (etaText) {
+      etaText.innerHTML = `<span data-person="husband">${names.husband}</span> 帰宅予定`;
+      etaText.style.color = 'var(--text)';
+      etaText.style.fontWeight = '700';
+    }
+
+    const wifeNotify = document.getElementById('wife-notify-body');
+    if (wifeNotify) wifeNotify.textContent = `${names.husband}が出発しました。${etaStr} 頃に到着予定です`;
+    const hikaru = document.getElementById('hikaru-notify-body');
+    if (hikaru) hikaru.textContent = `パパがもうすぐ帰ってくるよ！${etaStr} 頃の予定だよ`;
+    const yuto = document.getElementById('yuto-notify-body');
+    if (yuto) yuto.textContent = `パパがもうすぐ帰ってくるよ！${etaStr} 頃の予定だよ`;
+    const notifyGroup = document.getElementById('family-notify-group');
+    if (notifyGroup) notifyGroup.style.display = 'block';
+
+    const wifeNum = document.getElementById('wife-eta-display');
+    if (wifeNum) { wifeNum.textContent = etaStr; wifeNum.classList.add('active', 'flash-num'); }
+    const wifeSub = document.getElementById('wife-eta-sub');
+    if (wifeSub) wifeSub.textContent = `現在地から自宅まで${minsLabel}`;
+  }
+
+  function resetDeparture() {
+    if (!confirm('出発状態をリセットしますか？\n（翌日の出発ボタン・音声認識用）')) return;
+    db.ref('state/departure').remove();
+  }
+
+  function resetAllData() {
+    if (!confirm('チャット・出発状態・お迎えリクエスト・チェックリストをすべてリセットします。\nよろしいですか？')) return;
+    // 状態系をすべて削除
+    db.ref('state').remove();
+    db.ref('chat').remove();
+    // チェックリストをデフォルトに戻す
+    db.ref('checklist_items').set(defaultCheckItems.map(i => ({ ...i, checked: false })));
+    // お迎えリストをデフォルトに戻す
+    db.ref('pickup_schedule').set(defaultPickupSchedule.map(i => ({ ...i, done: false })));
+    alert('リセット完了しました！');
+    closeSettings();
+  }
+
+  // Firebaseから出発状態を監視
+  db.ref('state/departure').on('value', snap => {
+    const data = snap.val();
+    if (data && data.active) {
+      departed = true;
+      applyDepartureUI(data.etaStr, data.nowStr, data.minutes);
+      const resetBtn = document.getElementById('departure-reset-btn');
+      if (resetBtn) resetBtn.style.display = 'inline-block';
+    } else {
+      // リセット後の復元
+      departed = false;
+      const btn = document.getElementById('departure-btn');
+      if (btn) btn.classList.remove('pressed');
+      const label = document.getElementById('btn-main-label');
+      if (label) label.textContent = '出発する';
+      const status = document.getElementById('departure-status');
+      if (status) status.textContent = '未送信';
+      const etaNum = document.getElementById('eta-display');
+      if (etaNum) { etaNum.textContent = '--:--'; etaNum.classList.remove('active','flash-num'); }
+      const etaSub = document.getElementById('eta-sub');
+      if (etaSub) etaSub.textContent = '出発後に自動計算されます';
+      const resetBtn = document.getElementById('departure-reset-btn');
+      if (resetBtn) resetBtn.style.display = 'none';
+    }
+  });
+
+  function offerPickup(role) {
+    const kidName = names[role] || names.kid2;
+    document.getElementById('pickup-resolved').style.display = 'block';
+    const badge = document.getElementById('pickup-status-badge');
+    badge.textContent = `${names.husband}対応`;
+    badge.className = 'badge done';
+    const nb = document.getElementById('notify-child-btn');
+    nb.textContent = `${names.husband}がお迎えします`;
+    nb.disabled = true;
+    alert(`${names.husband}から「${kidName}のお迎えに行くよ」の通知を送りました`);
+  }
+
+  function notifyChild(role) {
+    const kidName = names[role] || names.kid2;
+    alert(`${kidName}に「もうすぐお迎えに行くよ」を送りました`);
+  }
+
+  function initChat() {
+    const bar = document.getElementById('chat-who-bar');
+    ['wife','husband','kid1','kid2'].forEach((role, i) => {
+      const b = document.createElement('button');
+      b.className = 'chat-who-btn' + (i === 0 ? ' active' : '');
+      b.setAttribute('data-role', role);
+      b.textContent = names[role];
+      b.onclick = () => {
+        chatSender = role;
+        bar.querySelectorAll('.chat-who-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+      bar.appendChild(b);
+    });
+
+    // Firebaseからメッセージを受信（既存＋新着）
+    db.ref('chat').on('child_added', snap => {
+      const m = snap.val();
+      appendChat(m.role, m.text, m.ts, true, snap.key);
+    });
+
+    // 削除されたメッセージを画面からも消す
+    db.ref('chat').on('child_removed', snap => {
+      const el = document.getElementById('chat-msg-' + snap.key);
+      if (el) el.remove();
+    });
+  }
+
+  function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    db.ref('chat').push({ role: chatSender, text, ts: Date.now() });
+    input.value = '';
+  }
+
+  function appendChat(role, text, ts, scroll, key) {
+    const t = ts ? new Date(ts) : new Date();
+    const timeStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`;
+    const isMine = role === chatSender;
+    const el = document.createElement('div');
+    el.className = `chat-msg ${isMine ? 'mine' : 'theirs'}`;
+    if (key) el.id = 'chat-msg-' + key;
+    const deleteBtn = key
+      ? `<button onclick="deleteChatMsg('${key}')" style="background:none;border:none;color:#555;font-size:14px;cursor:pointer;padding:2px 6px;opacity:0.6;vertical-align:middle;" title="削除">×</button>`
+      : '';
+    el.innerHTML = `
+      <div class="chat-sender-name">${names[role] || role}</div>
+      <div class="chat-bubble ${isMine ? '' : 'dark'}">${text}</div>
+      <div class="chat-t">${timeStr} ${deleteBtn}</div>`;
+    document.getElementById('chat-messages').appendChild(el);
+    if (scroll) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function deleteChatMsg(key) {
+    db.ref('chat/' + key).remove();
+  }
+
+  function clearAllChat() {
+    if (!confirm('チャットの会話を全て削除しますか？')) return;
+    db.ref('chat').remove();
+    document.getElementById('chat-messages').innerHTML = '';
+  }
+
+  // --- Pickup request ---
+  function requestPickup(role) {
+    const btn = document.getElementById(`pickup-btn-${role}`);
+    const statusEl = document.getElementById(`pickup-status-${role}`);
+    btn.textContent = '位置情報を取得中…';
+    btn.disabled = true;
+
+    const writePickup = (lat, lng, mapsUrl) => {
+      btn.textContent = '送信済み ✓';
+      if (statusEl) statusEl.textContent = '現在地を送信しました';
+      db.ref('state/pickups/' + role).set({ active: true, lat, lng, mapsUrl });
+    };
+
+    if (!navigator.geolocation) {
+      writePickup('35.68143', '139.76711', 'https://maps.google.com/?q=35.68143,139.76711');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lng = pos.coords.longitude.toFixed(5);
+        writePickup(lat, lng, `https://maps.google.com/?q=${lat},${lng}`);
+      },
+      () => writePickup('35.68143', '139.76711', 'https://maps.google.com/?q=35.68143,139.76711'),
+      { timeout: 8000 }
+    );
+  }
+
+  function showPickupRequest(role, lat, lng, mapsUrl) {
+    const kidName = names[role];
+    const cardId = `pickup-card-${role}`;
+    const cardHTML = `
+      <div class="block" id="${cardId}" style="border-left:3px solid var(--text);">
+        <div style="font-family:var(--num);font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--alert);margin-bottom:12px;">お迎えリクエスト</div>
+        <div style="font-size:26px;font-weight:600;color:var(--text);margin-bottom:8px;">${kidName}</div>
+        <a href="${mapsUrl}" target="_blank" style="font-family:var(--num);font-size:15px;color:var(--sub);text-decoration:none;display:block;margin-bottom:4px;">現在地を地図で見る →</a>
+        <div style="font-family:var(--num);font-size:13px;color:var(--muted);margin-bottom:20px;">${lat}, ${lng}</div>
+        <div id="eta-card-${role}" style="font-family:var(--num);font-size:14px;color:var(--muted);margin-bottom:16px;"></div>
+        <button class="btn filled" id="head-btn-${role}" onclick="headingToKid('${role}','${mapsUrl}')">向かいます →</button>
+      </div>`;
+
+    ['pickup-requests','wife-pickup-requests','husband-pickup-requests'].forEach((areaId, i) => {
+      const area = document.getElementById(areaId);
+      if (!area) return;
+      const suffix = i === 0 ? '' : (i === 1 ? '-wife' : '-husband');
+      const eid = `pickup-card${suffix}-${role}`;
+      const old = document.getElementById(eid);
+      if (old) old.remove();
+      area.style.display = 'block';
+      const html = cardHTML
+        .replace(`id="${cardId}"`, `id="${eid}"`)
+        .replace(`id="eta-card-${role}"`, `id="eta-card${suffix}-${role}"`)
+        .replace(`id="head-btn-${role}"`, `id="head-btn${suffix}-${role}"`);
+      area.insertAdjacentHTML('beforeend', html);
+    });
+  }
+
+  function headingToKid(role, mapsUrl) {
+    const eta = Math.floor(Math.random() * 10) + 12;
+    const now = new Date();
+    const arr = new Date(now.getTime() + eta * 60000);
+    const arrStr = `${arr.getHours()}:${String(arr.getMinutes()).padStart(2,'0')}`;
+    db.ref('state/pickups/' + role + '/heading').set({ active: true, eta, arrStr });
+    window.open(mapsUrl, '_blank');
+  }
+
+  function resetPickup(role) {
+    if (!confirm(`${names[role]}のお迎えリクエストをリセットしますか？`)) return;
+    db.ref('state/pickups/' + role).remove();
+  }
+
+  // Firebaseからお迎え状態を監視
+  db.ref('state/pickups').on('value', snap => {
+    const data = snap.val() || {};
+    // リセット済みのroleはボタンを元に戻す
+    ['kid1','kid2'].forEach(role => {
+      if (!data[role]) {
+        const btn = document.getElementById(`pickup-btn-${role}`);
+        if (btn) { btn.textContent = '迎えに来て！'; btn.disabled = false; }
+        const statusEl = document.getElementById(`pickup-status-${role}`);
+        if (statusEl) statusEl.textContent = '';
+        const resetBtn = document.getElementById(`pickup-reset-${role}`);
+        if (resetBtn) resetBtn.style.display = 'none';
+        // カードも削除
+        [`pickup-card-${role}`,`pickup-card-wife-${role}`,`pickup-card-husband-${role}`].forEach(id => {
+          const el = document.getElementById(id); if (el) el.remove();
+        });
+      }
+    });
+    Object.entries(data).forEach(([role, pickup]) => {
+      if (pickup.active) {
+        showPickupRequest(role, pickup.lat, pickup.lng, pickup.mapsUrl);
+        const btn = document.getElementById(`pickup-btn-${role}`);
+        if (btn) { btn.textContent = '送信済み ✓'; btn.disabled = true; }
+        const resetBtn = document.getElementById(`pickup-reset-${role}`);
+        if (resetBtn) resetBtn.style.display = 'inline-block';
+      }
+      if (pickup.heading && pickup.heading.active) {
+        const { eta, arrStr } = pickup.heading;
+        [`eta-card-${role}`, `eta-card-wife-${role}`, `eta-card-husband-${role}`].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = `<span style="font-size:40px;font-weight:800;letter-spacing:-2px;color:var(--text);">${arrStr}</span><span style="display:block;margin-top:4px;">約${eta}分後に到着予定</span>`;
+        });
+        document.querySelectorAll(`[id^="head-btn"]`).forEach(b => {
+          b.textContent = `向かっています（${arrStr}着予定）`; b.disabled = true;
+        });
+      }
+    });
+  });
+
+  let recognition = null, voiceActive = false, voiceInitialized = false;
+
+  function setWaveMuted(m) {
+    document.querySelectorAll('.wave-bar').forEach(b => b.classList.toggle('muted', m));
+  }
+
+  function initVoice() {
+    document.getElementById('voice-start-screen').style.display = 'none';
+    document.getElementById('voice-active-screen').style.display = 'block';
+    voiceInitialized = true;
+    startVoice();
+  }
+
+  let voiceRestarting = false;
+  function startVoice() {
+    if (!voiceInitialized) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      document.getElementById('voice-label').textContent = '音声非対応ブラウザ';
+      setWaveMuted(true); return;
+    }
+    if (recognition) { try { recognition.abort(); } catch(e) {} recognition = null; }
+    voiceRestarting = false;
+    const r = new SR();
+    recognition = r;
+    r.lang = 'ja-JP';
+    r.continuous = false;
+    r.interimResults = true;
+    r.maxAlternatives = 5;
+    r.onstart = () => {
+      setWaveMuted(false);
+      document.getElementById('voice-label').textContent = '聞いています';
+      document.getElementById('voice-toggle-btn').textContent = 'マイクをオフにする';
+    };
+    r.onresult = (e) => {
+      // 全候補を結合
+      let t = '';
+      for (let i = 0; i < e.results.length; i++) {
+        for (let j = 0; j < e.results[i].length; j++) {
+          t += e.results[i][j].transcript + ' ';
+        }
+      }
+      t = t.trim();
+      document.getElementById('voice-status').textContent = `「${t}」`;
+      // ひらがな・カタカナ・漢字・部分一致すべて対応
+      const keywords = ['出発','しゅっぱつ','シュッパツ','しゅっ','シュッ','departure'];
+      if (keywords.some(k => t.includes(k))) {
+        document.getElementById('voice-status').textContent = '✓ 送信しました！';
+        voiceActive = false;
+        try { r.abort(); } catch(e) {}
+        recognition = null;
+        pressDeparture();
+      }
+    };
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        document.getElementById('voice-label').textContent = 'マイクの許可が必要です';
+        document.getElementById('voice-status').textContent = '設定 → Safari → マイク → 許可 にしてください';
+        setWaveMuted(true); voiceActive = false; return;
+      }
+      // no-speech / network 等は無視して再起動
+      if (voiceActive && !voiceRestarting) {
+        voiceRestarting = true;
+        setTimeout(() => startVoice(), 200);
+      }
+    };
+    r.onend = () => {
+      if (voiceActive && recognition === null) return; // 送信後
+      if (voiceActive && !voiceRestarting) {
+        voiceRestarting = true;
+        setTimeout(() => startVoice(), 150);
+      }
+    };
+    try { r.start(); } catch(e) {
+      setTimeout(() => startVoice(), 300);
+    }
+  }
+
+  function stopVoice() {
+    voiceActive = false;
+    if (recognition) { try { recognition.stop(); } catch(e) {} }
+    setWaveMuted(true);
+    document.getElementById('voice-label').textContent = 'マイクがオフ';
+    document.getElementById('voice-status').textContent = '';
+    document.getElementById('voice-toggle-btn').textContent = 'マイクをオンにする';
+  }
+
+  function toggleVoice() {
+    if (departed) return;
+    if (voiceActive) { stopVoice(); } else { voiceActive = true; startVoice(); }
+  }
+
+  // --- 予定管理 ---
+  const defaultSchedule = [
+    { name: 'Korotan 登校', detail: '', label: '', time: '8:00' },
+    { name: 'Lori 登校', detail: '', label: '', time: '8:15' },
+    { name: 'Peach 幼稚園', detail: '', label: '開始', time: '9:30' },
+    { name: 'Korotan 下校', detail: '', label: 'お迎え', time: '15:30' },
+    { name: 'Lori ミニバス練習', detail: '小学校体育館', label: '', time: '16:00' },
+    { name: 'Lori ミニバスお迎え', detail: '小学校体育館 / 徒歩5分', label: 'お迎え', time: '20:00' },
+    { name: 'Korotan 塾', detail: '徒歩20分', label: 'お迎え', time: '21:45' },
+    { name: 'Peach 就寝', detail: 'この時間までに帰ると顔が見られます', label: '目安', time: '21:00' },
+  ];
+
+  function renderSchedule(items) {
+    const ul = document.getElementById('schedule-list');
+    if (!ul) return;
+    ul.innerHTML = '';
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'sched-item';
+      const detailHTML = item.detail
+        ? item.mapUrl
+          ? `<a href="${item.mapUrl}" target="_blank" class="sched-detail" style="color:var(--sub);text-decoration:none;display:flex;align-items:center;gap:4px;">${item.detail} <span style="font-size:11px;">🗺</span></a>`
+          : `<div class="sched-detail">${item.detail}</div>`
+        : '';
+      li.innerHTML = `
+        <div>
+          <div class="sched-name">${item.name}</div>
+          ${detailHTML}
+        </div>
+        <div class="sched-right">
+          <span class="sched-label">${item.label}</span>
+          <span class="sched-time">${item.time}</span>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderSchedEditList(items) {
+    const container = document.getElementById('sched-edit-list');
+    if (!container) return;
+    container.innerHTML = '';
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--rule);';
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:600;font-size:15px;">${item.name}</div>
+          <div style="font-size:13px;color:var(--muted);">${item.label} ${item.time}${item.detail ? ' — ' + item.detail : ''}</div>
+        </div>
+        <button onclick="deleteSchedItem(${i})" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;">×</button>`;
+      container.appendChild(div);
+    });
+    if (items.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:8px 0;">予定がありません</div>';
+    }
+  }
+
+  let schedItems = [];
+
+  function renderTimeline(items) {
+    const ul = document.getElementById('timeline-list');
+    if (!ul) return;
+    // 時刻順にソート
+    const sorted = [...items].sort((a, b) => a.time.localeCompare(b.time));
+    ul.innerHTML = '';
+    sorted.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'tl-item';
+      const badge = item.label ? `<span class="tl-badge">${item.label}</span>` : '';
+      const mapLink = item.mapUrl
+        ? `<a href="${item.mapUrl}" target="_blank" style="color:#888;font-size:12px;margin-left:6px;">🗺</a>`
+        : '';
+      li.innerHTML = `
+        <span class="tl-time">${item.time}</span>
+        <span class="tl-body">${item.name} ${badge}${mapLink}</span>`;
+      ul.appendChild(li);
+    });
+    // Chanmi帰宅予定は常に末尾に追加
+    const etaLi = document.createElement('li');
+    etaLi.className = 'tl-item';
+    etaLi.innerHTML = `
+      <span class="tl-time" id="timeline-eta" style="font-weight:500;">--:--</span>
+      <span class="tl-body" id="timeline-eta-text" style="color:var(--muted);"><span data-person="husband">${names.husband}</span> 帰宅（未定）</span>`;
+    ul.appendChild(etaLi);
+  }
+
+  db.ref('schedule').on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      schedItems = Array.isArray(data) ? data : Object.values(data);
+    } else {
+      schedItems = [...defaultSchedule];
+      db.ref('schedule').set(schedItems);
+    }
+    renderSchedule(schedItems);
+    renderTimeline(schedItems);
+  });
+
+  function openSchedSheet() {
+    renderSchedEditList(schedItems);
+    // 名前タグボタンを生成
+    const tagArea = document.getElementById('sched-name-tags');
+    tagArea.innerHTML = '';
+    Object.entries(names).forEach(([role, name]) => {
+      const btn = document.createElement('button');
+      btn.textContent = name;
+      btn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);';
+      btn.onclick = () => {
+        const input = document.getElementById('sched-input-name');
+        const cur = input.value;
+        // 既に名前が先頭にあれば置き換え、なければ先頭に追加
+        const hasName = Object.values(names).some(n => cur.startsWith(n + ' ') || cur === n);
+        if (hasName) {
+          input.value = name + ' ' + cur.replace(/^\S+\s?/, '');
+        } else {
+          input.value = name + (cur ? ' ' + cur : ' ');
+        }
+        input.focus();
+        // 選択中タグをハイライト
+        tagArea.querySelectorAll('button').forEach(b => b.style.background = 'var(--card)');
+        btn.style.background = 'var(--text)';
+        btn.style.color = 'var(--bg)';
+      };
+      tagArea.appendChild(btn);
+    });
+    document.getElementById('sched-overlay').classList.add('open');
+  }
+
+  function closeSchedSheet() {
+    document.getElementById('sched-overlay').classList.remove('open');
+  }
+
+  function closeSchedOutside(e) {
+    if (e.target === document.getElementById('sched-overlay')) closeSchedSheet();
+  }
+
+  function addSchedItem() {
+    const name = document.getElementById('sched-input-name').value.trim();
+    const detail = document.getElementById('sched-input-detail').value.trim();
+    const label = document.getElementById('sched-input-label').value;
+    const time = document.getElementById('sched-input-time').value;
+    const mapUrl = document.getElementById('sched-input-map').value.trim();
+    if (!name || !time) { alert('名前と時刻を入力してください'); return; }
+    const item = { name, detail, label, time };
+    if (mapUrl) item.mapUrl = mapUrl;
+    const newItems = [...schedItems, item];
+    db.ref('schedule').set(newItems);
+    document.getElementById('sched-input-name').value = '';
+    document.getElementById('sched-input-detail').value = '';
+    document.getElementById('sched-input-map').value = '';
+    document.getElementById('sched-input-time').value = '18:00';
+  }
+
+  function deleteSchedItem(index) {
+    const newItems = schedItems.filter((_, i) => i !== index);
+    db.ref('schedule').set(newItems);
+  }
+
+  // --- Peachスケジュール ---
+  const defaultPeachSchedule = [
+    { name: '幼稚園体験', detail: '○○幼稚園 / 9:30〜11:30', label: '開始', time: '9:30' },
+  ];
+  let peachItems = [];
+
+  function renderPeachSchedule(items) {
+    const ul = document.getElementById('peach-schedule-list');
+    if (!ul) return;
+    ul.innerHTML = '';
+    [...items].sort((a,b) => a.time.localeCompare(b.time)).forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'sched-item';
+      const detailHTML = item.detail
+        ? item.mapUrl
+          ? `<a href="${item.mapUrl}" target="_blank" class="sched-detail" style="color:var(--sub);text-decoration:none;">  ${item.detail} 🗺</a>`
+          : `<div class="sched-detail">${item.detail}</div>`
+        : '';
+      li.innerHTML = `
+        <div><div class="sched-name">${item.name}</div>${detailHTML}</div>
+        <div class="sched-right">
+          <span class="sched-label">${item.label}</span>
+          <span class="sched-time">${item.time}</span>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  db.ref('peach_schedule').on('value', snap => {
+    const data = snap.val();
+    peachItems = data ? (Array.isArray(data) ? data : Object.values(data)) : [...defaultPeachSchedule];
+    if (!data) db.ref('peach_schedule').set(peachItems);
+    renderPeachSchedule(peachItems);
+  });
+
+  function openPeachSheet() {
+    const list = document.getElementById('peach-edit-list');
+    list.innerHTML = '';
+    peachItems.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--rule);';
+      div.innerHTML = `<div><div style="font-weight:600;">${item.name}</div><div style="font-size:13px;color:var(--muted);">${item.label} ${item.time}${item.detail?' — '+item.detail:''}</div></div>
+        <button onclick="deletePeachItem(${i})" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;">×</button>`;
+      list.appendChild(div);
+    });
+    if (!peachItems.length) list.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:8px 0;">予定がありません</div>';
+    document.getElementById('peach-overlay').classList.add('open');
+  }
+  function closePeachSheet() { document.getElementById('peach-overlay').classList.remove('open'); }
+  function addPeachItem() {
+    const name = document.getElementById('peach-input-name').value.trim();
+    const detail = document.getElementById('peach-input-detail').value.trim();
+    const label = document.getElementById('peach-input-label').value;
+    const time = document.getElementById('peach-input-time').value;
+    if (!name || !time) { alert('予定名と時刻を入力してください'); return; }
+    db.ref('peach_schedule').set([...peachItems, { name, detail, label, time }]);
+    document.getElementById('peach-input-name').value = '';
+    document.getElementById('peach-input-detail').value = '';
+  }
+  function deletePeachItem(i) {
+    db.ref('peach_schedule').set(peachItems.filter((_,j) => j !== i));
+  }
+
+  // --- 今日のお迎えリスト ---
+  const defaultPickupSchedule = [
+    { name: 'Korotan 塾', detail: '徒歩20分', time: '21:45', done: false },
+    { name: 'Lori ミニバス', detail: '小学校体育館 / 徒歩5分', time: '20:00', done: false },
+  ];
+  let pickupScheduleItems = [];
+
+  function renderPickupSchedule(items) {
+    const ul = document.getElementById('pickup-schedule-list');
+    if (!ul) return;
+    ul.innerHTML = '';
+    [...items].sort((a,b) => a.time.localeCompare(b.time)).forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'sched-item';
+      const detailHTML = item.detail ? `<div class="sched-detail">${item.detail}</div>` : '';
+      li.innerHTML = `
+        <div><div class="sched-name">${item.name}</div>${detailHTML}</div>
+        <div class="sched-right">
+          <span class="sched-label">お迎え</span>
+          <div class="sched-time-row">
+            <span class="sched-time">${item.time}</span>
+            <span class="badge ${item.done ? 'done' : 'pending'}" style="cursor:pointer;" onclick="togglePickupDone(${i})">${item.done ? '済' : '未'}</span>
+          </div>
+        </div>`;
+      ul.appendChild(li);
+    });
+    if (!items.length) {
+      ul.innerHTML = '<li style="color:var(--muted);font-size:14px;padding:12px 0;">今日のお迎えはありません</li>';
+    }
+  }
+
+  function togglePickupDone(i) {
+    const sorted = [...pickupScheduleItems].sort((a,b) => a.time.localeCompare(b.time));
+    const target = sorted[i];
+    const idx = pickupScheduleItems.indexOf(target);
+    if (idx === -1) return;
+    const newItems = pickupScheduleItems.map((item, j) => j === idx ? { ...item, done: !item.done } : item);
+    db.ref('pickup_schedule').set(newItems);
+  }
+
+  db.ref('pickup_schedule').on('value', snap => {
+    const data = snap.val();
+    pickupScheduleItems = data ? (Array.isArray(data) ? data : Object.values(data)) : [...defaultPickupSchedule];
+    if (!data) db.ref('pickup_schedule').set(pickupScheduleItems);
+    renderPickupSchedule(pickupScheduleItems);
+  });
+
+  function openPickupSheet() {
+    const list = document.getElementById('pickup-sched-edit-list');
+    list.innerHTML = '';
+    [...pickupScheduleItems].sort((a,b) => a.time.localeCompare(b.time)).forEach((item, i) => {
+      const idx = pickupScheduleItems.indexOf(item);
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--rule);';
+      div.innerHTML = `<div><div style="font-weight:600;">${item.name}</div><div style="font-size:13px;color:var(--muted);">${item.time}${item.detail ? ' — ' + item.detail : ''}</div></div>
+        <button onclick="deletePickupSchedItem(${idx})" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;">×</button>`;
+      list.appendChild(div);
+    });
+    if (!pickupScheduleItems.length) list.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:8px 0;">お迎えの予定がありません</div>';
+    document.getElementById('pickup-sched-overlay').classList.add('open');
+  }
+  function closePickupSheet() { document.getElementById('pickup-sched-overlay').classList.remove('open'); }
+  function addPickupSchedItem() {
+    const name = document.getElementById('pickup-sched-input-name').value.trim();
+    const detail = document.getElementById('pickup-sched-input-detail').value.trim();
+    const time = document.getElementById('pickup-sched-input-time').value;
+    if (!name || !time) { alert('予定名と時刻を入力してください'); return; }
+    db.ref('pickup_schedule').set([...pickupScheduleItems, { name, detail, time, done: false }]);
+    document.getElementById('pickup-sched-input-name').value = '';
+    document.getElementById('pickup-sched-input-detail').value = '';
+  }
+  function deletePickupSchedItem(i) {
+    db.ref('pickup_schedule').set(pickupScheduleItems.filter((_,j) => j !== i));
+  }
+
+  // --- 提出物チェックリスト ---
+  const defaultCheckItems = [
+    { title: '音読宿題', person: 'kid2', checked: false },
+    { title: '制服持参', person: 'kid1', checked: false },
+    { title: 'ミニバス雑巾', person: 'kid2', checked: false },
+    { title: '幼稚園あおぞら教室申込書提出', person: 'kid3', checked: false },
+  ];
+  let checkItems = [];
+
+  function renderCheckList(items) {
+    const ul = document.getElementById('check-list-dynamic');
+    if (!ul) return;
+    ul.innerHTML = '';
+    items.forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'check-item';
+      li.innerHTML = `
+        <div class="check-box${item.checked ? ' checked' : ''}" onclick="toggleCheckDynamic(${i})">${item.checked ? '✓' : ''}</div>
+        <div>
+          <div class="check-title${item.checked ? ' done' : ''}">${item.title}</div>
+          <div class="check-who">${names[item.person] || item.person}</div>
+        </div>
+        <span class="check-due urgent">今日</span>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function toggleCheckDynamic(i) {
+    const newItems = checkItems.map((item, j) => j === i ? { ...item, checked: !item.checked } : item);
+    db.ref('checklist_items').set(newItems);
+  }
+
+  db.ref('checklist_items').on('value', snap => {
+    const data = snap.val();
+    checkItems = data ? (Array.isArray(data) ? data : Object.values(data)) : [...defaultCheckItems];
+    if (!data) db.ref('checklist_items').set(checkItems);
+    renderCheckList(checkItems);
+  });
+
+  function openCheckSheet() {
+    // 名前タグ生成
+    const tagArea = document.getElementById('check-name-tags');
+    tagArea.innerHTML = '';
+    let selectedRole = '';
+    Object.entries(names).forEach(([role, name]) => {
+      const btn = document.createElement('button');
+      btn.textContent = name;
+      btn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;';
+      btn.onclick = () => {
+        selectedRole = role;
+        document.getElementById('check-input-person-label').value = name;
+        document.getElementById('check-input-person-role').value = role;
+        tagArea.querySelectorAll('button').forEach(b => { b.style.background='var(--card)'; b.style.color='var(--text)'; });
+        btn.style.background = 'var(--text)'; btn.style.color = 'var(--bg)';
+      };
+      tagArea.appendChild(btn);
+    });
+    // 現在のリスト
+    const list = document.getElementById('check-edit-list');
+    list.innerHTML = '';
+    checkItems.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--rule);';
+      div.innerHTML = `<div><div style="font-weight:600;">${item.title}</div><div style="font-size:13px;color:var(--muted);">${names[item.person] || item.person}</div></div>
+        <button onclick="deleteCheckItem(${i})" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;">×</button>`;
+      list.appendChild(div);
+    });
+    if (!checkItems.length) list.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:8px 0;">項目がありません</div>';
+    document.getElementById('check-overlay').classList.add('open');
+  }
+  function closeCheckSheet() { document.getElementById('check-overlay').classList.remove('open'); }
+  function addCheckItem() {
+    const title = document.getElementById('check-input-title').value.trim();
+    const person = document.getElementById('check-input-person-role').value;
+    if (!title) { alert('持ち物名を入力してください'); return; }
+    db.ref('checklist_items').set([...checkItems, { title, person: person || 'kid1', checked: false }]);
+    document.getElementById('check-input-title').value = '';
+    document.getElementById('check-input-person-label').value = '';
+    document.getElementById('check-input-person-role').value = '';
+    document.getElementById('check-name-tags').querySelectorAll('button').forEach(b => { b.style.background='var(--card)'; b.style.color='var(--text)'; });
+  }
+  function deleteCheckItem(i) {
+    db.ref('checklist_items').set(checkItems.filter((_,j) => j !== i));
+  }
+
+  // 旧toggleCheck（互換性のため残す）
+  function toggleCheck(boxId, titleId) {}
+</script>
+
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-sheet">
+    <div class="settings-header">
+      <div class="settings-title">Family Names</div>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-field">
+      <label>パパ / Dad</label>
+      <input class="settings-input" id="input-husband" type="text">
+    </div>
+    <div class="settings-field">
+      <label>ママ / Mom</label>
+      <input class="settings-input" id="input-wife" type="text">
+    </div>
+    <div class="settings-field">
+      <label>子ども 1</label>
+      <input class="settings-input" id="input-kid1" type="text">
+    </div>
+    <div class="settings-field">
+      <label>子ども 2</label>
+      <input class="settings-input" id="input-kid2" type="text">
+    </div>
+    <div class="settings-field">
+      <label>末っ子</label>
+      <input class="settings-input" id="input-kid3" type="text">
+    </div>
+    <button class="btn filled" onclick="saveNames()">保存する</button>
+
+    <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--rule);">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">自宅の場所</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">自宅にいる時にタップして登録。出発ボタンを押すと現在地→自宅の所要時間を自動計算します。</div>
+      <button onclick="setHomeLocation()" style="width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;margin-bottom:8px;">📍 現在地を自宅として登録</button>
+      <div id="home-loc-status" style="font-size:13px;color:var(--muted);text-align:center;min-height:18px;"></div>
+    </div>
+
+    <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--rule);">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">データ管理</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">チャット・出発状態・お迎えリクエスト・チェックリストをすべて初期状態に戻します。予定・スケジュールはそのまま残ります。</div>
+      <button onclick="resetAllData()" style="width:100%;background:none;border:1px solid var(--alert);border-radius:8px;padding:12px;font-size:14px;font-weight:600;color:var(--alert);cursor:pointer;letter-spacing:0.04em;">🗑 全データをリセット</button>
+    </div>
+  </div>
+</div>
+<!-- Peachスケジュール編集シート -->
+<div class="settings-overlay" id="peach-overlay" onclick="if(event.target===this)closePeachSheet()">
+  <div class="settings-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="settings-header">
+      <div class="settings-title">Peach — Today's Schedule</div>
+      <button class="settings-close" onclick="closePeachSheet()">✕</button>
+    </div>
+    <div id="peach-edit-list" style="margin-bottom:24px;"></div>
+    <div style="border-top:1px solid var(--rule);padding-top:20px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">新しい予定を追加</div>
+      <div class="settings-field">
+        <label>予定名</label>
+        <input class="settings-input" id="peach-input-name" type="text" placeholder="幼稚園体験">
+      </div>
+      <div class="settings-field">
+        <label>詳細</label>
+        <input class="settings-input" id="peach-input-detail" type="text" placeholder="○○幼稚園 / 9:30〜11:30">
+      </div>
+      <div class="settings-field">
+        <label>ラベル</label>
+        <select class="settings-input" id="peach-input-label">
+          <option value="開始">開始</option>
+          <option value="お迎え">お迎え</option>
+          <option value="目安">目安</option>
+          <option value="確認">確認</option>
+        </select>
+      </div>
+      <div class="settings-field">
+        <label>時刻</label>
+        <input class="settings-input" id="peach-input-time" type="time" value="09:00">
+      </div>
+      <button class="btn filled" onclick="addPeachItem()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 今日のお迎え編集シート -->
+<div class="settings-overlay" id="pickup-sched-overlay" onclick="if(event.target===this)closePickupSheet()">
+  <div class="settings-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="settings-header">
+      <div class="settings-title">今日のお迎えを編集</div>
+      <button class="settings-close" onclick="closePickupSheet()">✕</button>
+    </div>
+    <div id="pickup-sched-edit-list" style="margin-bottom:24px;"></div>
+    <div style="border-top:1px solid var(--rule);padding-top:20px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">新しいお迎えを追加</div>
+      <div class="settings-field">
+        <label>予定名（例: Korotan 塾）</label>
+        <input class="settings-input" id="pickup-sched-input-name" type="text" placeholder="Korotan 塾">
+      </div>
+      <div class="settings-field">
+        <label>詳細（場所など）</label>
+        <input class="settings-input" id="pickup-sched-input-detail" type="text" placeholder="徒歩20分">
+      </div>
+      <div class="settings-field">
+        <label>時刻</label>
+        <input class="settings-input" id="pickup-sched-input-time" type="time" value="18:00">
+      </div>
+      <button class="btn filled" onclick="addPickupSchedItem()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 提出物編集シート -->
+<div class="settings-overlay" id="check-overlay" onclick="if(event.target===this)closeCheckSheet()">
+  <div class="settings-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="settings-header">
+      <div class="settings-title">提出物 / 持ち物を編集</div>
+      <button class="settings-close" onclick="closeCheckSheet()">✕</button>
+    </div>
+    <div id="check-edit-list" style="margin-bottom:24px;"></div>
+    <div style="border-top:1px solid var(--rule);padding-top:20px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">新しい項目を追加</div>
+      <div class="settings-field">
+        <label>持ち物・提出物</label>
+        <input class="settings-input" id="check-input-title" type="text" placeholder="体育着、宿題プリントなど">
+      </div>
+      <div class="settings-field">
+        <label>誰の？</label>
+        <div id="check-name-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+        <input class="settings-input" id="check-input-person-label" type="text" placeholder="名前タグをタップ" readonly style="cursor:default;color:var(--muted);">
+        <input type="hidden" id="check-input-person-role">
+      </div>
+      <button class="btn filled" onclick="addCheckItem()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 予定編集シート -->
+<div class="settings-overlay" id="sched-overlay" onclick="closeSchedOutside(event)">
+  <div class="settings-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="settings-header">
+      <div class="settings-title">今日の家族予定を編集</div>
+      <button class="settings-close" onclick="closeSchedSheet()">✕</button>
+    </div>
+
+    <!-- 現在の予定リスト -->
+    <div id="sched-edit-list" style="margin-bottom:24px;"></div>
+
+    <!-- 追加フォーム -->
+    <div style="border-top:1px solid var(--rule);padding-top:20px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">新しい予定を追加</div>
+      <div class="settings-field">
+        <label>名前・予定</label>
+        <div id="sched-name-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+        <input class="settings-input" id="sched-input-name" type="text" placeholder="塾、ミニバスなど予定を入力">
+      </div>
+      <div class="settings-field">
+        <label>詳細（例: 小学校体育館 / 徒歩5分）</label>
+        <input class="settings-input" id="sched-input-detail" type="text" placeholder="場所や補足">
+      </div>
+      <div class="settings-field">
+        <label>地図URL（任意）</label>
+        <input class="settings-input" id="sched-input-map" type="url" placeholder="https://maps.google.com/...">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Googleマップで場所を開いて「共有」→「リンクをコピー」で貼り付け</div>
+      </div>
+      <div class="settings-field">
+        <label>ラベル</label>
+        <select class="settings-input" id="sched-input-label" style="appearance:none;">
+          <option value="お迎え">お迎え</option>
+          <option value="目安">目安</option>
+          <option value="開始">開始</option>
+          <option value="確認">確認</option>
+          <option value="連絡">連絡</option>
+        </select>
+      </div>
+      <div class="settings-field">
+        <label>時刻</label>
+        <input class="settings-input" id="sched-input-time" type="time" value="18:00">
+      </div>
+      <button class="btn filled" onclick="addSchedItem()">追加する</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
