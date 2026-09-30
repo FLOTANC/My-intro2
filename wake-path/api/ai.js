@@ -55,6 +55,19 @@ function dataUrlToPart(dataUrl){
   if (!m) return null;
   return { inline_data: { mime_type:m[1], data:m[2] } };
 }
+// ── 簡易IPレート制限（Gemini課金の悪用/DoS対策）──
+const HITS = new Map();
+function rateLimited(req, max, windowMs){
+  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const arr = (HITS.get(ip)||[]).filter(t => now-t < windowMs);
+  arr.push(now);
+  HITS.set(ip, arr);
+  if (HITS.size > 5000) HITS.clear();
+  return arr.length > max;
+}
+const MAX_IMG = 4_000_000; // base64文字数 ≈ 画像3MB
+
 function studentCtx(s){
   if (!s) return '';
   const pass = (s.passLine!=null && !isNaN(parseFloat(s.passLine))) ? parseFloat(s.passLine).toFixed(1) : '4.0';
@@ -69,6 +82,19 @@ module.exports = async (req, res) => {
   if (req.method==='OPTIONS') return res.status(200).end();
   if (req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
   const { action, payload={} } = req.body || {};
+
+  // 画像を伴う採点はGeminiの単価が高いので厳しめ。text系は自然な対話ペースには十分。
+  if (rateLimited(req, action==='review' ? 6 : 20, 60000)){
+    return res.status(429).json({error:'少し待ってから、もう一度じゃ'});
+  }
+  if (typeof payload.imageBase64==='string' && payload.imageBase64.length > MAX_IMG){
+    return res.status(413).json({error:'画像が大きすぎる'});
+  }
+  for (const k of ['question','message']){
+    if (typeof payload[k]==='string' && payload[k].length > 1000){
+      return res.status(400).json({error:'文章が長すぎる'});
+    }
+  }
 
   try {
     if (action==='assignmentDraft'){
