@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MILKY SUBWAY SUMMER FESTIVAL 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --panel:#0e110e;
+    --panel-2:#131813;
+    --line:#24322a;
+    --green:#8df5a5;   /* PHOSPHOR GREEN — 主役 */
+    --cyan:#4fd68a;    /* DEEP GREEN — 副 */
+    --magenta:#f5c542; /* LED AMBER — 強調 */
+    --silver:#cfe8d5;
+    --silver-dim:#6d8a76;
+    --warn:#ff4d4d;    /* LED RED */
+    --mint:#aef5a8;    /* BUTTON MINT */
+    --mono:'JetBrains Mono', monospace;
+    --jp:'Noto Sans JP', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle, rgba(141,245,165,0.10) 0.9px, transparent 1px) 0 0 / 7px 7px,
+      var(--bg);
+    color:var(--silver);
+    font-family:var(--jp);
+    line-height:1.7;
+    padding:0 0 80px;
+  }
+  a{color:var(--cyan);}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.28em;
+    color:var(--silver-dim);
+    text-transform:uppercase;
+  }
+  /* ---------- HERO / DEPARTURE BOARD ---------- */
+  .hero{
+    border-bottom:1px solid var(--line);
+    padding:40px 20px 30px;
+    background:linear-gradient(180deg, #0e140f 0%, var(--bg) 100%);
+  }
+  .hero-inner{max-width:920px;margin:0 auto;}
+  .route-tag{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;font-weight:800;
+    color:#000;background:var(--mint);border:none;
+    padding:9px 20px;border-radius:999px;
+    box-shadow:5px 5px 0 #000, 0 0 22px rgba(174,245,168,0.35);
+  }
+  .route-tag .dot{width:7px;height:7px;border-radius:50%;background:#000;}
+  h1.title{
+    font-family:var(--jp);font-weight:900;
+    font-size:clamp(28px,5.2vw,48px);
+    color:#e6ffe9;margin:18px 0 4px;letter-spacing:.02em;
+    text-shadow:0 0 24px rgba(141,245,165,0.35);
+  }
+  .subtitle{
+    font-family:var(--mono);font-size:13px;letter-spacing:.15em;
+    color:var(--cyan);text-transform:uppercase;margin-bottom:22px;
+  }
+  .board{
+    margin-top:20px;border:1px solid var(--line);background:#060806;
+    border-radius:4px;overflow:hidden;
+  }
+  .board-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 14px;background:var(--panel-2);
+    font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--silver-dim);
+    border-bottom:1px solid var(--line);
+  }
+  .board-body{padding:14px 16px 16px;position:relative;height:34px;overflow:hidden;font-family:var(--mono);font-size:14px;}
+  .ticker span{
+    position:absolute;left:16px;right:16px;top:14px;opacity:0;
+    animation:tick 9s infinite;
+  }
+  .ticker span:nth-child(1){color:var(--green);animation-delay:0s;}
+  .ticker span:nth-child(2){color:var(--warn);animation-delay:3s;}
+  .ticker span:nth-child(3){color:var(--green);animation-delay:6s;}
+  @keyframes tick{
+    0%{opacity:0;} 4%{opacity:1;} 30%{opacity:1;} 34%{opacity:0;} 100%{opacity:0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker span{animation:none;opacity:0;}
+    .ticker span:nth-child(1){opacity:1;}
+  }
+  .flow{
+    margin-top:26px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 8px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--silver-dim);
+  }
+  .flow span{
+    background:var(--mint);color:#000;font-weight:700;
+    padding:8px 16px;border-radius:999px;box-shadow:4px 4px 0 #000;
+  }
+  .flow span.arrow{background:none;color:var(--silver-dim);box-shadow:none;padding:0 2px;font-weight:400;}
+  .flow b{color:#000;}
+  .roster{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:14px;}
+  .roster-date{font-family:var(--mono);font-size:13px;letter-spacing:.1em;color:#e6ffe9;font-weight:700;}
+  .roster-crew{display:flex;flex-wrap:wrap;gap:8px;}
+  .crew-pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;font-weight:800;color:#000;background:var(--mint);padding:7px 15px;border-radius:999px;box-shadow:4px 4px 0 #000;}
+  .crew-pill.adult{background:#e8e8e8;}
+
+  /* ---------- APP LINKS ---------- */
+  .apps{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px;}
+  .app-link{
+    display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-family:var(--mono);font-size:12px;letter-spacing:.1em;font-weight:800;
+    color:#000;background:var(--mint);padding:11px 20px;border-radius:999px;
+    box-shadow:5px 5px 0 #000;
+  }
+  .app-link .arw{font-size:13px;}
+  .app-link small{font-family:var(--jp);font-weight:700;letter-spacing:0;font-size:11.5px;opacity:.65;}
+  .app-link:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000;}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:56px 0 8px;}
+  .sec-head{margin-bottom:26px;}
+  .sec-num{font-family:var(--mono);font-size:12px;color:var(--silver-dim);letter-spacing:.2em;}
+  .sec-title{
+    font-family:var(--jp);font-weight:900;color:#e6ffe9;
+    font-size:clamp(22px,3.4vw,30px);margin:6px 0 0;
+  }
+  .sec-title em{font-style:normal;color:var(--cyan);}
+  .sec-note{font-size:14px;color:var(--silver-dim);margin-top:6px;max-width:640px;}
+
+  /* ---------- TIMELINE ---------- */
+  .timeline{position:relative;padding-left:26px;}
+  .timeline::before{
+    content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;
+    background:linear-gradient(180deg, var(--green), var(--cyan) 40%, var(--magenta) 70%, var(--green));
+    opacity:.5;
+  }
+  .stop{position:relative;padding:0 0 26px 20px;}
+  .stop::before{
+    content:"";position:absolute;left:-25px;top:4px;width:11px;height:11px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--stop-color, var(--cyan));
+  }
+  .stop .time{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--stop-color,var(--cyan));letter-spacing:.05em;}
+  .stop .label{color:#e6ffe9;font-weight:700;font-size:15.5px;margin-top:2px;}
+  .stop .tag{
+    display:inline-block;margin-top:7px;font-family:var(--mono);font-size:10px;font-weight:800;
+    letter-spacing:.1em;color:#000;background:var(--mint);
+    padding:5px 13px;border-radius:999px;box-shadow:3px 3px 0 #000;
+  }
+
+  /* ---------- CARD GRID ---------- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:18px 18px 20px;position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--cyan));}
+  .card h3{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--accent,var(--cyan));margin:0 0 8px;text-transform:uppercase;}
+  .card h4{color:#e6ffe9;font-size:17px;margin:0 0 8px;font-weight:700;}
+  .card p{font-size:13.5px;color:var(--silver);margin:0;}
+  .card ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;}
+  .card li{margin-bottom:3px;}
+
+  /* ---------- MENU TABLE ---------- */
+  table.menu{width:100%;border-collapse:collapse;font-size:14px;}
+  table.menu th{
+    text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    color:var(--silver-dim);border-bottom:1px solid var(--line);padding:8px 10px;text-transform:uppercase;
+  }
+  table.menu td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.menu td.code{font-family:var(--mono);color:var(--magenta);white-space:nowrap;font-size:13px;}
+  table.menu td.name{color:#e6ffe9;font-weight:700;}
+
+  /* ---------- FUEL ---------- */
+  .fuel-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+  .fuel-pill{
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;padding:8px 14px;border-radius:20px;
+    border:1px solid var(--line);display:flex;align-items:center;gap:8px;color:#e6ffe9;
+  }
+  .fuel-pill i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* ---------- MISSION STATIONS ---------- */
+  .mission-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media(max-width:720px){.mission-grid{grid-template-columns:1fr;}}
+  .mission-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px;
+  }
+  .mission-card .idx{font-family:var(--mono);font-size:24px;font-weight:800;color:var(--cyan);opacity:.4;line-height:1;}
+  .mission-card h4{color:#e6ffe9;font-size:16px;margin:4px 0 8px;}
+  .mission-card p{font-size:13.5px;margin:0;color:var(--silver);}
+  .access-code{
+    margin-top:20px;border:1px dashed var(--green);border-radius:4px;padding:16px 18px;
+    font-family:var(--mono);color:var(--green);background:rgba(141,245,165,0.06);
+  }
+  .access-code .k{color:var(--silver-dim);font-size:11px;letter-spacing:.15em;}
+  .access-code .v{font-size:20px;letter-spacing:.3em;font-weight:700;}
+
+  /* ---------- MATSURI TABLE ---------- */
+  table.convert{width:100%;border-collapse:collapse;font-size:14px;}
+  table.convert th{font-family:var(--mono);font-size:11px;color:var(--silver-dim);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  table.convert td{padding:12px 10px;border-bottom:1px solid var(--line);}
+  table.convert td.old{color:var(--silver-dim);}
+  table.convert td.new span{display:inline-block;background:var(--mint);color:#000;font-weight:800;font-family:var(--mono);font-size:12.5px;padding:7px 16px;border-radius:999px;box-shadow:4px 4px 0 #000;}
+  .arrow{color:var(--silver-dim);}
+
+  /* ---------- SIGNAGE ---------- */
+  .signs{display:flex;flex-wrap:wrap;gap:10px;}
+  .sign{
+    font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:#000;
+    background:var(--green);padding:8px 12px;border-radius:2px;font-weight:700;
+  }
+  .sign.warn{background:var(--warn);color:#fff;}
+  .sign.info{background:var(--silver);}
+  .sign.cyan{background:var(--cyan);}
+
+  /* ---------- PASS ---------- */
+  .pass{
+    display:flex;gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);
+    border-radius:6px;padding:18px;max-width:420px;
+  }
+  .qr{
+    width:64px;height:64px;flex:none;background:
+      linear-gradient(90deg, #8df5a5 0 25%, transparent 25% 30%, #8df5a5 30% 45%, transparent 45% 55%, #8df5a5 55% 65%, transparent 65% 75%, #8df5a5 75% 100%),
+      linear-gradient(0deg, #8df5a5 0 20%, transparent 20% 35%, #8df5a5 35% 50%, transparent 50% 65%, #8df5a5 65% 80%, transparent 80% 100%);
+    background-blend-mode:screen;
+  }
+  .pass .meta{font-family:var(--mono);}
+  .pass .meta .crew{color:var(--cyan);font-size:18px;font-weight:800;letter-spacing:.05em;}
+  .pass .meta .line{font-size:11px;color:var(--silver-dim);letter-spacing:.1em;margin-top:4px;}
+  .stamps{display:flex;gap:5px;margin-top:8px;}
+  .stamps i{width:14px;height:14px;border-radius:50%;border:1px solid var(--silver-dim);display:inline-block;}
+
+  footer{
+    margin-top:60px;border-top:1px solid var(--line);padding:28px 0;text-align:center;
+    font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--silver-dim);
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="route-tag"><span class="dot"></span>GALAXY LINE ・ ALL STATIONS</span>
+    <h1 class="title">MILKY SUBWAY<br>SUMMER FESTIVAL 2026</h1>
+    <div class="subtitle">銀河特急・夏祭りステーション ／ 11:00 – 18:00</div>
+
+    <div class="board">
+      <div class="board-head"><span>MILKY SUBWAY 運行情報</span><span>PLATFORM 06</span></div>
+      <div class="board-body">
+        <div class="ticker">
+          <span>🟢 現在、銀河線は正常運転しています</span>
+          <span>⚠️ EMERGENCY — TRAIN CONTROL LOST</span>
+          <span>🟢 SYSTEM RESTORED — MISSION COMPLETE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <span><b>11:00</b> 乗車開始</span><span class="arrow">→</span>
+      <span>宇宙ステーションで昼食</span><span class="arrow">→</span>
+      <span>ミッション・ゲーム</span><span class="arrow">→</span>
+      <span>おやつ</span><span class="arrow">→</span>
+      <span>プラレール急停車ゲーム</span><span class="arrow">→</span>
+      <span><b>18:00</b> 銀河特急出発</span>
+    </div>
+
+    <div class="roster">
+      <div class="roster-date">🗓 2026.08.29 (SAT)</div>
+      <div class="roster-crew">
+        <span class="crew-pill adult">大人 ×3</span>
+        <span class="crew-pill">中3 ×1</span>
+        <span class="crew-pill">小6 ×2</span>
+        <span class="crew-pill">小3 ×1</span>
+        <span class="crew-pill">3歳 ×1</span>
+        <span class="crew-pill">2歳 ×1</span>
+      </div>
+    </div>
+
+    <div class="apps">
+      <a class="app-link" href="/checkin"><span class="arw">🚉</span>MILKY STATION <small>乗車受付・得点管理</small></a>
+      <a class="app-link" href="/hack"><span class="arw">💻</span>SYSTEM HACK <small>ミッション03の端末</small></a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- TIMELINE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">01 — SCHEDULE</div>
+      <h2 class="sec-title">当日の<em>運行スケジュール</em></h2>
+      <p class="sec-note">中3×1・小6×2が中心。3歳・2歳もいるので、どのゲームも「投げる距離」「速度」「役割」で難度を変え、同じルールのまま全員が参加できる形にしている。トーンはかわいい宇宙祭りではなく「ちょっと怪しい未来都市・ゲームセンター・地下鉄」寄りで統一。</p>
+    </div>
+    <div class="timeline">
+      <div class="stop" style="--stop-color:var(--green)"><div class="time">11:00</div><div class="label">🚉 MILKY STATION OPEN・乗車受付</div><span class="tag">EVENT</span></div>
+      <div class="stop" style="--stop-color:var(--green)"><div class="time">11:15</div><div class="label">📸 キャラクター／サイバー写真撮影</div><span class="tag">EVENT</span></div>
+      <div class="stop" style="--stop-color:var(--magenta)"><div class="time">11:30 – 13:30</div><div class="label">🍔 銀河ステーション・ランチ</div><span class="tag">FOOD</span></div>
+      <div class="stop" style="--stop-color:var(--cyan)"><div class="time">13:30</div><div class="label">👾 銀河ミッションゲーム</div><span class="tag">MISSION</span></div>
+      <div class="stop" style="--stop-color:var(--magenta)"><div class="time">14:30</div><div class="label">🍹 ドリンク＆休憩</div><span class="tag">FOOD</span></div>
+      <div class="stop" style="--stop-color:var(--cyan)"><div class="time">15:00</div><div class="label">🚄 EMERGENCY STOP 予選</div><span class="tag">FINAL GAME</span></div>
+      <div class="stop" style="--stop-color:var(--magenta)"><div class="time">16:00</div><div class="label">🍨 Galaxy Dessert</div><span class="tag">FOOD</span></div>
+      <div class="stop" style="--stop-color:var(--cyan)"><div class="time">16:30</div><div class="label">🚄 EMERGENCY STOP 決勝</div><span class="tag">FINAL GAME</span></div>
+      <div class="stop" style="--stop-color:var(--green)"><div class="time">17:40</div><div class="label">📸 全員集合・表彰／景品</div><span class="tag">EVENT</span></div>
+      <div class="stop" style="--stop-color:var(--green)"><div class="time">18:00</div><div class="label">🚇 LAST TRAIN／終了</div><span class="tag">EVENT</span></div>
+    </div>
+  </section>
+
+  <!-- MAIN MISSION -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">02 — MAIN EVENT</div>
+      <h2 class="sec-title">👾 銀河特急を<em>止めろ！</em></h2>
+      <p class="sec-note">導入アナウンス：「銀河特急MILKY-06が制御不能になった。18:00までに3つのミッションでアクセスコードを集め、非常ブレーキを起動せよ。」家の中に3ステーションを設置する。ここで集めたコードが、15:00からのプラレール急停車ゲームの前提になる。</p>
+    </div>
+    <div class="mission-grid">
+      <div class="mission-card"><div class="idx">01</div><h4>SHIELD DEFENSE</h4><p>撃ち手がナーフ銃を構え、参加者は盾を持って弾を止める。1人10発、止められた数がそのままポイント。盾の大きさで年齢差を調整でき、幼児は距離を近づけて大きい盾にすれば同じルールで参加できる。</p></div>
+      <div class="mission-card"><div class="idx">02</div><h4>ALIEN HUNT</h4><p>家の中に小さな宇宙人・ロボットカードを隠す「逃亡ロボットを回収せよ」。幼児組も活躍できる担当。</p></div>
+      <div class="mission-card"><div class="idx">03</div><h4>SYSTEM HACK</h4><p>中学生＋小学生向け。暗号を解いて最後のパスワードを導く。端末はiPadまたはPCで <a href="/hack">/hack</a> を開く。4桁を入力し、間違えると警報とともに ACCESS DENIED、正解すると UNLOCKED。ここまでが前半戦。</p></div>
+    </div>
+    <div class="access-code">
+      <div class="k">ACCESS CODE</div>
+      <div class="v">2 0 2 6</div>
+      <p style="color:var(--silver);font-family:var(--jp);font-size:13px;margin-top:10px;">01で「2」、02で「0・2」、03の暗号で最後の「6」。入力に成功したら「BRAKE SYSTEM UNLOCKED／ただし列車はまだ走行中」とアナウンスし、そのまま15:00の急停車ゲームへ引き継ぐ。</p>
+    </div>
+  </section>
+
+  <!-- 銀河特急を止めろ -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">03 — FINAL GAME</div>
+      <h2 class="sec-title">🚄 <em>EMERGENCY STOP</em>／プラレール急停車</h2>
+      <p class="sec-note">プラレールで銀河特急を走らせ、ぐにゃぐにゃボールを当てて急停車させるゲーム。廊下に直線レールを長く敷き、レール脇に「非常停止スイッチ」を立てる。列車そのものを狙うのではなくスイッチを倒す形にすると、車両が壊れず、成功／失敗も一目でわかる。</p>
+    </div>
+    <div class="mission-grid">
+      <div class="mission-card"><div class="idx">RULE</div><h4>非常停止スイッチを倒す</h4><p>レール脇に紙コップを3個立て、これを「BRAKE 01 / 02 / 03」とする。列車が通過し切る前にボールを当てて倒す。1人3投。全部倒せば EMERGENCY STOP 成立で、大人がその場で電源を切る。</p></div>
+      <div class="mission-card"><div class="idx">PENALTY</div><h4>車両に直撃＝脱線</h4><p>列車本体に当ててしまったら「銀河特急を破壊した」で得点なし。狙って外す精度が要るので、小6・中3でも簡単すぎない。ぐにゃぐにゃボールなら当たっても車両は傷まない。</p></div>
+      <div class="mission-card"><div class="idx">LEVEL</div><h4>年齢差の調整</h4><p>投げる位置を年齢別ラインで分ける。2歳・3歳はレールのすぐ横から。難度はスピード設定と、コップまでの距離で変えられる。中3にはトンネルや坂を足して、見えない区間を挟むと一気に難しくなる。</p></div>
+      <div class="mission-card"><div class="idx">ROLE</div><h4>2歳は「発車係」</h4><p>プラレールは2歳が一番触りたがるので、最初から発車ボタン担当にしてしまう。「MILKY-06、発車！」の合図役にすると、待ち時間も自分の出番になる。</p></div>
+      <div class="mission-card"><div class="idx">ROUND</div><h4>2ラウンド制</h4><p>15:00に予選（全員1巡）、16:30に決勝。決勝はスピードを上げる、コップを2個に減らす、車両を1両にして的を小さくする、のいずれかで難度を上げる。</p></div>
+      <div class="mission-card"><div class="idx">SET</div><h4>用意するもの</h4><p>プラレールの直線レールをできるだけ長く、紙コップ、ぐにゃぐにゃボール5個。車体は黒い紙とネオンテープを巻いて「MILKY-06」に改装。レールの先に「PLATFORM 06」の紙を置けば終着駅になる。</p></div>
+    </div>
+    <div class="access-code">
+      <div class="k">ANNOUNCE</div>
+      <div class="v" style="font-size:15px;letter-spacing:.12em;">EMERGENCY BRAKE ACTIVATED</div>
+      <p style="color:var(--silver);font-family:var(--jp);font-size:13px;margin-top:10px;">紙コップが全部倒れたら、大人がその場でプラレールの電源を切る。同時に照明を落として緑のライトに切り替え、「銀河特急、停止成功」とアナウンス。02で集めたコードがここで効いた、という形で一日が完結する。</p>
+    </div>
+  </section>
+
+  <!-- 景品 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">04 — PRIZE</div>
+      <h2 class="sec-title">🎁 <em>景品</em>の配り方</h2>
+      <p class="sec-note">ストレス発散輪が1個しかないので、「一番強い子が総取り」にならない設計にしておくと最後まで全員が動く。</p>
+    </div>
+    <div class="grid">
+      <div class="card" style="--accent:var(--green)"><h3>ALL CREW</h3><h4>スクイーズ（全員）</h4><p>17:40の表彰で、乗車PASSのスタンプが全部埋まった証として全員に配る。順位ではなく「完走賞」の位置づけ。</p></div>
+      <div class="card" style="--accent:var(--cyan)"><h3>EQUIPMENT</h3><h4>ぐにゃぐにゃボール（5個）</h4><p>景品にせず、プラレール急停車ゲームの弾として一日中使う。5個あれば1人3投のローテーションが途切れない。最後にじゃんけんやくじで持ち帰り担当を決めると、それ自体がもう一つのイベントになる。</p></div>
+      <div class="card" style="--accent:var(--magenta)"><h3>MVP × 1</h3><h4>ストレス発散輪</h4><p>1個しかないので、実力の合計点ではなく「くじ」か「幼児でも取れる賞」で渡すのが安全。案は右記の3通り。</p></div>
+    </div>
+    <div class="mission-grid" style="margin-top:14px;">
+      <div class="mission-card"><div class="idx">A</div><h4>RANDOM ITEM BOX</h4><p>ミッションと急停車ゲームで1回成功するごとに抽選券を1枚。最後に箱から1枚引く。多く頑張った子ほど当たりやすいが、発車係の2歳にもチャンスが残る。</p></div>
+      <div class="mission-card"><div class="idx">B</div><h4>部門賞にする</h4><p>「最速停止賞」「一番いい叫び声賞」「一番派手に脱線させた賞」など、大人が現場で決める変な賞を作り、その1つの景品にする。中3が笑って納得しやすい。</p></div>
+      <div class="mission-card"><div class="idx">C</div><h4>大人チームの賞にする</h4><p>そもそも子どもに渡さず、大人3人の対決の景品にしてしまう。ストレス発散輪という景品の性格にも合っていて、子どもが観客として盛り上がる。</p></div>
+    </div>
+  </section>
+
+  <!-- パス -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">05 — CREW PASS</div>
+      <h2 class="sec-title">🎫 <em>乗車PASS</em>とスタンプ</h2>
+      <p class="sec-note">受付はiPadで行う（<a href="/checkin">/checkin</a> を玄関の端末に開いておく）。名前をタッチするとCREW-01〜09がランダムに割り当てられ、乗車PASS画面と発車ベルが出る。同じアプリの「得点管理」で、各ゲームの点数をCREW番号ごとに記録・集計でき、合計タブで順位が出る。紙のPASSはその番号を書き込んで首から下げる形にし、ミッションと予選をクリアするたびにスタンプ。全員そろったら「MISSION COMPLETE 2026.08」カードを渡し、その場でスクイーズを配る。</p>
+    </div>
+    <div class="pass">
+      <div class="qr"></div>
+      <div class="meta">
+        <div class="crew">CREW-01</div>
+        <div class="line">MILKY SUBWAY / GALAXY LINE</div>
+        <div class="stamps"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>MILKY SUBWAY SUMMER FESTIVAL 2026 — GALAXY LINE — 11:00→18:00</footer>
+
+</body>
+</html>

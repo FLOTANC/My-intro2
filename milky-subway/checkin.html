@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>MILKY STATION — 乗車受付</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#0e110e; --line:#24322a;
+    --green:#8df5a5; --dim:#4fd68a; --amber:#f5c542; --warn:#ff4d4d;
+    --text:#cfe8d5; --text-dim:#6d8a76; --mint:#aef5a8; --stamp:#ff2d95;
+    --mono:'JetBrains Mono',monospace; --jp:'Noto Sans JP',sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;overflow:hidden;}
+  body{
+    background:radial-gradient(circle, rgba(141,245,165,0.10) 0.9px, transparent 1px) 0 0/7px 7px, var(--bg);
+    color:var(--text);font-family:var(--jp);
+    display:flex;flex-direction:column;
+    user-select:none;-webkit-user-select:none;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .screen{flex:1;display:none;flex-direction:column;padding:26px 30px;overflow:hidden;}
+  .screen.on{display:flex;}
+
+  /* ---- header ---- */
+  .bar{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--text-dim);
+    border-bottom:1px solid var(--line);padding-bottom:10px;flex:none;
+  }
+  .bar b{color:var(--green);}
+
+  /* ---- standby ---- */
+  #standby{justify-content:center;align-items:center;text-align:center;cursor:pointer;}
+  .logo{font-family:var(--mono);font-size:clamp(13px,2vw,17px);letter-spacing:.42em;color:var(--dim);}
+  .big{font-weight:900;font-size:clamp(38px,8vw,76px);color:#e6ffe9;margin:12px 0 6px;letter-spacing:.02em;line-height:1.15;}
+  .plat{font-family:var(--mono);font-size:clamp(14px,2.4vw,20px);letter-spacing:.3em;color:var(--amber);}
+  .ticker{
+    margin-top:34px;height:30px;position:relative;width:100%;max-width:640px;
+    font-family:var(--mono);font-size:14px;letter-spacing:.08em;
+  }
+  .ticker span{position:absolute;left:0;right:0;opacity:0;animation:tick 9s infinite;}
+  .ticker span:nth-child(1){color:var(--green);animation-delay:0s;}
+  .ticker span:nth-child(2){color:var(--warn);animation-delay:3s;}
+  .ticker span:nth-child(3){color:var(--amber);animation-delay:6s;}
+  @keyframes tick{0%{opacity:0}4%{opacity:1}30%{opacity:1}34%{opacity:0}100%{opacity:0}}
+  .touch{
+    margin-top:44px;background:var(--mint);color:#000;font-weight:800;
+    font-family:var(--mono);letter-spacing:.14em;font-size:clamp(14px,2.2vw,18px);
+    padding:20px 44px;border-radius:999px;box-shadow:6px 6px 0 #000;
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .remain{margin-top:26px;font-family:var(--mono);font-size:13px;color:var(--text-dim);letter-spacing:.1em;}
+
+  /* ---- roster ---- */
+  .head{margin:22px 0 16px;flex:none;}
+  .head h2{font-size:clamp(20px,3.4vw,28px);color:#e6ffe9;margin:0;font-weight:900;}
+  .head p{margin:6px 0 0;font-size:14px;color:var(--text-dim);}
+  .grid{
+    flex:1;display:grid;gap:14px;overflow-y:auto;padding-bottom:10px;
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    align-content:start;
+  }
+  .person{
+    background:var(--mint);color:#000;border:none;border-radius:999px;
+    padding:26px 18px;font-family:var(--jp);font-weight:800;font-size:19px;
+    box-shadow:5px 5px 0 #000;cursor:pointer;transition:transform .08s;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .person:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000;}
+  .person small{font-family:var(--mono);font-size:11px;letter-spacing:.1em;opacity:.6;font-weight:700;}
+  .person.done{
+    background:transparent;color:var(--text-dim);
+    border:1px dashed var(--line);box-shadow:none;
+  }
+  .person.done small{color:var(--dim);opacity:1;}
+
+  /* ---- pass ---- */
+  #pass{justify-content:center;align-items:center;text-align:center;}
+  .card{
+    background:var(--panel);border:1px solid var(--dim);border-radius:16px;
+    padding:34px 40px;max-width:560px;width:100%;
+    box-shadow:0 0 60px rgba(141,245,165,0.14);
+    animation:in .45s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes in{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:none}}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--text-dim);}
+  .crewno{
+    font-family:var(--mono);font-weight:800;color:var(--green);
+    font-size:clamp(52px,11vw,96px);line-height:1;margin:10px 0 4px;letter-spacing:.04em;
+    text-shadow:0 0 30px rgba(141,245,165,.4);
+  }
+  .nameslot{margin-bottom:18px;min-height:76px;display:flex;flex-direction:column;justify-content:center;}
+  .nlabel{
+    font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--text-dim);
+    animation:fade .3s 1.0s backwards;
+  }
+  .pname{
+    font-size:clamp(26px,4.6vw,38px);font-weight:900;color:#e6ffe9;margin-top:6px;
+    text-shadow:0 0 26px rgba(141,245,165,.35);
+    animation:reveal .55s 1.25s backwards cubic-bezier(.2,.9,.3,1.3);
+  }
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes reveal{from{opacity:0;transform:translateY(14px) scale(.86);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+  .meta{
+    display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;
+    color:var(--text-dim);letter-spacing:.1em;border-top:1px solid var(--line);padding-top:14px;
+  }
+  .punch{
+    margin-top:18px;width:150px;height:150px;
+    animation:stamp .35s 1.85s backwards cubic-bezier(.2,.9,.3,1.5);
+  }
+  .punch canvas{width:100%;height:100%;display:block;}
+  @keyframes stamp{from{opacity:0;transform:scale(2.2)}to{opacity:1;transform:scale(1)}}
+  .go{margin-top:30px;font-size:17px;color:var(--text);animation:fade .4s 2.2s backwards;}
+  .next{
+    margin-top:24px;background:var(--mint);color:#000;font-weight:800;font-family:var(--mono);
+    letter-spacing:.14em;font-size:15px;padding:16px 38px;border:none;border-radius:999px;
+    box-shadow:5px 5px 0 #000;cursor:pointer;animation:fade .4s 2.4s backwards;
+  }
+  .next:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000;}
+
+  /* ---- footer ---- */
+  .foot{
+    flex:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 0 4px;
+    border-top:1px solid var(--line);
+  }
+  .foot button{
+    background:none;border:1px solid var(--line);color:var(--text-dim);
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    padding:9px 16px;border-radius:999px;cursor:pointer;
+  }
+  .foot button:active{color:var(--green);border-color:var(--dim);}
+
+  /* ---- score ---- */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px;flex:none;}
+  .tabs button{
+    background:none;border:1px solid var(--line);color:var(--text-dim);
+    font-family:var(--mono);font-size:12px;letter-spacing:.1em;font-weight:700;
+    padding:11px 18px;border-radius:999px;cursor:pointer;
+  }
+  .tabs button.on{background:var(--mint);color:#000;border-color:var(--mint);box-shadow:4px 4px 0 #000;}
+  .srows{flex:1;overflow-y:auto;padding-bottom:10px;}
+  .srow{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:9px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  }
+  .srow .who{flex:1;min-width:0;}
+  .srow .who b{display:block;font-size:18px;color:#e6ffe9;font-weight:800;}
+  .srow .who small{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;}
+  .srow .who small.no{color:var(--text-dim);}
+  .step{display:flex;align-items:center;gap:12px;flex:none;}
+  .step button{
+    width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+    font-size:26px;font-weight:800;font-family:var(--mono);line-height:1;
+    background:var(--mint);color:#000;box-shadow:4px 4px 0 #000;
+  }
+  .step button.minus{background:#2a3a2e;color:var(--text);box-shadow:none;border:1px solid var(--line);}
+  .step button:active{transform:translate(3px,3px);box-shadow:none;}
+  .step .val{
+    font-family:var(--mono);font-size:30px;font-weight:800;color:var(--green);
+    min-width:56px;text-align:center;
+  }
+  .srow.rank1{border-color:var(--amber);box-shadow:0 0 26px rgba(245,197,66,.18);}
+  .srow .tot{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--green);min-width:64px;text-align:right;}
+  .srow .medal{font-size:26px;width:34px;flex:none;text-align:center;}
+  .srow .brk{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.06em;margin-top:3px;}
+
+  /* ---- edit ---- */
+  #edit .rows{flex:1;overflow-y:auto;}
+  .row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+  .row input{
+    flex:1;background:#000;border:1px solid var(--line);color:var(--text);
+    font-family:var(--jp);font-size:17px;padding:13px 15px;border-radius:8px;
+  }
+  .row input:focus{outline:none;border-color:var(--dim);}
+  .row .no{font-family:var(--mono);font-size:12px;color:var(--text-dim);width:34px;flex:none;}
+  .row button{background:none;border:none;color:var(--warn);font-size:20px;padding:6px 10px;cursor:pointer;}
+
+  /* ---- shoot (camera) ---- */
+  #shoot{align-items:center;}
+  .shead{flex:none;text-align:center;margin:14px 0 12px;}
+  .shead h2{margin:0;font-size:clamp(19px,3vw,25px);color:#e6ffe9;font-weight:900;}
+  .shead p{margin:5px 0 0;font-size:13px;color:var(--text-dim);}
+  .stage{
+    flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;width:100%;
+  }
+  .frame{
+    position:relative;height:100%;max-height:100%;aspect-ratio:4/5;
+    border:3px solid var(--dim);border-radius:14px;overflow:hidden;background:#000;
+    box-shadow:0 0 44px rgba(141,245,165,.18);
+  }
+  .frame.wide{aspect-ratio:16/9;}
+  .frame video,.frame canvas,.frame img{width:100%;height:100%;object-fit:cover;display:block;}
+  .frame video.mirror{transform:scaleX(-1);}
+  .scan{
+    position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  }
+  .ruler{position:absolute;left:0;top:0;bottom:0;width:34px;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(174,245,168,.34) 0 2px, transparent 2px 26px);}
+  .count{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:800;font-size:clamp(90px,20vw,190px);
+    color:var(--green);text-shadow:0 0 40px rgba(141,245,165,.7);pointer-events:none;
+  }
+  .flashwhite{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+  .flashwhite.go{animation:flashfade .45s ease-out;}
+  @keyframes flashfade{from{opacity:.92}to{opacity:0}}
+  .camerr{
+    max-width:460px;text-align:center;font-size:15px;color:var(--text-dim);
+    border:1px dashed var(--line);border-radius:12px;padding:22px 20px;
+  }
+  .camerr b{display:block;color:var(--warn);font-family:var(--mono);font-size:12px;
+    letter-spacing:.14em;margin-bottom:8px;}
+
+  /* ---- gift (記念券) ---- */
+  .glist{flex:1;overflow-y:auto;padding-bottom:10px;}
+  .gband{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:14px;
+    background:var(--panel);border:1px solid var(--dim);border-radius:14px;
+  }
+  .gband .gthumb{width:96px;height:54px;}
+  .gband .who b{display:block;font-size:17px;color:#e6ffe9;font-weight:800;}
+  .grow{
+    display:flex;align-items:center;gap:13px;padding:12px 14px;margin-bottom:9px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  }
+  .gthumb{
+    width:54px;height:68px;flex:none;border-radius:7px;border:1px solid var(--line);
+    background:#000;object-fit:cover;display:block;
+  }
+  .gthumb.none{
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:.06em;text-align:center;
+  }
+  .grow .who{flex:1;min-width:0;}
+  .grow .who b{display:block;font-size:17px;color:#e6ffe9;font-weight:800;}
+  .grow .who small{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;}
+  .grow .who small.no{color:var(--text-dim);}
+  .gbtn{
+    background:var(--mint);color:#000;border:none;border-radius:999px;flex:none;
+    font-family:var(--mono);font-weight:800;font-size:12px;letter-spacing:.08em;
+    padding:12px 16px;box-shadow:4px 4px 0 #000;cursor:pointer;
+  }
+  .gbtn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000;}
+  .gbtn[disabled]{background:#2a3a2e;color:var(--text-dim);box-shadow:none;cursor:default;}
+  .gbtn.ghost{background:none;border:1px solid var(--line);color:var(--text-dim);box-shadow:none;font-weight:700;}
+  .ghint{font-size:13px;color:var(--text-dim);margin:0 0 14px;}
+
+  /* ---- viewer ---- */
+  .viewer{
+    position:fixed;inset:0;z-index:60;background:rgba(4,8,5,.94);
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px;gap:16px;
+  }
+  .viewer.on{display:flex;}
+  .viewer img{
+    max-width:min(100%,520px);max-height:64vh;border-radius:10px;
+    box-shadow:0 0 50px rgba(141,245,165,.22);user-select:auto;-webkit-user-select:auto;
+    -webkit-touch-callout:default;
+  }
+  .vnote{font-size:13px;color:var(--text-dim);text-align:center;max-width:440px;}
+  .vrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .busy{
+    position:fixed;inset:0;z-index:70;background:rgba(4,8,5,.9);display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    font-family:var(--mono);font-size:13px;letter-spacing:.16em;color:var(--green);
+  }
+  .busy.on{display:flex;}
+  .busy .spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--green);
+    border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ================= STANDBY ================= -->
+<div class="screen on" id="standby" onclick="toRoster()">
+  <div class="logo">MILKY SUBWAY</div>
+  <div class="big">銀河特急<br>乗車受付</div>
+  <div class="plat">PLATFORM 06</div>
+  <div class="ticker">
+    <span>🟢 現在、銀河線は正常運転しています</span>
+    <span>⚠️ MILKY-06 制御不能 — 乗務員を募集中</span>
+    <span>🟡 本日 11:00 発／終着 18:00</span>
+  </div>
+  <div class="touch">画面にタッチして乗車手続き</div>
+  <div class="remain" id="remain"></div>
+</div>
+
+<!-- ================= ROSTER ================= -->
+<div class="screen" id="roster">
+  <div class="bar"><span>MILKY STATION <b>改札口</b></span><span id="clock"></span></div>
+  <div class="head">
+    <h2>名前をタッチしてください</h2>
+    <p>乗務員コードが自動で割り当てられます</p>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="foot">
+    <button onclick="show('standby')">もどる</button>
+    <button onclick="openScore()">得点管理</button>
+    <button onclick="openGift()">記念券</button>
+    <button onclick="openEdit()">名簿を編集</button>
+    <button onclick="resetAll()">全リセット</button>
+  </div>
+</div>
+
+<!-- ================= PASS ================= -->
+<div class="screen" id="pass">
+  <div class="card">
+    <div class="k">GALAXY LINE / BOARDING PASS</div>
+    <div class="crewno" id="pCrew">CREW-01</div>
+    <div class="nameslot">
+      <div class="nlabel">CREW IDENTIFIED</div>
+      <div class="pname" id="pName">—</div>
+    </div>
+    <div class="meta"><span>2026.08.29</span><span>PLATFORM 06</span><span id="pTime">11:00</span></div>
+    <div class="punch"><canvas id="punchCv" width="300" height="300"></canvas></div>
+  </div>
+  <div class="go">改札を通って、宇宙ステーションへ進んでください</div>
+  <div class="vrow" style="margin-top:24px;">
+    <button class="next" style="margin-top:0;" onclick="shootPerson(passIdx)">📷 顔写真をとる</button>
+    <button class="next" style="margin-top:0;background:none;border:1px solid var(--line);color:var(--text-dim);box-shadow:none;" onclick="toRoster()">つぎの人へ</button>
+  </div>
+</div>
+
+<!-- ================= SHOOT ================= -->
+<div class="screen" id="shoot">
+  <div class="bar"><span>MILKY-06 <b id="shootTag">CREW PHOTO</b></span><span id="clock3"></span></div>
+  <div class="shead">
+    <h2 id="shootTitle">乗務員の顔写真</h2>
+    <p id="shootSub">まっすぐ前を見て、動かないでください</p>
+  </div>
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+      <video id="cam" playsinline muted autoplay class="mirror"></video>
+      <div class="ruler"></div>
+      <div class="scan"></div>
+      <div class="count" id="count"></div>
+      <div class="flashwhite" id="flash"></div>
+    </div>
+  </div>
+  <div class="foot" id="shootFoot"></div>
+</div>
+
+<!-- ================= GIFT ================= -->
+<div class="screen" id="gift">
+  <div class="bar"><span>MILKY STATION <b>記念券</b></span><span id="clock4"></span></div>
+  <div class="head">
+    <h2>記念券をつくる</h2>
+    <p>顔写真と全員写真を入れた乗車記念券を保存できます</p>
+  </div>
+  <div class="glist" id="glist"></div>
+  <div class="foot">
+    <button onclick="toRoster()">受付にもどる</button>
+    <button onclick="makePoster()">全員の顔写真ポスター</button>
+    <button onclick="downloadAll()">ぜんぶダウンロード</button>
+    <button onclick="resetPhotos()">写真を全部消す</button>
+  </div>
+</div>
+
+<!-- ================= VIEWER ================= -->
+<div class="viewer" id="viewer">
+  <img id="vimg" alt="記念券">
+  <div class="vnote">保存できないときは、画像を長押しして「写真に追加」を選んでください。</div>
+  <div class="vrow">
+    <button class="gbtn" onclick="saveShown()">この画像を保存</button>
+    <button class="gbtn ghost" onclick="closeViewer()">とじる</button>
+  </div>
+</div>
+
+<div class="busy" id="busy"><div class="spin"></div><span id="busyMsg">GENERATING…</span></div>
+
+<!-- ================= SCORE ================= -->
+<div class="screen" id="score">
+  <div class="bar"><span>MILKY-06 <b>得点管理</b></span><span id="clock2"></span></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="srows" id="srows"></div>
+  <div class="foot">
+    <button onclick="toRoster()">受付にもどる</button>
+    <button onclick="resetScores()">得点リセット</button>
+  </div>
+</div>
+
+<!-- ================= EDIT ================= -->
+<div class="screen" id="edit">
+  <div class="bar"><span>CREW LIST <b>名簿編集</b></span><span>MILKY-06</span></div>
+  <div class="head"><h2>参加者の名前</h2><p>当日までに書き換えておけます</p></div>
+  <div class="rows" id="rows"></div>
+  <div class="foot">
+    <button onclick="addRow()">＋ 追加</button>
+    <button onclick="saveEdit()">保存してもどる</button>
+  </div>
+</div>
+
+<script>
+const GAMES = [
+  {id:"shield", label:"01 SHIELD",  max:10},
+  {id:"alien",  label:"02 ALIEN",   max:99},
+  {id:"hack",   label:"03 HACK",    max:1 },
+  {id:"stop1",  label:"STOP 予選",  max:3 },
+  {id:"stop2",  label:"STOP 決勝",  max:3 }
+];
+let tab = "shield";
+const DEFAULT = ["コロたん","アリー","ローリー","おいも","もも","かえかえ","チャンミー","たんち","ちょまちん"];
+let people = [], booted = false;
+let passIdx = 0;
+const PKEY = "milky06_photos_v1";
+let photos = {byName:{}, group:null};
+
+/* ---------- storage (失敗しても動く) ---------- */
+function load(){
+  try{
+    const raw = localStorage.getItem("milky06_v2");
+    if(raw){
+      people = JSON.parse(raw);
+      const RENAME = {"こうたろう":"コロたん", "いおりん":"ローリー"};
+      people.forEach(p => { p.sc = p.sc || {}; if(RENAME[p.name]) p.name = RENAME[p.name]; });
+      save();
+      return;
+    }
+  }catch(e){}
+  people = DEFAULT.map(n => ({name:n, crew:null, time:null, sc:{}}));
+}
+function save(){
+  try{ localStorage.setItem("milky06_v2", JSON.stringify(people)); }catch(e){}
+}
+
+/* ---------- screens ---------- */
+function show(id){
+  if(id !== "shoot") stopCam();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+}
+function toRoster(){ drawGrid(); show("roster"); }
+
+/* ---------- 受付 ---------- */
+function drawGrid(){
+  const g = document.getElementById("grid");
+  g.innerHTML = "";
+  people.forEach((p,i) => {
+    const b = document.createElement("button");
+    b.className = "person" + (p.crew ? " done" : "");
+    b.innerHTML = p.crew
+      ? `${p.name}<small>${p.crew} ・ ${p.time} 乗車済${photos.byName[p.name] ? " 📷" : ""}</small>`
+      : `${p.name}<small>TAP TO BOARD</small>`;
+    b.onclick = () => p.crew ? reissue(i) : checkIn(i);
+    g.appendChild(b);
+  });
+  drawRemain();
+}
+function drawRemain(){
+  const left = people.filter(p => !p.crew).length;
+  document.getElementById("remain").textContent =
+    left === 0 ? "全員乗車完了 — MILKY-06 発車準備" : `乗車待ち ${left} 名`;
+}
+function nextCrew(){
+  const used = people.filter(p=>p.crew).map(p=>parseInt(p.crew.slice(5),10));
+  const pool = [];
+  for(let n=1;n<=Math.max(people.length,9);n++) if(!used.includes(n)) pool.push(n);
+  const n = pool[Math.floor(Math.random()*pool.length)] || used.length+1;
+  return "CREW-" + String(n).padStart(2,"0");
+}
+function checkIn(i){
+  const now = new Date();
+  passIdx = i;
+  people[i].crew = nextCrew();
+  people[i].sc = people[i].sc || {};
+  people[i].time = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  save(); chime();
+  document.getElementById("pCrew").textContent = people[i].crew;
+  document.getElementById("pName").textContent = people[i].name;
+  document.getElementById("pTime").textContent = people[i].time;
+  show("pass");
+  drawPunch();
+}
+
+/* 乗車券のスタンプ（記念券と同じ描画を使う） */
+async function drawPunch(){
+  const c = document.getElementById("punchCv");
+  if(!c) return;
+  await ensureFonts();
+  const x = c.getContext("2d");
+  x.clearRect(0, 0, c.width, c.height);
+  drawStamp(x, c.width/2, c.height/2, 95);
+}
+function reissue(i){
+  if(confirm(people[i].name + " の乗車を取り消しますか？")){
+    people[i].crew = null; people[i].time = null; save(); drawGrid();
+  }
+}
+function resetAll(){
+  if(confirm("全員の乗車記録を消しますか？（名前は残ります）")){
+    people.forEach(p => { p.crew = null; p.time = null; });
+    save(); drawGrid();
+  }
+}
+
+/* ---------- 名簿編集 ---------- */
+function openEdit(){
+  const r = document.getElementById("rows");
+  r.innerHTML = "";
+  people.forEach((p,i) => r.appendChild(makeRow(p.name,i)));
+  show("edit");
+}
+function makeRow(v,i){
+  const d = document.createElement("div");
+  d.className = "row";
+  d.innerHTML = `<span class="no">${String(i+1).padStart(2,"0")}</span>
+    <input type="text" value="${v.replace(/"/g,"&quot;")}">
+    <button onclick="this.parentNode.remove()">✕</button>`;
+  return d;
+}
+function addRow(){
+  const r = document.getElementById("rows");
+  r.appendChild(makeRow("", r.children.length));
+  r.lastChild.querySelector("input").focus();
+}
+function saveEdit(){
+  const names = [...document.querySelectorAll("#rows input")].map(i=>i.value.trim()).filter(Boolean);
+  const prev = people.slice();
+  people = names.map((n,i) => {
+    const byName = prev.find(p => p.name === n);
+    const base = byName || prev[i];
+    return base ? {name:n, crew:base.crew, time:base.time, sc:base.sc||{}}
+                : {name:n, crew:null, time:null, sc:{}};
+  });
+  save(); toRoster();
+}
+
+/* ---------- 得点 ---------- */
+function openScore(){ drawTabs(); drawScore(); show("score"); }
+function drawTabs(){
+  const t = document.getElementById("tabs");
+  t.innerHTML = "";
+  [...GAMES, {id:"total", label:"合計・順位"}].forEach(g => {
+    const b = document.createElement("button");
+    b.textContent = g.label;
+    if(g.id === tab) b.className = "on";
+    b.onclick = () => { tab = g.id; drawTabs(); drawScore(); };
+    t.appendChild(b);
+  });
+}
+function total(p){ return GAMES.reduce((a,g) => a + (p.sc[g.id]||0), 0); }
+function bump(i, d){
+  const g = GAMES.find(x => x.id === tab);
+  const v = (people[i].sc[tab]||0) + d;
+  if(v < 0 || v > g.max) return;
+  people[i].sc[tab] = v;
+  save(); drawScore();
+  if(d > 0) blip();
+}
+function drawScore(){
+  const box = document.getElementById("srows");
+  box.innerHTML = "";
+  const boarded = people.map((p,i) => ({p,i})).filter(x => x.p.crew);
+  if(boarded.length === 0){
+    box.innerHTML = '<div style="color:var(--text-dim);font-size:15px;padding:20px 4px;">まだ誰も乗車していません。先に受付をしてください。</div>';
+    return;
+  }
+  if(tab === "total"){
+    boarded.sort((a,b) => total(b.p) - total(a.p));
+    boarded.forEach((x, k) => {
+      const d = document.createElement("div");
+      d.className = "srow" + (k === 0 ? " rank1" : "");
+      const brk = GAMES.map(g => g.label.split(" ").pop() + ":" + (x.p.sc[g.id]||0)).join("  ");
+      d.innerHTML = `<div class="medal">${["🥇","🥈","🥉"][k]||""}</div>
+        <div class="who"><b>${x.p.name}</b><small class="no">${x.p.crew}</small>
+        <div class="brk">${brk}</div></div>
+        <div class="tot">${total(x.p)}</div>`;
+      box.appendChild(d);
+    });
+    return;
+  }
+  boarded.forEach(x => {
+    const d = document.createElement("div");
+    d.className = "srow";
+    d.innerHTML = `<div class="who"><b>${x.p.name}</b><small>${x.p.crew}</small></div>
+      <div class="step">
+        <button class="minus">−</button>
+        <span class="val">${x.p.sc[tab]||0}</span>
+        <button class="plus">＋</button>
+      </div>`;
+    d.querySelector(".minus").onclick = () => bump(x.i, -1);
+    d.querySelector(".plus").onclick  = () => bump(x.i, +1);
+    box.appendChild(d);
+  });
+}
+function resetScores(){
+  if(confirm("全員の得点を0にしますか？（乗車記録は残ります）")){
+    people.forEach(p => p.sc = {}); save(); drawScore();
+  }
+}
+function blip(){
+  try{
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    const o=c.createOscillator(), g=c.createGain();
+    o.frequency.value=1320; o.type="square"; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(0.001,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12,c.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.12);
+    o.start(); o.stop(c.currentTime+0.14);
+  }catch(e){}
+}
+
+/* ---------- 発車ベル ---------- */
+function chime(){
+  try{
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    [880,1174].forEach((f,k)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.frequency.value=f; o.type="sine"; o.connect(g); g.connect(c.destination);
+      const t=c.currentTime+k*0.16;
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.start(t); o.stop(t+0.55);
+    });
+  }catch(e){}
+}
+
+/* =========================================================
+   写真・記念券
+   写真は端末のブラウザ内だけに保存され、外部へは一切送信しない。
+   ========================================================= */
+const EVENT_DATE = "2026.08.29";
+const STAMP_DATE = "26.-8.29";
+
+/* ---------- 写真ストレージ（乗車記録とは別キー） ---------- */
+function loadPhotos(){
+  try{
+    const raw = localStorage.getItem(PKEY);
+    if(raw) photos = JSON.parse(raw);
+  }catch(e){}
+  if(!photos || typeof photos !== "object") photos = {};
+  photos.byName = photos.byName || {};
+  if(!photos.group) photos.group = null;
+}
+function savePhotos(){
+  try{ localStorage.setItem(PKEY, JSON.stringify(photos)); return true; }
+  catch(e){ return false; }
+}
+function photoSaveFailed(){
+  alert("写真を保存できませんでした。端末の空き容量が足りないようです。\n（乗車記録と得点は無事です）");
+}
+
+/* ---------- canvas ヘルパ ---------- */
+function cvs(w,h){ const c=document.createElement("canvas"); c.width=w; c.height=h; return c; }
+
+/* 中央でトリミングして枠いっぱいに描く */
+function drawCover(x, src, dx, dy, dw, dh){
+  const sw = src.videoWidth || src.naturalWidth || src.width;
+  const sh = src.videoHeight || src.naturalHeight || src.height;
+  if(!sw || !sh) return;
+  const s = Math.max(dw/sw, dh/sh);
+  const w = sw*s, h = sh*s;
+  x.drawImage(src, dx + (dw-w)/2, dy + (dh-h)/2, w, h);
+}
+
+/* spaced() で描いたときの文字列の幅。下地の大きさを合わせるのに使う */
+function spacedWidth(x, text, sp){
+  const chars = [...String(text)];
+  if(chars.length === 0) return 0;
+  let total = 0;
+  chars.forEach(ch => total += x.measureText(ch).width + sp);
+  return total - sp;
+}
+
+/* 文字間隔つきテキスト（canvas の letterSpacing は環境差があるので自前で描く） */
+function spaced(x, text, cx, cy, sp, align){
+  const chars = [...String(text)];
+  let total = 0;
+  chars.forEach(ch => total += x.measureText(ch).width + sp);
+  total -= sp;
+  let px = align === "center" ? cx - total/2 : align === "right" ? cx - total : cx;
+  const prev = x.textAlign;
+  x.textAlign = "left";
+  chars.forEach(ch => { x.fillText(ch, px, cy); px += x.measureText(ch).width + sp; });
+  x.textAlign = prev;
+}
+
+function roundRect(x, l, t, w, h, r){
+  x.beginPath();
+  x.moveTo(l+r, t);
+  x.arcTo(l+w, t,   l+w, t+h, r);
+  x.arcTo(l+w, t+h, l,   t+h, r);
+  x.arcTo(l,   t+h, l,   t,   r);
+  x.arcTo(l,   t,   l+w, t,   r);
+  x.closePath();
+}
+
+function loadImg(src){
+  return new Promise((ok, ng) => {
+    const im = new Image();
+    im.onload = () => ok(im);
+    im.onerror = ng;
+    im.src = src;
+  });
+}
+
+/* canvas 描画前にフォントを確実に読み込む */
+let fontsReady = false;
+async function ensureFonts(){
+  if(fontsReady || !document.fonts) return;
+  try{
+    await Promise.all([
+      document.fonts.load('800 64px "JetBrains Mono"'),
+      document.fonts.load('700 28px "JetBrains Mono"'),
+      document.fonts.load('900 64px "Noto Sans JP"'),
+      document.fonts.load('700 26px "Noto Sans JP"')
+    ]);
+    await document.fonts.ready;
+  }catch(e){}
+  fontsReady = true;
+}
+
+/* ---------- 写真加工 ----------
+   既定は緑のマグショット風。opt.color を立てると色はそのままで、
+   走査線だけ軽くのせて全体のトーンに馴染ませる（全員写真用）。 */
+function mugshot(src, W, H, opt){
+  opt = opt || {};
+  const c = cvs(W,H), x = c.getContext("2d");
+  x.fillStyle = opt.color ? "#000" : "#0a140c"; x.fillRect(0,0,W,H);
+  drawCover(x, src, 0,0,W,H);
+
+  if(!opt.color){
+    // 緑の2色調
+    const img = x.getImageData(0,0,W,H), d = img.data;
+    const A = [10,20,12], B = [201,255,206];
+    for(let i=0;i<d.length;i+=4){
+      let l = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114)/255;
+      l = (l-0.5)*1.22 + 0.5;
+      l = l < 0 ? 0 : l > 1 ? 1 : l;
+      const n = (Math.random()-0.5)*0.055;   // 粒子ノイズ
+      l = l + n;
+      l = l < 0 ? 0 : l > 1 ? 1 : l;
+      d[i]   = A[0] + (B[0]-A[0])*l;
+      d[i+1] = A[1] + (B[1]-A[1])*l;
+      d[i+2] = A[2] + (B[2]-A[2])*l;
+    }
+    x.putImageData(img,0,0);
+  }
+
+  // 走査線
+  const step = Math.max(3, Math.round(H/260));
+  x.fillStyle = opt.color ? "rgba(0,0,0,.13)" : "rgba(0,0,0,.26)";
+  for(let y=0;y<H;y+=step) x.fillRect(0, y, W, Math.max(1, step*0.45));
+
+  // 背景の身長目盛り（マグショットのときだけ）
+  if(!opt.color){
+    x.fillStyle = "rgba(174,245,168,.30)";
+    const rw = Math.round(W*0.055), gap = Math.round(H/26);
+    for(let y=0;y<H;y+=gap) x.fillRect(0, y, y % (gap*5) === 0 ? rw*1.7 : rw, Math.max(2, H/300));
+  }
+
+  // 周辺減光（集合写真は端の人が暗くなるので弱める）
+  const soft = opt.soft || opt.color;
+  const vig = soft ? 0.20 : 0.55;
+  const g = x.createRadialGradient(W/2,H*0.45,H*0.18, W/2,H*0.5, (soft ? 0.95 : 0.78)*Math.max(W,H));
+  g.addColorStop(0,"rgba(0,0,0,0)");
+  g.addColorStop(1,"rgba(0,0,0," + vig + ")");
+  x.fillStyle = g; x.fillRect(0,0,W,H);
+
+  // 下部プレート
+  if(opt.crew || opt.name){
+    const ph = Math.round(H*0.088), py = H - ph - Math.round(H*0.035);
+    const pw = Math.round(W*0.84), px = (W-pw)/2;
+    x.fillStyle = "#aef5a8";
+    roundRect(x, px, py, pw, ph, ph*0.16); x.fill();
+    x.fillStyle = "#000";
+    x.textBaseline = "middle";
+    x.font = `800 ${Math.round(ph*0.42)}px "JetBrains Mono", monospace`;
+    spaced(x, opt.crew || "", px + pw*0.05, py + ph/2, ph*0.05, "left");
+    if(opt.name){
+      x.textAlign = "right";
+      x.font = `800 ${Math.round(ph*0.42)}px "Noto Sans JP", sans-serif`;
+      x.fillText(opt.name, px + pw*0.95, py + ph/2);
+      x.textAlign = "left";
+    }
+  }
+  return c;
+}
+
+/* ---------- カメラ ---------- */
+let stream = null, shootMode = "person", shootIdx = 0, shot = null, facing = "user", shootFrom = "gift";
+
+function stopCam(){
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  const v = document.getElementById("cam");
+  if(v) v.srcObject = null;
+}
+
+function shootPerson(i, from){
+  shootMode = "person"; shootIdx = i; facing = "user";
+  shootFrom = from || (document.getElementById("pass").classList.contains("on") ? "pass" : "gift");
+  document.getElementById("shootTag").textContent = "CREW PHOTO";
+  document.getElementById("shootTitle").textContent = people[i].name + " の顔写真";
+  document.getElementById("shootSub").textContent = "まっすぐ前を見て、動かないでください";
+  openShoot();
+}
+function shootGroup(){
+  shootMode = "group"; facing = "environment"; shootFrom = "gift";
+  document.getElementById("shootTag").textContent = "ALL CREW";
+  document.getElementById("shootTitle").textContent = "全員の記念写真";
+  document.getElementById("shootSub").textContent = "MILKY-06 乗務員、全員そろってください";
+  openShoot();
+}
+
+async function openShoot(){
+  shot = null;
+  show("shoot");
+  restoreStage();
+  drawShootFoot("loading");
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: facing, width:{ideal:1280}, height:{ideal:1280} },
+      audio:false
+    });
+    const v = document.getElementById("cam");
+    v.srcObject = stream;
+    v.classList.toggle("mirror", facing === "user");
+    await v.play().catch(()=>{});
+    drawShootFoot("ready");
+  }catch(e){
+    camFallback();
+  }
+}
+
+/* カメラが使えない端末では標準カメラ／写真選択に切り替える */
+function camFallback(){
+  stopCam();
+  const st = document.getElementById("stage");
+  st.innerHTML =
+    '<div class="camerr"><b>CAMERA UNAVAILABLE</b>' +
+    'この端末のブラウザではカメラを直接使えませんでした。' +
+    '下のボタンから、端末のカメラで撮るか、写真を選んでください。</div>';
+  drawShootFoot("file");
+}
+
+function restoreStage(){
+  const st = document.getElementById("stage");
+  st.innerHTML =
+    '<div class="frame' + (shootMode === "group" ? " wide" : "") + '" id="frame">' +
+    '<video id="cam" playsinline muted autoplay class="mirror"></video>' +
+    '<div class="ruler"></div><div class="scan"></div>' +
+    '<div class="count" id="count"></div><div class="flashwhite" id="flash"></div></div>';
+}
+
+function drawShootFoot(state){
+  const f = document.getElementById("shootFoot");
+  f.innerHTML = "";
+  const add = (label, fn, primary) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    if(primary){
+      b.style.cssText = "background:var(--mint);color:#000;border-color:var(--mint);font-weight:800;box-shadow:4px 4px 0 #000;";
+    }
+    b.onclick = fn;
+    f.appendChild(b);
+  };
+  if(state === "loading"){ add("カメラを準備中…", ()=>{}); add("やめる", backFromShoot); }
+  if(state === "ready"){
+    add("📷 さつえい", startCountdown, true);
+    add("カメラ切替", flipCam);
+    add("やめる", backFromShoot);
+  }
+  if(state === "review"){ add("これでOK", keepShot, true); add("撮りなおす", openShoot); add("やめる", backFromShoot); }
+  if(state === "file"){
+    const wrap = document.createElement("label");
+    wrap.style.cssText = "background:var(--mint);color:#000;font-family:var(--mono);font-size:11px;" +
+      "letter-spacing:.12em;font-weight:800;padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:4px 4px 0 #000;";
+    wrap.textContent = "📷 カメラ／写真を選ぶ";
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*"; inp.style.display = "none";
+    if(shootMode === "person") inp.setAttribute("capture","user");
+    inp.onchange = () => { if(inp.files && inp.files[0]) usePickedFile(inp.files[0]); };
+    wrap.appendChild(inp);
+    f.appendChild(wrap);
+    add("やめる", backFromShoot);
+  }
+}
+
+async function flipCam(){
+  facing = facing === "user" ? "environment" : "user";
+  await openShoot();
+}
+
+function backFromShoot(){
+  stopCam();
+  if(shootFrom === "pass") show("pass"); else openGift();
+}
+
+function startCountdown(){
+  const el = document.getElementById("count");
+  let n = 3;
+  drawShootFoot("loading");
+  el.textContent = n; blip();
+  const t = setInterval(() => {
+    n--;
+    if(n > 0){ el.textContent = n; blip(); return; }
+    clearInterval(t);
+    el.textContent = "";
+    capture();
+  }, 900);
+}
+
+function capture(){
+  const v = document.getElementById("cam");
+  const fl = document.getElementById("flash");
+  if(fl){ fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go"); }
+  shutter();
+  const W = shootMode === "group" ? 1280 : 640;
+  const H = shootMode === "group" ? 720  : 800;
+  const c = cvs(W,H), x = c.getContext("2d");
+  if(facing === "user"){ x.translate(W,0); x.scale(-1,1); }  // 鏡像を元に戻す
+  drawCover(x, v, 0,0,W,H);
+  finishShot(c);
+}
+
+async function usePickedFile(file){
+  try{
+    const url = URL.createObjectURL(file);
+    const im = await loadImg(url);
+    const W = shootMode === "group" ? 1280 : 640;
+    const H = shootMode === "group" ? 720  : 800;
+    const c = cvs(W,H);
+    drawCover(c.getContext("2d"), im, 0,0,W,H);
+    URL.revokeObjectURL(url);
+    restoreStage();
+    finishShot(c);
+  }catch(e){ alert("この写真は読み込めませんでした。"); }
+}
+
+function finishShot(c){
+  shot = c.toDataURL("image/jpeg", 0.74);
+  stopCam();
+  const st = document.getElementById("stage");
+  st.innerHTML = '<div class="frame' + (shootMode === "group" ? " wide" : "") + '">' +
+    '<img src="' + shot + '" alt=""><div class="scan"></div></div>';
+  drawShootFoot("review");
+}
+
+function keepShot(){
+  if(!shot) return;
+  const key = shootMode === "group" ? null : people[shootIdx].name;
+  const prev = key ? photos.byName[key] : photos.group;   // 保存に失敗したら元に戻す
+  if(key) photos.byName[key] = shot; else photos.group = shot;
+  if(!savePhotos()){
+    if(key){
+      if(prev === undefined) delete photos.byName[key]; else photos.byName[key] = prev;
+    }else photos.group = prev;
+    photoSaveFailed();
+    return;
+  }
+  chime();
+  shot = null;
+  if(shootFrom === "pass"){ drawGrid(); show("pass"); }
+  else openGift();
+}
+
+/* ---------- 記念券の一覧 ---------- */
+function openGift(){
+  const box = document.getElementById("glist");
+  box.innerHTML = "";
+
+  const band = document.createElement("div");
+  band.className = "gband";
+  band.innerHTML = photos.group
+    ? '<img class="gthumb" src="' + photos.group + '" alt=""><div class="who"><b>全員の記念写真</b>' +
+      '<small style="font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;">ALL CREW ・ 撮影ずみ</small></div>'
+    : '<div class="gthumb none" style="width:96px;height:54px;">NO<br>PHOTO</div>' +
+      '<div class="who"><b>全員の記念写真</b><small style="font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;">まだ撮影していません</small></div>';
+  const gb = document.createElement("button");
+  gb.className = "gbtn";
+  gb.textContent = photos.group ? "撮りなおす" : "📷 撮る";
+  gb.onclick = shootGroup;
+  band.appendChild(gb);
+  box.appendChild(band);
+
+  const boarded = people.map((p,i) => ({p,i})).filter(x => x.p.crew);
+  if(boarded.length === 0){
+    const d = document.createElement("div");
+    d.className = "ghint";
+    d.style.padding = "16px 4px";
+    d.textContent = "まだ誰も乗車していません。先に受付をしてください。";
+    box.appendChild(d);
+    show("gift");
+    return;
+  }
+
+  boarded.forEach(x => {
+    const ph = photos.byName[x.p.name];
+    const d = document.createElement("div");
+    d.className = "grow";
+    d.innerHTML = (ph ? '<img class="gthumb" src="' + ph + '" alt="">' : '<div class="gthumb none">NO<br>PHOTO</div>') +
+      '<div class="who"><b>' + x.p.name + '</b>' +
+      '<small class="' + (ph ? "" : "no") + '">' + x.p.crew + (ph ? " ・ 撮影ずみ" : " ・ 写真なし") + '</small></div>';
+    const shoot = document.createElement("button");
+    shoot.className = "gbtn ghost";
+    shoot.textContent = ph ? "撮りなおす" : "📷 撮る";
+    shoot.onclick = () => shootPerson(x.i);
+    d.appendChild(shoot);
+    const make = document.createElement("button");
+    make.className = "gbtn";
+    make.textContent = "記念券";
+    make.disabled = !ph;
+    make.onclick = () => makeTicket(x.i);
+    d.appendChild(make);
+    box.appendChild(d);
+  });
+  show("gift");
+}
+
+function resetPhotos(){
+  if(!confirm("撮影した写真をすべて消しますか？\n（乗車記録と得点は残ります。書き出した記念券も残ります）")) return;
+  photos = {byName:{}, group:null};
+  savePhotos();
+  openGift();
+}
+
+/* ---------- 記念券（1人1枚・1080×1620） ---------- */
+async function makeTicket(i){
+  const p = people[i];
+  const src = photos.byName[p.name];
+  if(!src){ alert("先に顔写真を撮ってください。"); return; }
+  busy(true, "TICKET " + p.crew);
+  try{
+    await ensureFonts();
+    const c = await buildTicket(p, src, photos.group);
+    openViewer(c, "MILKY-06_" + p.crew + "_" + p.name + ".jpg");
+  }catch(e){
+    alert("記念券をつくれませんでした。");
+  }finally{ busy(false); }
+}
+
+async function buildTicket(p, portraitSrc, groupSrc){
+  const W = 1080, H = 1620;
+  const c = cvs(W,H), x = c.getContext("2d");
+
+  // 背景
+  x.fillStyle = "#07100a"; x.fillRect(0,0,W,H);
+  x.fillStyle = "rgba(141,245,165,.10)";
+  for(let y=0;y<H;y+=14) for(let dx=0;dx<W;dx+=14) x.fillRect(dx,y,2,2);
+
+  // 外枠
+  x.strokeStyle = "#24322a"; x.lineWidth = 2;
+  roundRect(x, 26, 26, W-52, H-52, 26); x.stroke();
+
+  x.textBaseline = "alphabetic";
+
+  // ヘッダ
+  x.fillStyle = "#6d8a76";
+  x.font = '700 22px "JetBrains Mono", monospace';
+  spaced(x, "GALAXY LINE / BOARDING PASS", 76, 96, 3.4, "left");
+  spaced(x, "PLATFORM 06", W-76, 96, 3.4, "right");
+  x.strokeStyle = "#24322a"; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(76,124); x.lineTo(W-76,124); x.stroke();
+
+  // 顔写真
+  const pw = 560, ph = 700, px = (W-pw)/2, py = 146;
+  const im = await loadImg(portraitSrc);
+  const mug = mugshot(im, pw, ph, {crew:p.crew, name:p.name});
+  x.save();
+  x.shadowColor = "rgba(141,245,165,.32)"; x.shadowBlur = 40;
+  roundRect(x, px, py, pw, ph, 16); x.fillStyle = "#000"; x.fill();
+  x.restore();
+  x.save();
+  roundRect(x, px, py, pw, ph, 16); x.clip();
+  x.drawImage(mug, px, py);
+  x.restore();
+  x.strokeStyle = "#7ef5d0"; x.lineWidth = 5;
+  roundRect(x, px, py, pw, ph, 16); x.stroke();
+
+  // CREW番号と名前
+  x.textAlign = "center";
+  x.fillStyle = "#6d8a76";
+  x.font = '700 19px "JetBrains Mono", monospace';
+  spaced(x, "CREW IDENTIFIED", W/2, 894, 5.5, "center");
+
+  x.fillStyle = "#8df5a5";
+  x.font = '800 88px "JetBrains Mono", monospace';
+  x.save();
+  x.shadowColor = "rgba(141,245,165,.45)"; x.shadowBlur = 34;
+  spaced(x, p.crew, W/2, 978, 5, "center");
+  x.restore();
+
+  x.fillStyle = "#e6ffe9";
+  x.font = '900 54px "Noto Sans JP", sans-serif';
+  x.fillText(p.name, W/2, 1040);
+
+  x.fillStyle = "#8df5a5";
+  x.font = '800 23px "JetBrains Mono", monospace';
+  spaced(x, "MISSION COMPLETE", W/2, 1086, 6, "center");
+
+  x.strokeStyle = "#24322a"; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(76,1108); x.lineTo(W-76,1108); x.stroke();
+
+  x.fillStyle = "#6d8a76";
+  x.font = '700 22px "JetBrains Mono", monospace';
+  spaced(x, EVENT_DATE, 76, 1144, 3.4, "left");
+  spaced(x, "MILKY-06", W/2, 1144, 3.4, "center");
+  spaced(x, p.time || "--:--", W-76, 1144, 3.4, "right");
+
+  // 全員写真（16:9のまま切り取らずに大きく載せる）
+  const bw = 712, bh = 400, bx = (W-bw)/2, by = 1166;
+  if(groupSrc){
+    const gim = await loadImg(groupSrc);
+    const band = mugshot(gim, bw, bh, {color:true});
+    x.save();
+    x.shadowColor = "rgba(141,245,165,.22)"; x.shadowBlur = 30;
+    roundRect(x, bx, by, bw, bh, 14); x.fillStyle = "#000"; x.fill();
+    x.restore();
+    x.save();
+    roundRect(x, bx, by, bw, bh, 14); x.clip();
+    x.drawImage(band, bx, by);
+    x.restore();
+    x.strokeStyle = "#7ef5d0"; x.lineWidth = 4;
+    roundRect(x, bx, by, bw, bh, 14); x.stroke();
+    // 下地は文字幅を測ってから引く（固定幅だと日付の桁で文字がはみ出す）
+    const lbl = "ALL CREW " + EVENT_DATE, lsp = 2, lpad = 14, lh = 38;
+    x.font = '700 19px "JetBrains Mono", monospace';
+    const lw = spacedWidth(x, lbl, lsp);
+    x.fillStyle = "rgba(7,16,10,.82)";
+    roundRect(x, bx+16, by+bh-54, lw + lpad*2, lh, 9); x.fill();
+    x.fillStyle = "#8df5a5";
+    spaced(x, lbl, bx+16+lpad, by+bh-29, lsp, "left");
+  }else{
+    x.strokeStyle = "#24322a"; x.setLineDash([8,8]); x.lineWidth = 2;
+    roundRect(x, bx, by, bw, bh, 14); x.stroke(); x.setLineDash([]);
+    x.fillStyle = "#4a6153";
+    x.font = '700 20px "JetBrains Mono", monospace';
+    spaced(x, "ALL CREW PHOTO", W/2, by+bh/2+7, 4, "center");
+  }
+
+  // ★スタンプ（顔写真の右上にかかるように押す）
+  drawStamp(x, W-320, 254, 104);
+
+  x.textAlign = "left";
+  return c;
+}
+
+/* 5つ角の星のパス */
+function starPath(x, cx, cy, R, ri, points){
+  x.beginPath();
+  for(let i=0;i<points*2;i++){
+    const rad = i % 2 === 0 ? R : ri;
+    const a = -Math.PI/2 + i*Math.PI/points;
+    const px = cx + Math.cos(a)*rad, py = cy + Math.sin(a)*rad;
+    if(i === 0) x.moveTo(px,py); else x.lineTo(px,py);
+  }
+  x.closePath();
+}
+
+/* 蛍光ピンクの星スタンプ */
+function drawStamp(x, cx, cy, R){
+  const ri = R*0.60;   // 文字が収まるよう、少し太めの星にする
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(-8 * Math.PI/180);
+
+  // 発光
+  x.shadowColor = "rgba(255,45,149,.9)"; x.shadowBlur = R*0.6;
+  const g = x.createRadialGradient(0,-R*0.16,R*0.06, 0,0,R);
+  g.addColorStop(0, "#ff7fd1");
+  g.addColorStop(0.55, "#ff2d95");
+  g.addColorStop(1, "#f0157f");
+  x.fillStyle = g;
+  starPath(x, 0,0, R, ri, 5); x.fill();
+
+  // 縁のハイライト
+  x.shadowBlur = R*0.3;
+  x.strokeStyle = "#ffb3e0"; x.lineWidth = R*0.05; x.lineJoin = "round";
+  starPath(x, 0,0, R, ri, 5); x.stroke();
+  x.shadowBlur = 0;
+
+  // 文字
+  x.fillStyle = "#fff";
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.font = `800 ${Math.round(R*0.17)}px "JetBrains Mono", monospace`;
+  spaced(x, "MILKY", 0, -R*0.25, R*0.022, "center");
+  x.font = `800 ${Math.round(R*0.125)}px "JetBrains Mono", monospace`;
+  spaced(x, "STATION", 0, -R*0.075, R*0.018, "center");
+  x.font = `800 ${Math.round(R*0.13)}px "JetBrains Mono", monospace`;
+  spaced(x, STAMP_DATE, 0, R*0.115, R*0.012, "center");
+
+  x.restore();
+  x.textBaseline = "alphabetic";
+}
+
+/* 文字の下側を横縞で抜いた、レトロな見出しを作る */
+function stripedHeading(lines, size, lineH, color, maxW){
+  const meas = cvs(10,10).getContext("2d");
+  const setFont = s => meas.font = `900 ${s}px "Noto Sans JP", sans-serif`;
+  setFont(size);
+  let w = 0;
+  lines.forEach(t => w = Math.max(w, meas.measureText(t).width));
+  if(maxW && w > maxW){                 // 長い行があれば縮める
+    const k = maxW / w;
+    size = Math.floor(size * k);
+    lineH = Math.floor(lineH * k);
+    setFont(size);
+    w = 0;
+    lines.forEach(t => w = Math.max(w, meas.measureText(t).width));
+  }
+
+  const pad = Math.round(size*0.34);
+  const W = Math.ceil(w) + pad*2;
+  const H = Math.ceil(lineH*(lines.length-1) + size*1.34) + pad*2;
+  const c = cvs(W,H), x = c.getContext("2d");
+  x.font = `900 ${size}px "Noto Sans JP", sans-serif`;
+  x.textAlign = "center"; x.textBaseline = "alphabetic";
+  x.fillStyle = color;
+  const base = pad + size;
+  lines.forEach((t,i) => x.fillText(t, W/2, base + lineH*i));
+
+  // 文字の下 4 割を横縞で抜く。下にいくほど縞を太くして溶けるように見せる
+  x.globalCompositeOperation = "destination-out";
+  x.fillStyle = "#000";
+  lines.forEach((t,i) => {
+    const b = base + lineH*i;
+    const step = Math.max(5, size*0.088);
+    let k = 0;
+    for(let y = b - size*0.40; y < b + size*0.10; y += step, k++){
+      x.fillRect(0, y, W, step*(0.30 + k*0.075));
+    }
+  });
+  x.globalCompositeOperation = "source-over";
+  return c;
+}
+
+/* ---------- 乗務員一覧ポスター（1600×1200） ---------- */
+async function makePoster(){
+  const boarded = people.map((p,i) => ({p,i})).filter(x => x.p.crew && photos.byName[x.p.name]);
+  if(boarded.length === 0){ alert("顔写真がまだ1枚もありません。"); return; }
+  busy(true, "CREW POSTER");
+  try{
+    await ensureFonts();
+    const W = 1600, H = 1200;
+    const c = cvs(W,H), x = c.getContext("2d");
+    // 紫の下地。粒状ノイズと走査線で布のような質感にする
+    x.fillStyle = "#4d43c8"; x.fillRect(0,0,W,H);
+    const bgi = x.getImageData(0,0,W,H), bd = bgi.data;
+    for(let i=0;i<bd.length;i+=4){
+      const nz = (Math.random()-0.5)*30;
+      bd[i] += nz; bd[i+1] += nz; bd[i+2] += nz*0.5;
+    }
+    x.putImageData(bgi,0,0);
+    x.fillStyle = "rgba(24,12,72,.17)";
+    for(let y=0;y<H;y+=4) x.fillRect(0,y,W,1.7);
+
+    x.textAlign = "center"; x.textBaseline = "alphabetic";
+
+    const n = boarded.length;
+    const cols = n <= 3 ? n : n <= 8 ? 4 : 5;
+    const rows = Math.ceil(n/cols);
+    const top = 64, bottom = H-340;   // 下にタイトルと日付を置くぶんを空ける
+    const gapX = 26, gapY = 26;
+    const availW = W-160, availH = bottom-top;
+    let cw = (availW - gapX*(cols-1))/cols;
+    let ch = cw*1.25;
+    if(ch*rows + gapY*(rows-1) > availH){
+      ch = (availH - gapY*(rows-1))/rows;
+      cw = ch/1.25;
+    }
+    const gridW = cw*cols + gapX*(cols-1);
+    const startX = (W-gridW)/2;
+
+    for(let k=0;k<n;k++){
+      const r = Math.floor(k/cols), cIdx = k % cols;
+      const inRow = Math.min(cols, n - r*cols);
+      const rowW = cw*inRow + gapX*(inRow-1);
+      const lx = (n - r*cols < cols ? (W-rowW)/2 : startX) + cIdx*(cw+gapX);
+      const ly = top + r*(ch+gapY) + (availH - (ch*rows + gapY*(rows-1)))/2;
+      const b = boarded[k];
+      const im = await loadImg(photos.byName[b.p.name]);
+
+      const R = Math.round(cw*0.058), BW = Math.round(cw*0.038);  // 角丸と枠の太さ
+      const iw = Math.round(cw - BW*2), ih = Math.round(ch - BW*2);
+
+      // 落ち影
+      x.save();
+      x.shadowColor = "rgba(10,5,44,.62)"; x.shadowBlur = 26;
+      x.shadowOffsetX = 9; x.shadowOffsetY = 12;
+      x.fillStyle = "#000";
+      roundRect(x, lx, ly, cw, ch, R); x.fill();
+      x.restore();
+
+      // 枠の側面。少しずらした濃いミントで厚みを出す
+      x.fillStyle = "#33a086";
+      roundRect(x, lx+5, ly+7, cw, ch, R); x.fill();
+
+      // 枠の表面。斜めのグラデーションで面の向きを見せる
+      const gf = x.createLinearGradient(lx, ly, lx+cw, ly+ch);
+      gf.addColorStop(0, "#c6ffee");
+      gf.addColorStop(0.45, "#7ef5d0");
+      gf.addColorStop(1, "#4fc9a8");
+      x.fillStyle = gf;
+      roundRect(x, lx, ly, cw, ch, R); x.fill();
+
+      // 写真
+      const mug = mugshot(im, iw, ih, {crew:b.p.crew, name:b.p.name});
+      x.save();
+      roundRect(x, lx+BW, ly+BW, iw, ih, Math.max(3, R-BW*0.6)); x.clip();
+      x.drawImage(mug, lx+BW, ly+BW);
+      x.restore();
+
+      // 窓の内側に落ちる影で、枠がせり出して見えるようにする
+      x.save();
+      roundRect(x, lx+BW, ly+BW, iw, ih, Math.max(3, R-BW*0.6)); x.clip();
+      x.strokeStyle = "rgba(6,14,10,.5)"; x.lineWidth = BW*0.7;
+      roundRect(x, lx+BW, ly+BW, iw, ih, Math.max(3, R-BW*0.6)); x.stroke();
+      x.restore();
+
+      // 枠の上辺に当たる光
+      x.strokeStyle = "rgba(255,255,255,.45)"; x.lineWidth = 2;
+      x.beginPath();
+      x.moveTo(lx+R, ly+1.5); x.lineTo(lx+cw-R, ly+1.5);
+      x.stroke();
+    }
+
+    // 下にタイトルと日付
+    x.strokeStyle = "rgba(255,255,255,.20)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(180, H-312); x.lineTo(W-180, H-312); x.stroke();
+
+    const head = stripedHeading(
+      ["MILKY SUBWAY", "SUMMER FESTIVAL 2026"],
+      68, 82, "#7ef5d0", W-320
+    );
+    x.save();
+    x.shadowColor = "rgba(126,245,208,.55)"; x.shadowBlur = 34;
+    x.drawImage(head, (W-head.width)/2, H-296);
+    x.shadowBlur = 16;
+    x.drawImage(head, (W-head.width)/2, H-296);   // 二度描きで発光を強める
+    x.restore();
+
+    x.fillStyle = "#c8c2ff";
+    x.font = '700 20px "JetBrains Mono", monospace';
+    spaced(x, EVENT_DATE + " (SAT)  /  MILKY-06 CREW  /  PLATFORM 06", W/2, H-44, 4, "center");
+    x.textAlign = "left";
+    openViewer(c, "MILKY-06_CREW_" + EVENT_DATE.replace(/\./g,"") + ".jpg");
+  }catch(e){
+    alert("ポスターをつくれませんでした。");
+  }finally{ busy(false); }
+}
+
+/* ---------- 保存 ---------- */
+let shownBlob = null, shownName = "milky.jpg", shownUrl = null;
+
+function openViewer(canvas, filename){
+  shownName = filename;
+  canvas.toBlob(b => {
+    shownBlob = b;
+    if(shownUrl) URL.revokeObjectURL(shownUrl);
+    shownUrl = URL.createObjectURL(b);
+    document.getElementById("vimg").src = shownUrl;
+    document.getElementById("viewer").classList.add("on");
+  }, "image/jpeg", 0.92);
+}
+function closeViewer(){
+  document.getElementById("viewer").classList.remove("on");
+}
+async function saveShown(){
+  if(!shownBlob) return;
+  const file = new File([shownBlob], shownName, {type:"image/jpeg"});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:"MILKY SUBWAY 記念券"}); return; }
+    catch(e){ if(e && e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a");
+  a.href = shownUrl; a.download = shownName;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function downloadAll(){
+  const boarded = people.map((p,i) => ({p,i})).filter(x => x.p.crew && photos.byName[x.p.name]);
+  if(boarded.length === 0){ alert("顔写真がまだ1枚もありません。"); return; }
+  if(!confirm(boarded.length + "枚の記念券をまとめてダウンロードします。\n端末から確認を求められたら「許可」を選んでください。")) return;
+  busy(true, "GENERATING…");
+  try{
+    await ensureFonts();
+    for(let k=0;k<boarded.length;k++){
+      const b = boarded[k];
+      document.getElementById("busyMsg").textContent = (k+1) + " / " + boarded.length;
+      const c = await buildTicket(b.p, photos.byName[b.p.name], photos.group);
+      const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "MILKY-06_" + b.p.crew + "_" + b.p.name + ".jpg";
+      document.body.appendChild(a); a.click(); a.remove();
+      await new Promise(r => setTimeout(r, 700));
+      URL.revokeObjectURL(url);
+    }
+  }catch(e){
+    alert("途中で失敗しました。1枚ずつ保存してみてください。");
+  }finally{ busy(false); }
+}
+
+function busy(on, msg){
+  document.getElementById("busyMsg").textContent = msg || "GENERATING…";
+  document.getElementById("busy").classList.toggle("on", !!on);
+}
+
+/* ---------- シャッター音 ---------- */
+function shutter(){
+  try{
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "square"; o.frequency.value = 2400;
+    o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(0.001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, c.currentTime+0.005);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+0.07);
+    o.start(); o.stop(c.currentTime+0.09);
+  }catch(e){}
+}
+
+/* ---------- clock ---------- */
+setInterval(()=>{
+  const n=new Date();
+  const t = String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+  ["clock","clock2","clock3","clock4"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = t;
+  });
+},1000);
+
+load(); loadPhotos(); drawRemain();
+</script>
+</body>
+</html>
