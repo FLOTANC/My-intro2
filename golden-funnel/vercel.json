@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/assets/(.*)",
+      "missing": [
+        {
+          "type": "header",
+          "key": "referer",
+          "value": "https://golden-funnel.*"
+        }
+      ],
+      "destination": "/",
+      "permanent": false
+    }
+  ]
+}

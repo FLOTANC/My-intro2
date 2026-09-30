@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Golden Funnel Visualizer</title>
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        canvas { display: block; }
+
+        /* 自動再生が止められたときだけ出す、音を出すための誘い */
+        #unmute {
+            position: absolute; inset: 0; z-index: 10; display: none;
+            align-items: flex-end; justify-content: center; padding-bottom: 12vh;
+            cursor: pointer; background: transparent;
+        }
+        #unmute.shown { display: flex; }
+        #unmute span {
+            font-size: 0.8rem; letter-spacing: 4px; color: #e5a63a;
+            border: 1px solid rgba(229,166,58,0.45); padding: 14px 28px;
+            background: rgba(0,0,0,0.35); animation: pulse 2.6s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+        /* 左下に出す音源の案内 */
+        #hint {
+            position: absolute; left: 24px; bottom: 22px; z-index: 5;
+            font-size: 0.72rem; letter-spacing: 1.5px; color: #7a6538;
+            opacity: 0; transition: opacity 0.6s; pointer-events: none;
+        }
+        #hint.shown { opacity: 1; pointer-events: auto; }
+        #pick {
+            cursor: pointer; border-bottom: 1px solid #4a3c1e;
+            padding-bottom: 2px; transition: color 0.3s, border-color 0.3s;
+        }
+        #pick:hover, #mute:hover { color: #e5a63a; border-color: #e5a63a; }
+        #mute {
+            cursor: pointer; border-bottom: 1px solid #4a3c1e;
+            padding-bottom: 2px; margin-left: 18px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+        #nowplaying { display: block; margin-top: 10px; color: #5c4d2c; }
+
+        /* ファイルをドラッグしている間だけ光らせる */
+        #dropzone {
+            position: absolute; inset: 0; z-index: 8; display: none;
+            border: 1px dashed rgba(229,166,58,0.55);
+            background: rgba(229,166,58,0.05);
+        }
+        #dropzone.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="dropzone"></div>
+
+<div id="unmute"><span>CLICK FOR SOUND</span></div>
+
+<div id="hint">
+    <label id="pick">♪ 別の曲を選ぶ / ドロップする
+        <input id="filein" type="file" accept="audio/*" hidden>
+    </label>
+    <span id="mute">音を止める (M)</span>
+    <span id="nowplaying"></span>
+</div>
+
+<!-- Three.js Library via CDN -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    let scene, camera, renderer, analyser, dataArray;
+    let particleSystem, geometry, material;
+
+    // ---- 形状パラメータ ----
+    const strandCount = 620;       // 糸の本数（少なめにして1本1本を見せる）
+    const pointsPerStrand = 150;   // 1本あたりの粒子数（多いほど線として繋がって見える）
+    const dustCount = 4000;        // 周囲に漂う塵
+    const particleCount = strandCount * pointsPerStrand + dustCount;
+
+    // ---- 配色。参考画像のクリーム〜シャンパンゴールド〜焦げ琥珀の3点で作る ----
+    const C_DEEP = new THREE.Color('#3a230e');  // 外周へ沈む焦げ琥珀
+    const C_GOLD = new THREE.Color('#e5a63a');  // 芯となるシャンパンゴールド
+    const C_HOT  = new THREE.Color('#ffe4a6');  // 密集部の白熱（白に振りすぎない）
+
+    const R_MAX = 14;              // 裾の広がり
+    const SPIRE = 26;              // 尖塔の鋭さ（大きいほど中心が高い）
+    const CORE = 1.55;             // 中心の丸まり
+    const FLARE = 0.010;           // 外縁の反り上がり
+
+    // ---- 粒子ごとの定数（毎フレーム再計算しないよう先に持っておく） ----
+    let basePositions, baseColors;
+    let pCos, pSin, pRadius, pPhase, pReveal;
+
+    // 音量の急な上下をならすための保持値
+    let smoothBass = 0, smoothMid = 0, smoothHigh = 0;
+
+    // 糸が立ち上がる演出の進み具合
+    let growth = 0, lastFrame = 0;
+
+    // 中心からの距離 r における高さ。中心へ向かうほど急に立ち上がり、外縁は緩く反り返る
+    function heightAt(r) {
+        return SPIRE / (r + CORE) - SPIRE / (R_MAX + CORE) + FLARE * r * r;
+    }
+
+    // 中心からの距離に応じた明るさ。お椀のリムが最も明るく、中心の空洞と外周は落ちる
+    function luminanceAt(r) {
+        const rim = Math.exp(-Math.pow((r - 3.8) / 2.8, 2));
+        const spire = Math.exp(-Math.pow(r / 1.2, 2)) * 0.5;
+        return Math.min(1, rim + spire);
+    }
+
+    // 明るさ 0〜1 を焦げ琥珀→ゴールド→クリームへ写す
+    function paint(target, lum) {
+        // べき乗で低い側を引き伸ばし、焦げ琥珀の占める幅を広く取る
+        const t = Math.pow(lum, 1.7);
+        // 金の領域を広く取り、白へ寄るのは最上位だけに絞る
+        if (t < 0.72) target.lerpColors(C_DEEP, C_GOLD, t / 0.72);
+        else target.lerpColors(C_GOLD, C_HOT, (t - 0.72) / 0.28);
+        // 加算合成なので、暗い粒はさらに落として重なりだけが白熱するようにする
+        target.multiplyScalar(0.22 + t * 0.62);
+        return target;
+    }
+
+    function smoothstep(edge0, edge1, x) {
+        const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+    }
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        pCos = new Float32Array(particleCount);
+        pSin = new Float32Array(particleCount);
+        pRadius = new Float32Array(particleCount);
+        pPhase = new Float32Array(particleCount);
+        pReveal = new Float32Array(particleCount);
+
+        const color = new THREE.Color();
+        let i = 0;
+
+        // ---- 糸（ストランド）の生成 ----
+        // 外周のどこかから始まり、渦を巻きながら中心へ寄りつつ尖塔へ登っていく
+        for (let s = 0; s < strandCount; s++) {
+            // 面積が均等になるよう sqrt で外側を厚めに取る
+            const rStart = 1.0 + Math.sqrt(Math.random()) * (R_MAX - 1.0);
+            // 大半は頂点まで登って尖塔を作り、残りは途中の高さで止めて厚みを出す
+            const rEnd = Math.random() < 0.65
+                ? 0.02 + Math.random() * 0.12
+                : 0.25 + Math.random() * 1.2;
+            const theta0 = Math.random() * Math.PI * 2;
+            const twist = 2.2 + Math.random() * 2.3;   // 巻きの強さ
+            const thickness = 0.01 + Math.random() * 0.03;
+            const phase = Math.random() * Math.PI * 2;
+            // 全部が頂点まで届くと束が太くなるので、途中で力尽きる糸を混ぜる
+            const reach = Math.random() < 0.35 ? 0.45 + Math.random() * 0.4 : 1.0;
+
+            // 面から外れて泳ぐ量。3割ほどは大きく横へはみ出させる
+            const strayAmp = Math.random() < 0.3
+                ? 0.7 + Math.random() * 1.8
+                : 0.10 + Math.random() * 0.3;
+            const strayFreq = 0.5 + Math.random() * 2.0;
+            const strayPhase = Math.random() * Math.PI * 2;
+            const strayTilt = (Math.random() - 0.5) * 2;
+
+            for (let p = 0; p < pointsPerStrand; p++) {
+                const u = (p / (pointsPerStrand - 1)) * reach;
+
+                // 外周から中心へ。べき乗で中心付近に粒子が密集し、尖塔が明るくなる
+                const r = rEnd + (rStart - rEnd) * Math.pow(1 - u, 2.0);
+
+                // 糸の逸れ。u に沿ってゆっくり振れるので、面から離れて戻る弧を描く
+                const sway = Math.sin(u * strayFreq * Math.PI * 2 + strayPhase);
+                const stray = strayAmp * sway * (0.3 + u * 0.7);
+
+                // 対数螺旋。中心に近いほど巻きが締まる
+                const theta = theta0
+                    + twist * Math.log((rStart + 0.6) / (r + 0.6))
+                    + (stray * strayTilt * 0.5) / (r + 1.2);
+
+                const rr = Math.max(0.02, r + stray * 0.6);
+                const jitter = thickness * (0.4 + r * 0.09);
+                const c = Math.cos(theta), sn = Math.sin(theta);
+
+                const x = c * rr + (Math.random() - 0.5) * jitter;
+                const z = sn * rr + (Math.random() - 0.5) * jitter;
+                // 高さは元の半径の面を基準に、逸れた分だけ上下へ持ち上がる
+                const y = heightAt(r) + stray * strayTilt * 0.45 + (Math.random() - 0.5) * jitter * 1.6;
+
+                basePositionsWrite(positions, i, x, y, z);
+                pCos[i] = c; pSin[i] = sn; pRadius[i] = rr;
+                pPhase[i] = phase + p * 0.09;
+                pReveal[i] = u * 0.8 + Math.random() * 0.06;
+
+                paint(color, Math.min(1, luminanceAt(rr) * (0.7 + Math.random() * 0.55)));
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+                i++;
+            }
+        }
+
+        // ---- 塵。糸だけだと構造が硬いので、周囲に散らして奥行きを出す ----
+        for (let d = 0; d < dustCount; d++) {
+            // 中心付近には撒かない。お椀の内側を空洞のまま暗く残す
+            const r = 2.4 + Math.sqrt(Math.random()) * (R_MAX * 1.15 - 2.4);
+            const theta = Math.random() * Math.PI * 2;
+            const c = Math.cos(theta), sn = Math.sin(theta);
+            const spread = 0.5 + r * 0.12;
+
+            const x = c * r;
+            const z = sn * r;
+            const y = heightAt(r) + (Math.random() - 0.5) * spread * 2.4;
+
+            basePositionsWrite(positions, i, x, y, z);
+            pCos[i] = c; pSin[i] = sn; pRadius[i] = r;
+            pPhase[i] = Math.random() * Math.PI * 2;
+            pReveal[i] = Math.random() * 0.7;
+
+            paint(color, luminanceAt(r) * Math.random() * 0.55);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+            i++;
+        }
+
+        // 揺れも立ち上がりも、毎フレームこの初期状態を基準に計算する（ずれの蓄積を防ぐ）
+        basePositions = positions.slice();
+        baseColors = colors.slice();
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        // マテリアル設定（加算合成で光らせる）
+        material = new THREE.PointsMaterial({
+            size: 0.028,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            opacity: 0.75,
+            depthWrite: false
+        });
+
+        particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
+
+        onWindowResize();
+        window.addEventListener('resize', onWindowResize);
+    }
+
+    function basePositionsWrite(arr, i, x, y, z) {
+        arr[i * 3] = x;
+        arr[i * 3 + 1] = y;
+        arr[i * 3 + 2] = z;
+    }
+
+    // 音源はサイトに置かず、見る人が手元のファイルを読み込ませる
+    let audioContext = null, currentSource = null, gainNode = null, muted = false;
+
+    // 音が実際に鳴っているときだけ解析結果を使う（自動再生が保留中は動かない）
+    function audioIsRunning() {
+        return analyser && audioContext && audioContext.state === 'running';
+    }
+
+    async function startTrack(arrayBuffer, name) {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // 消音はここで行う。解析は流したままなので、無音でも映像は曲に合わせて動く
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = muted ? 0 : 1;
+            gainNode.connect(audioContext.destination);
+        }
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        // 前の曲が鳴っていれば止めてから差し替える
+        if (currentSource) {
+            try { currentSource.stop(); } catch (e) { /* 停止済みなら無視 */ }
+        }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = true;
+
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyser.connect(gainNode);
+        source.start(0);
+
+        currentSource = source;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        document.getElementById('nowplaying').textContent = '♪ ' + name;
+
+        // 操作なしで開いた場合、ブラウザが再生を保留する。最初の操作で解除する
+        await audioContext.resume();
+        if (audioContext.state !== 'running') waitForGesture();
+    }
+
+    function waitForGesture() {
+        const unmute = document.getElementById('unmute');
+        unmute.classList.add('shown');
+        const resume = async () => {
+            await audioContext.resume();
+            if (audioContext.state === 'running') unmute.classList.remove('shown');
+        };
+        ['click', 'keydown', 'touchstart'].forEach((ev) => {
+            window.addEventListener(ev, resume, { once: true });
+        });
+    }
+
+    async function playFile(file) {
+        const label = document.getElementById('nowplaying');
+        label.textContent = '読み込み中…';
+        try {
+            await startTrack(await file.arrayBuffer(), file.name);
+        } catch (e) {
+            console.warn('could not play file:', e);
+            label.textContent = 'この形式は再生できませんでした';
+        }
+    }
+
+    // 同梱の音源。拡張子を持たせず、パスも推測できない名前にしている
+    async function loadBundledTrack() {
+        try {
+            const response = await fetch('./assets/f3b7c1a94e2d.dat');
+            await startTrack(await response.arrayBuffer(), 'henkaku initiation');
+        } catch (e) {
+            console.warn('bundled track unavailable:', e);
+        }
+    }
+
+    function setMuted(next) {
+        muted = next;
+        if (gainNode) {
+            // 短くランプさせてプツッというノイズを避ける
+            const t = audioContext.currentTime;
+            gainNode.gain.cancelScheduledValues(t);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, t);
+            gainNode.gain.linearRampToValueAtTime(muted ? 0 : 1, t + 0.08);
+        }
+        document.getElementById('mute').textContent = muted ? '音を出す (M)' : '音を止める (M)';
+    }
+
+    function setupFileInput() {
+        const dropzone = document.getElementById('dropzone');
+        const input = document.getElementById('filein');
+
+        document.getElementById('mute').addEventListener('click', () => setMuted(!muted));
+        window.addEventListener('keydown', (e) => {
+            // Cmd+M（最小化）などのショートカットを消音と取り違えない
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.key === 'm' || e.key === 'M') setMuted(!muted);
+        });
+
+        input.addEventListener('change', () => {
+            if (input.files[0]) playFile(input.files[0]);
+        });
+
+        // ページのどこに落としても受け取る
+        window.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('active');
+        });
+        window.addEventListener('dragleave', (e) => {
+            if (e.relatedTarget === null) dropzone.classList.remove('active');
+        });
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('active');
+            const file = e.dataTransfer.files[0];
+            if (file) playFile(file);
+        });
+    }
+
+    // 収めたい範囲。注視点から上下・左右にこれだけ見えていれば尖塔の先まで入る
+    const FIT_TARGET_Y = 7.0;
+    const FIT_HALF_H = 12.0;   // 尖塔の高さ（低音で伸びる分を含む）
+    const FIT_HALF_W = 12.5;   // 裾の広がり（外周の塵は多少切れてよい）
+    const FIT_ELEVATION = 23;  // 見下ろす角度（度）
+
+    function onWindowResize() {
+        const aspect = window.innerWidth / window.innerHeight;
+        camera.aspect = aspect;
+
+        // 縦横それぞれに必要な距離を出し、遠いほうを採る（画面比が変わっても切れない）
+        const halfFov = (camera.fov * Math.PI) / 360;
+        const distH = FIT_HALF_H / Math.tan(halfFov);
+        const distW = FIT_HALF_W / (Math.tan(halfFov) * aspect);
+        const dist = Math.max(distH, distW) * 1.05;
+
+        // やや高い位置から見下ろして、渦を巻く裾の広がりが見えるようにする
+        const elev = (FIT_ELEVATION * Math.PI) / 180;
+        camera.position.set(0, FIT_TARGET_Y + dist * Math.sin(elev), dist * Math.cos(elev));
+        camera.lookAt(0, FIT_TARGET_Y, 0);
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // 指定した周波数ビンの平均を 0〜1 で返す
+    function bandAverage(from, to) {
+        let sum = 0;
+        for (let i = from; i <= to; i++) sum += dataArray[i];
+        return sum / (to - from + 1) / 255;
+    }
+
+    // 上がるときは素早く、下がるときはゆっくり追従させる
+    function ease(current, target) {
+        return current + (target - current) * (target > current ? 0.35 : 0.08);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const now = performance.now() * 0.001;
+        const dt = lastFrame ? Math.min(0.05, now - lastFrame) : 0.016;
+        lastFrame = now;
+
+        // 基本の回転（音声がまだ、または使えない場合もここだけは動く）
+        particleSystem.rotation.y += 0.0012;
+
+        if (audioIsRunning()) {
+            analyser.getByteFrequencyData(dataArray);
+
+            // 帯域ごとの平均をとる（1本のビンだけ見るより曲の動きを拾いやすい）
+            const bass = bandAverage(4, 12);    // 低音
+            const mid = bandAverage(13, 48);    // 中音
+            const high = bandAverage(49, 100);  // 高音
+
+            // 立ち上がりは速く、減衰はゆっくり（ビートが見えるようにする）
+            smoothBass = ease(smoothBass, bass);
+            smoothMid = ease(smoothMid, mid);
+            smoothHigh = ease(smoothHigh, high);
+        } else {
+            // 音源がないときは、ゆっくりした呼吸を与えて動きを絶やさない
+            smoothBass = 0.20 + Math.sin(now * 0.35) * 0.13;
+            smoothMid = 0.17 + Math.sin(now * 0.24 + 1.4) * 0.11;
+            smoothHigh = 0.10 + Math.sin(now * 0.17 + 2.7) * 0.06;
+        }
+
+        // 1. 高音に合わせて回転を加速
+        particleSystem.rotation.y += smoothHigh * 0.012;
+
+        // 2. 低音で裾が広がり、尖塔が伸びる
+        particleSystem.scale.set(1 + smoothBass * 0.10, 1 + smoothBass * 0.16, 1 + smoothBass * 0.10);
+
+        // 3. 低音のアタックで粒が太る（フラッシュ）
+        material.size = 0.028 + smoothBass * 0.022;
+
+        updateParticles(now, dt);
+        renderer.render(scene, camera);
+    }
+
+    function updateParticles(time, dt) {
+        const positions = geometry.attributes.position.array;
+        const growing = growth < 1.25;
+        if (growing) growth += dt * 0.30;   // 約4秒かけて糸が立ち上がる
+
+        // 中音域の強さで、糸に沿って波を走らせる
+        const amp = smoothMid * 0.55;
+        // 地面（外側の平らな裾）を上下にうねらせる同心円の波。低音で大きく持ち上がる
+        const groundAmp = 0.22 + smoothBass * 1.15;
+
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            const r = pRadius[i];
+
+            // 波は中心から外へ向かって伝わる
+            const wave = Math.sin(r * 1.1 - time * 2.4 + pPhase[i]) * amp * (0.25 + r * 0.05);
+
+            // 傾斜の急な中心付近は動かさず、外へ出るほど地面としてうねらせる
+            const ground = smoothstep(2.2, 6.5, r);
+            const ripple = Math.sin(r * 0.8 - time * 1.5 + pPhase[i] * 0.25) * groundAmp * ground;
+
+            let x = basePositions[i3] + pCos[i] * wave;
+            let y = basePositions[i3 + 1] + wave * 0.5 + ripple;
+            let z = basePositions[i3 + 2] + pSin[i] * wave;
+
+            if (growing) {
+                // 外周から順に、糸が地面から起き上がるように高さを持ち上げる
+                const rf = smoothstep(pReveal[i], pReveal[i] + 0.28, growth);
+                y *= rf;
+                x *= 0.85 + rf * 0.15;
+                z *= 0.85 + rf * 0.15;
+            }
+
+            positions[i3] = x;
+            positions[i3 + 1] = y;
+            positions[i3 + 2] = z;
+        }
+        geometry.attributes.position.needsUpdate = true;
+
+        // 立ち上がりきるまでは、まだ現れていない粒子を暗く伏せておく
+        if (growing) {
+            const colors = geometry.attributes.color.array;
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                const rf = smoothstep(pReveal[i], pReveal[i] + 0.28, growth);
+                colors[i3] = baseColors[i3] * rf;
+                colors[i3 + 1] = baseColors[i3 + 1] * rf;
+                colors[i3 + 2] = baseColors[i3 + 2] * rf;
+            }
+            geometry.attributes.color.needsUpdate = true;
+        }
+    }
+
+    // ボタンを介さず、開いた時点で渦を組み上げはじめる
+    init();
+    setupFileInput();
+    animate();
+    loadBundledTrack();
+
+    // 糸が立ち上がりきってから音源の案内を出す
+    setTimeout(() => document.getElementById('hint').classList.add('shown'), 4500);
+
+</script>
+</body>
+</html>
