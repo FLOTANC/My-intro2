@@ -35,6 +35,18 @@ function pinOk(req) {
   return !!pin && !!process.env.TEACHER_PIN && pin === process.env.TEACHER_PIN;
 }
 
+// 簡易IPレート制限（PIN総当たり・書き込み連打の抑止）
+const HITS = new Map();
+function rateLimited(req, max, windowMs) {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const arr = (HITS.get(ip) || []).filter(t => now - t < windowMs);
+  arr.push(now);
+  HITS.set(ip, arr);
+  if (HITS.size > 5000) HITS.clear();
+  return arr.length > max;
+}
+
 // コメント/返信の親パスを組み立て（teacher返信 or 通常コメント返信）
 function replyPath(artworkId, parent) {
   const base = 'art/artworks/' + sanitize(artworkId);
@@ -51,6 +63,11 @@ module.exports = async (req, res) => {
 
   const { action, payload = {} } = req.body || {};
   if (!action) return res.status(400).json({ error: 'action is required' });
+
+  // PIN照合は総当たりを防ぐため特に厳しく。書き込み全般も連打を抑える。
+  if (rateLimited(req, action === 'verifyPin' ? 5 : 60, 60000)) {
+    return res.status(429).json({ error: 'アクセスが多すぎます。少し待ってください' });
+  }
 
   // PIN照合（verifyPin は payload で照合、先生系はヘッダで照合）
   if (action === 'verifyPin') {
