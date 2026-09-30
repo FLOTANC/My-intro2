@@ -1,0 +1,20 @@
+# ルートのデプロイは FLOTAN ポートフォリオ（index.html / wake.html / x402-diagram.html）だけを配信する。
+# 各サブプロジェクトはそれぞれ別の Vercel プロジェクトとしてデプロイしているため、
+# ここから一緒に上げるとサーバーコードまで静的ファイルとして公開されてしまう。
+
+art-feedback/
+bijutsu-nav/
+docs/
+family-compass/
+galaxy-line-2026/
+golden-funnel/
+jibot-handshake/
+math-quest/
+milky-subway/
+penguin-gallery/
+wake-path/
+
+# 作業用ドキュメント（公開不要）
+CLAUDE.md
+README.md
+security-guidance.md
