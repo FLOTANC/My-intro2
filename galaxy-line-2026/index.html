@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>銀河特急を止めろ！ — MILKY SUBWAY SUMMER FESTIVAL 2026</title>
+<meta name="description" content="2026.08.29 (SAT) 11:00–18:00 銀河特急・夏祭りステーション。当日の流れとメニューのご案内。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --panel:#0e110e;
+    --panel-2:#131813;
+    --line:#24322a;
+    --green:#8df5a5;
+    --cyan:#4fd68a;
+    --amber:#f5c542;
+    --silver:#cfe8d5;
+    --silver-dim:#6d8a76;
+    --warn:#ff4d4d;
+    --mint:#aef5a8;
+    --pink:#ff2d95;
+    --mono:'JetBrains Mono', monospace;
+    --jp:'Noto Sans JP', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle, rgba(141,245,165,0.10) 0.9px, transparent 1px) 0 0 / 7px 7px,
+      var(--bg);
+    color:var(--silver);
+    font-family:var(--jp);
+    line-height:1.75;
+    padding:0 0 20px;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    border-bottom:1px solid var(--line);
+    padding:38px 20px 32px;
+    background:linear-gradient(180deg,#0e140f 0%,var(--bg) 100%);
+    position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 4px);
+  }
+  .hero-inner{max-width:900px;margin:0 auto;position:relative;z-index:1;}
+  .route-tag{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;font-weight:800;
+    color:#000;background:var(--mint);
+    padding:9px 20px;border-radius:999px;
+    box-shadow:5px 5px 0 #000, 0 0 22px rgba(174,245,168,.35);
+  }
+  .route-tag .dot{width:7px;height:7px;border-radius:50%;background:#000;}
+  h1.title{
+    font-weight:900;font-size:clamp(30px,6.4vw,54px);
+    color:#e6ffe9;margin:20px 0 6px;letter-spacing:.02em;line-height:1.16;
+    text-shadow:0 0 26px rgba(141,245,165,.4);
+  }
+  .subtitle{
+    font-family:var(--mono);font-size:clamp(11px,2.4vw,13px);letter-spacing:.15em;
+    color:var(--cyan);text-transform:uppercase;
+  }
+  .when{
+    margin-top:24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;
+    padding-top:20px;border-top:1px solid var(--line);
+  }
+  .when .d{font-family:var(--mono);font-weight:800;font-size:clamp(26px,5.6vw,40px);color:var(--green);letter-spacing:.02em;}
+  .when .t{font-family:var(--mono);font-weight:700;font-size:clamp(15px,3vw,20px);color:#e6ffe9;letter-spacing:.1em;}
+  .when .w{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--silver-dim);}
+
+  .board{
+    margin-top:22px;border:1px solid var(--line);background:#060806;
+    border-radius:4px;overflow:hidden;
+  }
+  .board-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:8px 14px;background:var(--panel-2);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--silver-dim);
+    border-bottom:1px solid var(--line);
+  }
+  .board-body{padding:14px 16px 16px;position:relative;height:34px;overflow:hidden;font-family:var(--mono);font-size:13px;}
+  .ticker span{position:absolute;left:16px;right:16px;top:14px;opacity:0;animation:tick 9s infinite;}
+  .ticker span:nth-child(1){color:var(--green);animation-delay:0s;}
+  .ticker span:nth-child(2){color:var(--amber);animation-delay:3s;}
+  .ticker span:nth-child(3){color:var(--pink);animation-delay:6s;}
+  @keyframes tick{0%{opacity:0}4%{opacity:1}30%{opacity:1}34%{opacity:0}100%{opacity:0}}
+  @media (prefers-reduced-motion: reduce){
+    .ticker span{animation:none;opacity:0;}
+    .ticker span:nth-child(1){opacity:1;}
+    .hero::after{display:none;}
+  }
+
+  /* ---------- SECTION ---------- */
+  section{padding:52px 0 4px;}
+  .sec-head{margin-bottom:24px;}
+  .sec-num{font-family:var(--mono);font-size:11.5px;color:var(--silver-dim);letter-spacing:.2em;}
+  .sec-title{font-weight:900;color:#e6ffe9;font-size:clamp(21px,4vw,29px);margin:6px 0 0;}
+  .sec-title em{font-style:normal;color:var(--cyan);}
+  .sec-note{font-size:14px;color:var(--silver-dim);margin-top:8px;max-width:640px;}
+
+  /* ---------- MISSION ---------- */
+  .mission{
+    border:1px solid var(--cyan);border-radius:10px;
+    background:
+      radial-gradient(120% 100% at 50% 0%, rgba(141,245,165,.13) 0%, transparent 62%),
+      var(--panel);
+    padding:34px 26px 30px;text-align:center;position:relative;overflow:hidden;
+    box-shadow:0 0 60px rgba(141,245,165,.12);
+  }
+  .mission .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--cyan);
+  }
+  .mission h2{
+    margin:14px 0 0;font-weight:900;line-height:1.2;
+    font-size:clamp(30px,7.6vw,58px);color:#e6ffe9;
+    text-shadow:0 0 30px rgba(141,245,165,.5);
+  }
+  .mission h2 .ufo{display:inline-block;animation:hover 3s ease-in-out infinite;}
+  @keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .mission .lead{
+    margin:20px auto 0;max-width:560px;font-size:clamp(14px,2.6vw,16.5px);color:var(--silver);
+  }
+  .mission .lead b{color:var(--green);font-weight:700;}
+  .mission .kicker{
+    margin-top:18px;font-family:var(--mono);font-size:clamp(10px,2.2vw,12px);
+    letter-spacing:.22em;color:var(--amber);
+  }
+  .mission .kicker .jp{
+    display:block;margin-top:5px;font-family:var(--jp);font-weight:700;
+    font-size:clamp(13px,2.8vw,15px);letter-spacing:.04em;color:#e6ffe9;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:26px;}
+  .chip{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;font-weight:800;
+    color:#000;background:var(--mint);padding:9px 16px;border-radius:999px;box-shadow:4px 4px 0 #000;
+  }
+
+  /* ---------- TIMELINE ---------- */
+  .timeline{position:relative;padding-left:24px;}
+  .timeline::before{
+    content:"";position:absolute;left:4px;top:8px;bottom:8px;width:2px;
+    background:linear-gradient(180deg,var(--green),var(--cyan) 40%,var(--amber) 72%,var(--green));
+    opacity:.5;
+  }
+  .stop{position:relative;padding:0 0 24px 20px;}
+  .stop::before{
+    content:"";position:absolute;left:-25px;top:6px;width:11px;height:11px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--sc,var(--cyan));
+  }
+  .stop .time{font-family:var(--mono);font-weight:700;font-size:12.5px;color:var(--sc,var(--cyan));letter-spacing:.06em;}
+  .stop .label{color:#e6ffe9;font-weight:700;font-size:15.5px;margin-top:2px;}
+  .stop .sub{font-size:13px;color:var(--silver-dim);margin-top:2px;}
+  .stop.game::before{border-color:var(--green);box-shadow:0 0 12px rgba(141,245,165,.8);}
+  .stop.game .label{color:var(--green);}
+
+  /* ---------- MENU ---------- */
+  .menu-group{margin-bottom:26px;}
+  .mg-head{
+    display:flex;align-items:center;gap:12px;margin-bottom:12px;
+  }
+  .mg-head .en{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;font-weight:800;
+    color:#000;background:var(--cyan);padding:5px 12px;border-radius:3px;
+  }
+  .mg-head .jp{font-size:13.5px;color:var(--silver-dim);}
+  .dish{
+    display:flex;gap:16px;align-items:flex-start;
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);
+    border-radius:4px;padding:14px 16px;margin-bottom:8px;
+  }
+  .dish .ico{font-size:24px;line-height:1.3;flex:none;}
+  .dish .body{flex:1;min-width:0;}
+
+  /* 写真は色をそのままに、走査線だけ薄くのせて世界観に馴染ませる */
+  .ph{
+    position:relative;overflow:hidden;border-radius:4px;
+    border:1px solid var(--cyan);background:#000;
+    box-shadow:0 0 18px rgba(79,214,138,.16);
+  }
+  .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+  .ph::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+  }
+  .dish > .ph{width:154px;aspect-ratio:4/3;flex:none;}
+  @media(max-width:640px){
+    .dish{gap:12px;}
+    .dish > .ph{width:104px;}
+  }
+  .variants{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px;}
+  .variant .ph{width:100%;aspect-ratio:2/1;}
+  .variant span{
+    display:block;margin-top:6px;font-family:var(--mono);font-size:9.5px;font-weight:800;
+    letter-spacing:.06em;color:var(--cyan);text-align:center;line-height:1.5;
+  }
+  .dish .no{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--silver-dim);}
+  .dish h4{margin:1px 0 0;color:#e6ffe9;font-size:16.5px;font-weight:700;line-height:1.4;}
+  .dish p{margin:4px 0 0;font-size:13px;color:var(--silver-dim);line-height:1.65;}
+  .dish .tag{
+    display:inline-block;margin-top:7px;font-family:var(--mono);font-size:10px;font-weight:800;
+    letter-spacing:.1em;color:#000;background:var(--mint);padding:4px 11px;border-radius:999px;
+  }
+  .dish.feat{border-left-color:var(--amber);}
+  .dish.feat .no{color:var(--amber);}
+  .menu-note{
+    margin-top:18px;border:1px dashed var(--green);border-radius:4px;
+    padding:16px 18px;background:rgba(141,245,165,.06);font-size:14px;color:var(--silver);
+  }
+  .menu-note b{color:var(--green);}
+
+  /* ---------- INFO ---------- */
+  .info{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  @media(max-width:640px){.info{grid-template-columns:1fr;}}
+  .icard{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px;
+  }
+  .icard h4{margin:0 0 6px;color:#e6ffe9;font-size:15.5px;font-weight:700;}
+  .icard h4 span{margin-right:8px;}
+  .icard p{margin:0;font-size:13.5px;color:var(--silver-dim);}
+  .icard.dress{
+    grid-column:1 / -1;
+    border-color:var(--pink);
+    background:
+      radial-gradient(120% 130% at 8% 0%, rgba(255,45,149,.16) 0%, transparent 60%),
+      var(--panel);
+    box-shadow:0 0 34px rgba(255,45,149,.14);
+  }
+  .icard.dress .code{
+    font-family:var(--mono);font-size:11px;letter-spacing:.28em;font-weight:800;color:var(--pink);
+  }
+  .icard.dress h4{margin-top:6px;font-size:clamp(18px,3.6vw,23px);}
+  .icard.dress p{color:var(--silver);font-size:14px;}
+
+  footer{
+    margin-top:54px;border-top:1px solid var(--line);padding:26px 0 10px;text-align:center;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--silver-dim);
+    line-height:2;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="route-tag"><span class="dot"></span>GALAXY LINE ・ ALL STATIONS</span>
+    <h1 class="title">MILKY SUBWAY<br>SUMMER FESTIVAL 2026</h1>
+    <div class="subtitle">銀河特急・夏祭りステーション</div>
+
+    <div class="when">
+      <span class="d">2026.08.29</span>
+      <span class="w">SATURDAY</span>
+      <span class="t">11:00 – 18:00</span>
+    </div>
+
+    <div class="board">
+      <div class="board-head"><span>MILKY SUBWAY 運行情報</span><span>PLATFORM 06</span></div>
+      <div class="board-body">
+        <div class="ticker">
+          <span>🟢 銀河線は本日も正常運転しています</span>
+          <span>🟡 MILKY-06 ／ 11:00 発・終着 18:00</span>
+          <span>👾 まもなく、なにかが起こります</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- MISSION -->
+  <section>
+    <div class="mission">
+      <div class="eyebrow">MAIN EVENT</div>
+      <h2><span class="ufo">👾</span> 銀河特急を<br>止めろ！</h2>
+      <p class="lead">
+        銀河特急 MILKY-06 が、<b>止まらなくなる。</b><br>
+        乗務員に選ばれたきみたちの任務は、<b>18:00 までにこの特急を止めること。</b>
+      </p>
+      <div class="kicker">HOW TO STOP IT<span class="jp">どうやって止めるかは、当日、駅で。</span></div>
+      <div class="chips">
+        <span class="chip">勝負はぜんぶで5つ</span>
+        <span class="chip">2歳から大人まで全員参加</span>
+        <span class="chip">🎁 景品あり</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">01 — SCHEDULE</div>
+      <h2 class="sec-title">当日の<em>運行スケジュール</em></h2>
+      <p class="sec-note">ごはんの時間は決まっています。ゲームの中身は当日までのお楽しみに。</p>
+    </div>
+    <div class="timeline">
+      <div class="stop" style="--sc:var(--green)">
+        <div class="time">11:00</div>
+        <div class="label">🚉 MILKY STATION OPEN・集合</div>
+        <div class="sub">駅の改札から乗車します</div>
+      </div>
+      <div class="stop" style="--sc:var(--green)">
+        <div class="time">11:15</div>
+        <div class="label">📸 記念写真</div>
+        <div class="sub">サイバーな衣装で一枚</div>
+      </div>
+      <div class="stop" style="--sc:var(--amber)">
+        <div class="time">11:30 – 13:30</div>
+        <div class="label">🍔 ちょまちん食堂・出張ランチ</div>
+        <div class="sub">全9品。メニューは下にあります</div>
+      </div>
+      <div class="stop game">
+        <div class="time">13:30</div>
+        <div class="label">👾 ミッション開始</div>
+        <div class="sub">内容は当日のお楽しみ</div>
+      </div>
+      <div class="stop" style="--sc:var(--amber)">
+        <div class="time">14:30</div>
+        <div class="label">🍹 ドリンク＆休憩</div>
+      </div>
+      <div class="stop game">
+        <div class="time">15:00</div>
+        <div class="label">🚄 銀河特急を止めろ！／予選</div>
+        <div class="sub">全員1回ずつ挑戦します</div>
+      </div>
+      <div class="stop" style="--sc:var(--amber)">
+        <div class="time">16:00</div>
+        <div class="label">🍨 デザート</div>
+      </div>
+      <div class="stop game">
+        <div class="time">16:30</div>
+        <div class="label">🚄 銀河特急を止めろ！／決勝</div>
+        <div class="sub">難度が上がります</div>
+      </div>
+      <div class="stop" style="--sc:var(--green)">
+        <div class="time">17:40</div>
+        <div class="label">🏆 全員集合・表彰／景品</div>
+      </div>
+      <div class="stop" style="--sc:var(--green)">
+        <div class="time">18:00</div>
+        <div class="label">🚇 LAST TRAIN・終了</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">02 — DINING CAR</div>
+      <h2 class="sec-title">🍔 <em>ちょまちん食堂</em> 出張のご案内</h2>
+      <p class="sec-note">全9品。セルフではなく、ぜんぶ作ってきてくれます。</p>
+    </div>
+
+    <div class="menu-group">
+      <div class="mg-head"><span class="en">MAIN</span><span class="jp">パンもの</span></div>
+      <div class="dish feat">
+        <div class="ph"><img src="photos/01-burger.jpg" alt="ミニハンバーガー" loading="lazy"></div>
+        <div class="body">
+          <div class="no">01</div>
+          <h4>🍔 ミニハンバーガー</h4>
+          <p>丸パン、パティ、レタス、トマト、うずらの目玉焼き</p>
+        </div>
+      </div>
+      <div class="dish feat">
+        <div class="body">
+          <div class="no">02</div>
+          <h4>🌭 ミニドッグ 3種</h4>
+          <p>3種類の具材で、それぞれ違う味を楽しめます</p>
+          <div class="variants">
+            <div class="variant">
+              <div class="ph"><img src="photos/02a-dog.jpg" alt="ソーセージケチャップのミニドッグ" loading="lazy"></div>
+              <span>ソーセージ<br>ケチャップ</span>
+            </div>
+            <div class="variant">
+              <div class="ph"><img src="photos/02b-dog.jpg" alt="玉子サラダのミニドッグ" loading="lazy"></div>
+              <span>玉子<br>サラダ</span>
+            </div>
+            <div class="variant">
+              <div class="ph"><img src="photos/02c-dog.jpg" alt="ハムときゅうりのミニドッグ" loading="lazy"></div>
+              <span>ハム＆<br>きゅうり</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="mg-head"><span class="en">HOT</span><span class="jp">あつあつ</span></div>
+      <div class="dish">
+        <div class="ph"><img src="photos/03-steak.jpg" alt="ガーリックステーキ" loading="lazy"></div>
+        <div class="body"><div class="no">03</div><h4>🥩 ガーリックステーキ</h4><p>牛肉、にんにく</p></div>
+      </div>
+      <div class="dish">
+        <div class="ph"><img src="photos/04-fries.jpg" alt="フライドポテト" loading="lazy"></div>
+        <div class="body"><div class="no">04</div><h4>🍟 フライドポテト</h4><p>みんな大好き。たっぷり用意します</p></div>
+      </div>
+      <div class="dish">
+        <div class="ph"><img src="photos/05-nugget.jpg" alt="ナゲット" loading="lazy"></div>
+        <div class="body"><div class="no">05</div><h4>🍗 ナゲット</h4><p>ケチャップやマスタードと一緒に</p></div>
+      </div>
+      <div class="dish">
+        <div class="ph"><img src="photos/06-harumaki.jpg" alt="えびのスティック春巻き" loading="lazy"></div>
+        <div class="body"><div class="no">06</div><h4>🌯 えびのスティック春巻き</h4><p>えび、長ねぎ、大葉</p></div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="mg-head"><span class="en">COLD</span><span class="jp">さっぱり</span></div>
+      <div class="dish">
+        <div class="ph"><img src="photos/07-tako.jpg" alt="たこの大葉ジェノバソース" loading="lazy"></div>
+        <div class="body"><div class="no">07</div><h4>🐙 たこの大葉ジェノバソース</h4><p>たこ、大葉、きゅうり、ミニトマト、一口モッツァレラ</p></div>
+      </div>
+      <div class="dish">
+        <div class="ph"><img src="photos/08-rape.jpg" alt="キャロットラペ" loading="lazy"></div>
+        <div class="body"><div class="no">08</div><h4>🥕 キャロットラペ</h4><p>にんじん、オレンジでさっぱり爽やかに</p></div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="mg-head"><span class="en">SOUP</span><span class="jp">スープ</span></div>
+      <div class="dish">
+        <div class="ph"><img src="photos/09-soup.jpg" alt="コーンクリームスープ" loading="lazy"></div>
+        <div class="body"><div class="no">09</div><h4>🥣 コーンクリームスープ</h4><p>コーン缶と牛乳で作る、やさしい味わい</p></div>
+      </div>
+    </div>
+
+    <div class="menu-note">
+      ★ <b>全9品、ちょまちん食堂が作って持ってきてくれます。</b>どれも取り分けやすいサイズなので、小さい子も食べやすくしています。
+    </div>
+  </section>
+
+  <!-- INFO -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">03 — INFORMATION</div>
+      <h2 class="sec-title">🎫 <em>ご乗車</em>のご案内</h2>
+    </div>
+    <div class="info">
+      <div class="icard dress">
+        <div class="code">DRESS CODE</div>
+        <h4>👕 みんなで買ったサイバーパンクの服で来てください</h4>
+        <p>当日は着た状態で集合してください。11:15 に記念写真を撮ります。</p>
+      </div>
+      <div class="icard">
+        <h4><span>🕚</span>時間</h4>
+        <p>11:00 集合、18:00 解散。途中の出入りは自由です。</p>
+      </div>
+      <div class="icard">
+        <h4><span>🍽</span>食事</h4>
+        <p>食事はちょまちん食堂の提供です。</p>
+      </div>
+      <div class="icard">
+        <h4><span>👾</span>ゲーム</h4>
+        <p>体を動かす場面があります。2歳から大人まで、全員が同じゲームに参加できるようにしています。</p>
+      </div>
+      <div class="icard">
+        <h4><span>🎁</span>景品</h4>
+        <p>最後に表彰と景品があります。全員がもらえるものも用意しています。</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  MILKY SUBWAY SUMMER FESTIVAL 2026 — GALAXY LINE<br>
+  2026.08.29 (SAT) 11:00 → 18:00 ／ PLATFORM 06
+</footer>
+
+</body>
+</html>
